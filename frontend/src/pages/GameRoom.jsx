@@ -1,0 +1,443 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import io from 'socket.io-client';
+import '../index.css';
+import RoomBaseEditor from './RoomBaseEditor';
+
+let socket;
+const serverUrl = import.meta.env.VITE_SERVER_URL
+  || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
+
+export default function GameRoom() {
+  const { id } = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const playerName = location.state?.playerName || 'Player';
+  
+  const [gameState, setGameState] = useState(null);
+  const [roomState, setRoomState] = useState(null);
+  const [baseEditorState, setBaseEditorState] = useState({ edits: {}, locks: {} });
+  const [socketId, setSocketId] = useState('');
+  const [error, setError] = useState('');
+  const [damageAnim, setDamageAnim] = useState(null);
+  const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
+  const [selectedCards, setSelectedCards] = useState([]);
+  const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
+  const lastDamageTimestamp = useRef(null);
+  const damageTimer = useRef(null);
+
+  useEffect(() => {
+    socket = io(serverUrl);
+    socket.on('connect', () => setSocketId(socket.id));
+
+    const savedCards = JSON.parse(localStorage.getItem('gf_custom_cards') || '[]');
+    const baseCardsEdits = JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}');
+    
+    // Send all created cards to be mixed into the common deck
+    socket.emit('joinRoom', { 
+       password: id, 
+       playerName, 
+       customCards: savedCards,
+       baseCardsEdits 
+    });
+
+    socket.on('roomUpdate', (data) => {
+      setRoomState(data);
+    });
+
+    socket.on('gameState', (data) => {
+      setGameState(data);
+      const damage = data.lastDamage;
+      if (damage && damage.timestamp !== lastDamageTimestamp.current) {
+        lastDamageTimestamp.current = damage.timestamp;
+        setDamageAnim(damage);
+        clearTimeout(damageTimer.current);
+        damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
+      }
+    });
+
+    socket.on('baseEditorState', data => setBaseEditorState(data));
+
+    socket.on('gameStateCleared', () => {
+      setGameState(null);
+      setSelectedCards([]);
+      setDamageAnim(null);
+      lastDamageTimestamp.current = null;
+    });
+
+    socket.on('errorMsg', (msg) => {
+      setError(msg);
+      setTimeout(() => setError(''), 3000);
+    });
+
+    return () => {
+      clearTimeout(damageTimer.current);
+      socket.disconnect();
+    };
+  }, [id, playerName, navigate]);
+
+  useEffect(() => {
+    if (gameState?.phase === 'exchange' && gameState.me) {
+      setExchangeValues({ hp: gameState.me.hp, mp: gameState.me.mp, money: gameState.me.money });
+    }
+  }, [gameState?.phase, gameState?.me]);
+
+  if (!gameState) {
+    return (
+      <div className="room-lobby">
+        {error && <div style={{color: 'red', marginBottom: '10px'}}>{error}</div>}
+        <div className="glass-panel lobby-header">
+          <div><h2>Room: {id}</h2><p>{roomState?.players?.length || 0}人参加中</p></div>
+          <div className="lobby-players">{roomState?.players?.map(player => <span key={player.id}>{player.name}{player.id === roomState.hostId ? '（部屋主）' : ''}</span>)}</div>
+          {socketId === roomState?.hostId && (
+            <button className="btn" disabled={(roomState?.players?.length || 0) < 2} onClick={() => socket.emit('startGame', { roomName: id })}>対戦を開始</button>
+          )}
+        </div>
+        <RoomBaseEditor socket={socket} roomName={id} editorState={baseEditorState} myId={socketId} />
+      </div>
+    );
+  }
+
+  const { me, opponent, turn, phase, field } = gameState;
+  const isMyTurn = turn === me.id;
+  const hasFog = me.ailments.includes('fog');
+  const hasHallucination = me.ailments.includes('hallucination');
+
+  const handlePlayCard = (cardIndex) => {
+    if (!isMyTurn) return;
+    const cardIndices = selectedCards.includes(cardIndex) ? selectedCards : [cardIndex];
+    socket.emit('playCard', { roomName: id, cardIndices, targetId: opponent?.id });
+    setSelectedCards([]);
+  };
+
+  const toggleCard = (index) => {
+    if (!isMyTurn) return;
+    setSelectedCards(current => current.includes(index)
+      ? current.filter(i => i !== index)
+      : [...current, index].sort((a, b) => a - b));
+  };
+
+  const handleEndTurn = () => {
+    if (!isMyTurn || phase !== 'main') return;
+    socket.emit('endTurn', { roomName: id });
+  };
+
+  // Render a small square card for the hand
+  const renderSquareCard = (realCard, index) => {
+    const card = hasHallucination ? {
+       ...realCard, name: '?', type: '?', attack: '?', defense: '?', costMp: '?', costMoney: '?'
+    } : realCard;
+
+    let statText = '';
+    if (card.attack > 0) statText = `攻${card.attack}`;
+    else if (card.defense > 0) statText = `守${card.defense}`;
+    else if (card.healHp > 0) statText = `回${card.healHp}`;
+    
+    // Convert attributes to class for color
+    const attrClass = `attr-bg-${card.attribute}`;
+    const borderClass = `attr-border-${card.attribute}`;
+
+    return (
+      <div 
+         key={realCard.instanceId} 
+         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''}`} 
+         onClick={() => toggleCard(index)}
+         onDoubleClick={() => handlePlayCard(index)}
+         onMouseEnter={() => setHoveredCardIndex(index)}
+         onMouseLeave={() => setHoveredCardIndex(null)}
+      >
+         {card.imageUrl && !hasHallucination ? (
+            <div className="image-area" style={{backgroundImage: `url(${card.imageUrl})`}} />
+         ) : (
+            <div className="image-area" style={{backgroundColor: '#e2e8f0'}}>{card.type.charAt(0).toUpperCase()}</div>
+         )}
+         {statText && <div className={`stat-bar ${attrClass}`}>{statText}</div>}
+      </div>
+    );
+  };
+
+  // Render a detailed field card
+  const renderFieldCard = (card) => {
+    if (!card) return null;
+    let statText = '';
+    if (card.attack > 0) statText += `攻${card.attack} `;
+    if (card.hitRate > 0 && card.type !== 'armor') statText += `${card.hitRate}% `;
+    if (card.defense > 0) statText += `守${card.defense} `;
+    if (card.healHp > 0) statText += `HP+${card.healHp} `;
+
+    return (
+      <div className={`gf-card-field attr-border-${card.attribute}`}>
+        {card.imageUrl ? (
+          <div className="image-area" style={{backgroundImage: `url(${card.imageUrl})`}}></div>
+        ) : (
+          <div className="image-area">{card.type.charAt(0).toUpperCase()}</div>
+        )}
+        <div className="details">
+           <div className="card-name">{card.name}</div>
+           <div className="card-stat-text">{statText}</div>
+           <div className="card-stat-text" style={{fontSize: '0.6rem'}}>{card.description}</div>
+        </div>
+        {card.costMoney > 0 && <div className="card-price">¥{card.costMoney}</div>}
+      </div>
+    );
+  };
+
+  const renderAilments = (player) => {
+    return player.ailments.map(a => {
+      let icon = '';
+      if(a === 'cold') icon = '🤧';
+      if(a === 'fever') icon = '🤒';
+      if(a === 'hell') icon = '🔥';
+      if(a === 'heaven') icon = '👼';
+      if(a === 'fog') icon = '🌫️';
+      if(a === 'flash') icon = '✨';
+      if(a === 'hallucination') icon = '🌀';
+      if(a === 'darkcloud') icon = '☁️';
+      return <span key={a} className="ailment-icon" title={a}>{icon}</span>;
+    });
+  };
+
+  return (
+    <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', height: '100vh', padding: '10px' }}>
+      
+      {/* Top Bar */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', background: 'var(--gf-green)', color: 'white', padding: '4px 10px', borderRadius: '4px' }}>
+         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>← 修行 (Room: {id})</span>
+         </div>
+         <div style={{ fontWeight: 'bold' }}>{gameState.gameStateStr === 'ended' ? '決着' : 'G.F.1'}</div>
+         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+            <button className="btn" style={{ padding: '2px 8px', fontSize: '0.8rem' }}>教典</button>
+         </div>
+      </div>
+
+      {/* Main Area */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '10px', position: 'relative' }}>
+         
+         {/* Damage Overlay */}
+         {damageAnim && (
+           <div className="damage-overlay">
+             {damageAnim.amount} <span style={{fontSize: '2rem'}}>ダメージ</span>
+           </div>
+         )}
+
+         {/* Left/Center: Field */}
+         <div style={{ display: 'flex', gap: '10px', padding: '10px' }}>
+            {/* Attacker Box */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+               <div className="player-pill" style={{ marginBottom: '10px', width: '150px', justifyContent: 'center', background: '#f1f5f9' }}>
+                 {field ? (field.attackerId === me.id ? me.name : opponent?.name) : '---'}
+               </div>
+               
+               {field && renderFieldCard(field.attackCard)}
+               {!field && selectedCards.length > 0 && (
+                 <div className="selected-field-preview">
+                   <div className="selected-field-title">選択中 ({selectedCards.length})</div>
+                   <div className="selected-field-cards">
+                     {selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
+                       <div key={card.instanceId}>{renderFieldCard(card)}</div>
+                     ))}
+                   </div>
+                 </div>
+               )}
+               
+               {field && field.attackCard.attack > 0 && (
+                 <div style={{ marginTop: 'auto', background: '#eaffea', border: '2px solid #555', borderRadius: '8px', padding: '4px 20px', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                   攻{field.attackCard.attack}
+                 </div>
+               )}
+            </div>
+            
+            <div style={{ alignSelf: 'flex-start', color: '#ff3333', fontSize: '2rem', fontWeight: 'bold', marginTop: '5px' }}>➡</div>
+
+            {/* Defender Box */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,255,255,0.3)', borderRadius: '12px', padding: '10px' }}>
+               <div className="player-pill" style={{ marginBottom: '10px', width: '150px', justifyContent: 'center', background: '#f1f5f9' }}>
+                 {field && field.defenderId ? (field.defenderId === me.id ? me.name : opponent?.name) : '---'}
+               </div>
+               
+               {field && field.defenseCards && field.defenseCards.map((c, i) => (
+                  <div key={i} style={{ marginBottom: '5px' }}>{renderFieldCard(c)}</div>
+               ))}
+
+               {field && selectedCards.length > 0 && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
+                 <div key={card.instanceId} className="pending-defense-card">{renderFieldCard(card)}</div>
+               ))}
+
+               {field && field.defenderId && (
+                 <div style={{ marginTop: 'auto', background: '#eaffea', border: '2px solid #555', borderRadius: '8px', padding: '4px 20px', fontSize: '1.2rem', fontWeight: 'bold' }}>
+                   守{field.defenseCards ? field.defenseCards.reduce((acc, c) => acc + (c.defense||0), 0) : 0}
+                 </div>
+               )}
+            </div>
+         </div>
+
+         {/* Right: Player List & Log */}
+         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            
+            {/* Opponent */}
+            {opponent && (
+               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div className={`player-pill ${turn === opponent.id ? 'active' : ''}`} style={{ flex: 1 }}>
+                     <span style={{ marginRight: '10px', color: '#94a3b8' }}>●</span>
+                     <span style={{ flex: 1, color: 'var(--gf-blue)' }}>{opponent.name}</span>
+                     
+                     {hasFog ? (
+                        <span style={{ fontSize: '0.7rem', color: '#666' }}>[霧]</span>
+                     ) : (
+                        <div style={{ fontSize: '0.7rem', display: 'flex', gap: '4px', fontWeight: 'normal' }}>
+                           <span title="HP">HP <span style={{fontWeight:'bold'}}>{opponent.hp}</span></span>
+                           <span title="MP">MP <span style={{fontWeight:'bold'}}>{opponent.mp}</span></span>
+                           <span title="Money">¥ <span style={{fontWeight:'bold'}}>{opponent.money}</span></span>
+                        </div>
+                     )}
+                  </div>
+                  {/* Status Icons below or inside. GF puts them inside or below. We put them below. */}
+               </div>
+            )}
+            {opponent && opponent.ailments.length > 0 && (
+               <div style={{ paddingLeft: '20px' }}>{renderAilments(opponent)}</div>
+            )}
+
+            {/* Empty Slots to look like GF */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity: 0.5 }}>
+               <div className="player-pill" style={{ flex: 1 }}>
+                  <span style={{ marginRight: '10px', color: '#94a3b8' }}>●</span>
+                  <span style={{ flex: 1 }}>---</span>
+               </div>
+            </div>
+
+            {/* Me */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+               <div className={`player-pill ${turn === me.id ? 'active' : ''}`} style={{ flex: 1 }}>
+                  <span style={{ marginRight: '10px', color: '#94a3b8' }}>●</span>
+                  <span style={{ flex: 1, color: 'var(--gf-blue)' }}>{me.name}</span>
+                  <div style={{ fontSize: '0.7rem', display: 'flex', gap: '4px', fontWeight: 'normal' }}>
+                     <span title="HP">HP <span style={{fontWeight:'bold'}}>{me.hp}</span></span>
+                     <span title="MP">MP <span style={{fontWeight:'bold'}}>{me.mp}</span></span>
+                     <span title="Money">¥ <span style={{fontWeight:'bold'}}>{me.money}</span></span>
+                  </div>
+               </div>
+            </div>
+            {me.ailments.length > 0 && (
+               <div style={{ paddingLeft: '20px' }}>{renderAilments(me)}</div>
+            )}
+
+            {/* Log / Actions Box */}
+            <div className="glass-panel" style={{ flex: 1, marginTop: '20px', padding: '10px', fontSize: '0.8rem', overflowY: 'auto', background: 'white' }}>
+               <div style={{ textAlign: 'center', borderBottom: '1px solid #ccc', paddingBottom: '4px', marginBottom: '8px', fontWeight: 'bold' }}>※ 起こした奇跡 (Log)</div>
+               {gameState.log.slice(-10).map((l, i) => <div key={i}>{l}</div>)}
+            </div>
+         </div>
+      </div>
+
+      {/* Bottom Area: Hand & Actions */}
+      <div style={{ background: '#7bd7c6', padding: '10px', borderTop: '2px solid var(--gf-green)', position: 'relative' }}>
+         
+         {/* Error Toast */}
+         {error && (
+            <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,0,0,0.8)', color: 'white', padding: '5px 15px', borderRadius: '20px', fontWeight: 'bold', zIndex: 1000, boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }}>
+               {error}
+            </div>
+         )}
+
+         {/* Hovered Card Detail */}
+         {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
+            <div style={{ position: 'absolute', top: '-85px', left: `${Math.min(hoveredCardIndex * 70, window.innerWidth - 240)}px`, zIndex: 100 }}>
+               {renderFieldCard(hasHallucination ? { ...me.hand[hoveredCardIndex], name: '???', type: '???', attack: '?', defense: '?', costMp: '?', costMoney: '?' } : me.hand[hoveredCardIndex])}
+            </div>
+         )}
+
+         <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '5px' }}>
+            {me.hand.map((c, i) => renderSquareCard(c, i))}
+         </div>
+         {me.learnedMiracles?.length > 0 && (
+           <div className="learned-miracles">
+             <span>習得済み奇跡</span>
+             {me.learnedMiracles.map((miracle, index) => (
+               <button
+                 key={`${miracle.id}-${index}`}
+                 className="btn btn-secondary"
+                 disabled={!isMyTurn || !['main', 'defense'].includes(phase) || me.mp < (miracle.costMp || 0)}
+                 onClick={() => socket.emit('castMiracle', { roomName: id, miracleIndex: index, targetId: opponent?.id })}
+               >
+                 {miracle.name}（MP{miracle.costMp || 0}）
+               </button>
+             ))}
+           </div>
+         )}
+         <div style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '4px' }}>
+           カードを選択して「使用」。複数選択で武器＋装飾品などを合体できます（ダブルクリックで単体使用）。
+         </div>
+         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
+            {isMyTurn && (phase === 'main' || phase === 'defense') && selectedCards.length > 0 && (
+               <button className="btn" onClick={() => handlePlayCard(selectedCards[0])}>選択カードを使用 ({selectedCards.length})</button>
+            )}
+            {isMyTurn && phase === 'defense' && (
+               <button className="btn" onClick={() => socket.emit('finishDefense', { roomName: id })}>ダメージを受ける</button>
+            )}
+            {isMyTurn && phase === 'main' && (
+               <button className="btn" onClick={() => socket.emit('pray', { roomName: id })} title="手札に武器がない場合のみ可能">祈る (ドロー)</button>
+            )}
+            {isMyTurn && phase === 'main' && (
+               <button className="btn" onClick={handleEndTurn}>ターン終了</button>
+            )}
+         </div>
+      </div>
+
+      {isMyTurn && phase === 'exchange' && (
+        <div className="shrine-overlay">
+          <div className="glass-panel shrine-panel">
+            <h2>両替</h2>
+            <p>HP・MP・￥の合計を保ったまま、自由に配分します。</p>
+            <div className="exchange-fields">
+              {['hp', 'mp', 'money'].map(key => (
+                <label key={key}>
+                  {key === 'money' ? '￥' : key.toUpperCase()}
+                  <input
+                    type="number"
+                    min="0"
+                    max="99"
+                    value={exchangeValues[key]}
+                    onChange={event => setExchangeValues(values => ({ ...values, [key]: Number(event.target.value) }))}
+                  />
+                </label>
+              ))}
+            </div>
+            <p>配分合計: {exchangeValues.hp + exchangeValues.mp + exchangeValues.money} / {me.hp + me.mp + me.money}</p>
+            <button className="btn" onClick={() => socket.emit('completeExchange', { roomName: id, ...exchangeValues })}>この配分で決定</button>
+          </div>
+        </div>
+      )}
+
+      {isMyTurn && phase === 'buy_offer' && gameState.buyOffer && (
+        <div className="shrine-overlay">
+          <div className="glass-panel shrine-panel">
+            <h2>買う</h2>
+            <p>相手の手札から無作為に選ばれました。</p>
+            {renderFieldCard(gameState.buyOffer)}
+            <p>価格: ￥{gameState.buyOffer.type === 'miracle' ? 0 : gameState.buyOffer.costMoney || 0}</p>
+            <div className="buy-actions">
+              <button className="btn" onClick={() => socket.emit('resolveBuy', { roomName: id, accept: true })}>買う</button>
+              <button className="btn btn-secondary" onClick={() => socket.emit('resolveBuy', { roomName: id, accept: false })}>買わない</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {gameState.gameStateStr === 'ended' && (
+        <div className="game-end-overlay">
+          <div className="glass-panel game-end-panel">
+            <h2>{gameState.winner ? '決着' : '引き分け'}</h2>
+            <p>
+              {gameState.winner
+                ? (gameState.winner.id === me.id ? 'あなたの勝利です！' : `${gameState.winner.name} の勝利です。`)
+                : '生存者なしで決着しました。'}
+            </p>
+            <button className="btn" onClick={() => socket.emit('returnToLobby', { roomName: id })}>待機画面に戻る</button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
