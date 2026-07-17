@@ -63,6 +63,9 @@ test('戦闘アニメーションに使うFlash版画像がすべて存在する
       assert.equal(fs.existsSync(path.join(publicDir, 'godfield-flash', 'ui', 'game', 'effect', `${effect}_${digit}.png`)), true, `${effect}_${digit}`);
     }
   }
+  for (const assistant of ['mars', 'mercury', 'jupiter', 'saturn', 'uranus', 'pluto', 'neptune', 'venus', 'earth', 'moon']) {
+    assert.equal(fs.existsSync(path.join(publicDir, 'godfield-flash', 'ui', 'game', 'assistant', `${assistant}.png`)), true, assistant);
+  }
 });
 
 test('ホバー音を除くFlash版効果音がゲームイベントまたは画面操作に割り当てられている', () => {
