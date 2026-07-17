@@ -617,13 +617,16 @@ export default function GameRoom() {
                 {renderFieldCard(field.attackCard)}
               </section>
             )}
-            {field && field.defenseCards?.length > 0 && (
+            {field && (field.defenseCards?.length > 0 || (phase === 'defense' && selectedCards.length > 0)) && (
               <section className="gf-field-group defender">
                 <div className="gf-field-owner">{playerNameById(field.defenderId) || '---'}</div>
-                {field.defenseCards.map((card, index) => <div key={index}>{renderFieldCard(card)}</div>)}
+                {(field.defenseCards || []).map((card, index) => <div key={index}>{renderFieldCard(card)}</div>)}
+                {phase === 'defense' && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
+                  <div key={card.instanceId} className="pending-defense-card">{renderFieldCard(card)}</div>
+                ))}
               </section>
             )}
-            {field && selectedCards.length > 0 && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
+            {field && phase !== 'defense' && selectedCards.length > 0 && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
               <div key={card.instanceId} className="pending-defense-card">{renderFieldCard(card)}</div>
             ))}
             {!field && selectedCards.length > 0 && (

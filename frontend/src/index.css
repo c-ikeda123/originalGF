@@ -1882,6 +1882,15 @@ h1, h2, h3, h4, h5, h6 {
   gap: 1px;
 }
 
+.gf-field-group.defender {
+  flex-direction: column;
+  flex-wrap: nowrap;
+}
+
+.gf-field-group.defender .pending-defense-card {
+  margin: 0;
+}
+
 .gf-field-owner {
   width: 240px;
   height: 30px;
