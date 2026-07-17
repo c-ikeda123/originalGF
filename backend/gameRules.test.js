@@ -2,8 +2,12 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   applyAilment,
+  combineAttackCards,
+  canDefendAttribute,
   cureAilments,
+  isDefenseCard,
   processEndOfTurnAilments,
+  resolveDefenseCard,
   rollAttack,
   validateCardPlay,
 } = require('./gameRules');
@@ -47,4 +51,34 @@ test('指定された災いだけを治癒する', () => {
   const player = { ailments: ['cold', 'fog', 'dream'] };
   assert.deepEqual(cureAilments(player, ['cold', 'fog']), ['cold', 'fog']);
   assert.deepEqual(player.ailments, ['dream']);
+});
+
+test('追加攻撃・倍化・全体化をFlash版の順序で合成する', () => {
+  const result = combineAttackCards([
+    { name: '剣', type: 'weapon', attack: 5, hitRate: 75, attribute: 'fire' },
+    { name: '弓', type: 'weapon', attack: 3, attackBonus: 3, additive: true, attribute: 'light' },
+    { name: 'オーラ', type: 'miracle', attack: 0, supportEffect: 'double_attack', attribute: 'none' },
+    { name: '蜃気楼', type: 'miracle', attack: 0, supportEffect: 'wide_attack', attribute: 'none' },
+  ]);
+  assert.equal(result.attack, 16);
+  assert.equal(result.hitRate, 100);
+  assert.equal(result.target, 'all');
+  assert.equal(result.attribute, 'none');
+});
+
+test('通常武器も防御値または特殊防御があれば防御に使える', () => {
+  assert.equal(isDefenseCard({ type: 'weapon', defense: 3 }), true);
+  assert.equal(isDefenseCard({ type: 'weapon', defenseEffect: 'reflect_weapon' }), true);
+  assert.equal(validateCardPlay([{ type: 'weapon', defense: 3 }], 'defense').valid, true);
+});
+
+test('属性相性と特殊防御を解決する', () => {
+  assert.equal(canDefendAttribute('fire', 'water'), true);
+  assert.equal(canDefendAttribute('fire', 'earth'), false);
+  assert.equal(canDefendAttribute('light', 'dark'), false);
+  const attack = { amount: 10, attribute: 'fire', sourceType: 'weapon' };
+  assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'reflect_weapon' }), { action: 'reflect', amount: 10 });
+  assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'block_weapon' }), { action: 'block', amount: 0 });
+  assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'remove_attribute' }), { action: 'remove_attribute', amount: 10, attribute: 'none' });
+  assert.deepEqual(resolveDefenseCard(attack, { defense: 4, attribute: 'earth' }), { action: 'invalid_attribute', amount: 10 });
 });

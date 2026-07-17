@@ -158,8 +158,10 @@ export default function GameRoom() {
     if (phase === 'main') return !['armor', 'ring', 'defense_item'].includes(card.type);
     if (phase === 'defense') {
       if (me.ailments.includes('flash') && selectedCards.length > 0) return false;
-      return ['armor', 'ring', 'defense_item', 'accessory'].includes(card.type)
-        || (card.type === 'miracle' && card.defense > 0);
+      return (card.defense || 0) > 0
+        || Boolean(card.defenseEffect)
+        || Boolean(card.reactiveEffect)
+        || ['ring', 'defense_item', 'accessory'].includes(card.type);
     }
     return false;
   };

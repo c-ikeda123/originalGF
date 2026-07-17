@@ -8,15 +8,46 @@ const cards = [];
 let serial = 0;
 
 const attr = { '-': 'none', 火: 'fire', 水: 'water', 木: 'wood', 土: 'earth', 光: 'light', 闇: 'dark', 天: 'light' };
+const deriveSystemFields = card => {
+  const description = card.description || '';
+  const fields = {};
+  if (description.includes('2回攻撃')) fields.repeatCount = 2;
+  if (description.includes('HP吸収')) fields.attackEffect = 'absorb_hp';
+  if (description.includes('自分にも同じダメージ')) fields.attackEffect = 'damage_to_self';
+  if (description.includes('単体攻撃武器の攻撃力を倍にする')) fields.supportEffect = 'double_attack';
+  if (description.includes('単体攻撃武器を100%攻にする')) fields.supportEffect = 'wide_attack';
+  if (description.includes('MP消費なしで奇跡') || description.includes('MPなしで奇跡')) fields.supportEffect = 'magic_free';
+  if (description.includes('何でもはね返す')) fields.defenseEffect = 'reflect_any';
+  else if (description.includes('無属性攻撃をはね返す')) fields.defenseEffect = 'reflect_weapon';
+  else if (description.includes('奇跡をはね返す')) fields.defenseEffect = 'reflect_magic';
+  else if (description.includes('無属性の攻撃を弾く')) fields.defenseEffect = 'flick_weapon';
+  else if (description.includes('奇跡を弾く')) fields.defenseEffect = 'flick_magic';
+  else if (description.includes('無属性武器を止める')) fields.defenseEffect = 'block_weapon';
+  else if (description.includes('奇跡を止める')) fields.defenseEffect = 'block_magic';
+  else if (description.includes('攻撃の属性を取り除く')) fields.defenseEffect = 'remove_attribute';
+  const ringEffects = {
+    火星の指輪: 'counter_damage_all',
+    水星の指輪: 'counter_fog',
+    木星の指輪: 'counter_dream',
+    土星の指輪: 'counter_double_damage',
+    天王の指輪: 'counter_flash',
+    冥王の指輪: 'counter_darkcloud',
+    海王の指輪: 'recover_double_mp',
+    金星の指輪: 'absorb_money',
+  };
+  if (ringEffects[card.name]) fields.reactiveEffect = ringEffects[card.name];
+  return fields;
+};
 const add = (category, name, data = {}) => {
   const id = `gf_${category}_${String(++serial).padStart(3, '0')}`;
-  cards.push({
+  const card = {
     id, name, category, type: data.type || category, attribute: data.attribute || 'none',
     target: data.target || 'single', attack: 0, attackBonus: 0, defense: 0,
     hitRate: 100, healHp: 0, healMp: 0, costMoney: 0, costMp: 0,
     copies: 1, description: '', ...data,
     imageUrl: data.imageUrl || godfieldFlashImages[id] || '',
-  });
+  };
+  cards.push({ ...card, ...deriveSystemFields(card) });
 };
 const rate = percent => Math.round(percent * 5);
 

@@ -5,8 +5,11 @@ const cors = require('cors');
 const path = require('path');
 const {
   applyAilment,
+  combineAttackCards,
   cureAilments,
+  isDefenseCard,
   processEndOfTurnAilments,
+  resolveDefenseCard,
   rollAttack,
   validateCardPlay,
 } = require('./gameRules');
@@ -316,15 +319,7 @@ io.on('connection', (socket) => {
       return;
     }
 
-    const combinedCard = cards.length > 1 ? {
-      ...card,
-      name: cards.map(c => c.name).join(' + '),
-      attack: cards.reduce((sum, c) => sum + (c.attack || 0), 0),
-      defense: cards.reduce((sum, c) => sum + (c.defense || 0), 0),
-      hitRate: Math.min(...cards.filter(c => c.attack > 0).map(c => c.hitRate || 100)),
-      attribute: combineAttributes(cards),
-      description: `Combined: ${cards.map(c => c.name).join(', ')}`
-    } : card;
+    const combinedCard = combineAttackCards(cards);
 
     room.log.push(`${player.name} played ${combinedCard.name}!`);
     room.lastAction = createActionEvent(player, opponent, combinedCard, 'use');
@@ -348,6 +343,10 @@ io.on('connection', (socket) => {
              attribute: combinedCard.attribute,
              source: player.name,
              attackerId: player.id,
+             sourceType: combinedCard.sourceType || combinedCard.type,
+             absorbHp: combinedCard.absorbHp,
+             selfDamage: combinedCard.selfDamage,
+             nextTurnId: opponentId,
              ailments: cards.filter(usedCard => usedCard.ailmentTrigger === 'damage').map(usedCard => usedCard.ailmentInflict).filter(Boolean),
            };
            room.field = {
@@ -381,6 +380,10 @@ io.on('connection', (socket) => {
                attribute: combinedCard.attribute,
                source: player.name,
                attackerId: player.id,
+               sourceType: combinedCard.sourceType || combinedCard.type,
+               absorbHp: combinedCard.absorbHp,
+               selfDamage: combinedCard.selfDamage,
+               nextTurnId: opponentId,
                ailments: cards.filter(usedCard => usedCard.ailmentTrigger === 'damage').map(usedCard => usedCard.ailmentInflict).filter(Boolean),
              };
              room.field = { attackerId: player.id, attackCard: combinedCard, defenderId: opponentId, defenseCards: [] };
@@ -404,44 +407,42 @@ io.on('connection', (socket) => {
        }
     } else if (room.phase === 'defense') {
        // Defense logic
-       if (['armor', 'ring', 'defense_item', 'accessory'].includes(combinedCard.type) || (combinedCard.type === 'miracle' && combinedCard.defense > 0)) {
+       if (isDefenseCard(combinedCard)) {
          const pDamage = player.pendingDamage;
          if (!pDamage) return;
 
-         // Attribute check
-         let blocks = true;
-         if (pDamage.attribute === 'light') blocks = false;
-         else if (pDamage.attribute === 'fire' && !['water', 'light'].includes(combinedCard.attribute)) blocks = false;
-         else if (pDamage.attribute === 'water' && !['fire', 'light'].includes(combinedCard.attribute)) blocks = false;
-         else if (pDamage.attribute === 'wood' && !['earth', 'light'].includes(combinedCard.attribute)) blocks = false;
-         else if (pDamage.attribute === 'earth' && !['wood', 'light'].includes(combinedCard.attribute)) blocks = false;
-         else if (pDamage.attribute === 'dark') blocks = true; // Dark can be blocked by anything, but if unblocked it hits hard
-         
-         // Ailment: Flash limits defense to 1 card. (We'll enforce this by immediately ending defense phase if they have flash and play a card)
          const hasFlash = player.ailments.includes('flash');
-
-         if (blocks) {
-            pDamage.amount -= combinedCard.defense;
-            room.field.defenseCards.push(combinedCard);
-            room.log.push(`${player.name} defended with ${combinedCard.name}! Reduced damage by ${combinedCard.defense}.`);
-            if (pDamage.amount <= 0) {
-               room.log.push(`Damage was completely blocked!`);
-               player.pendingDamage = null;
-               
-               // Resolve field after a short delay
-               clearFieldLater(roomName);
-               endTurnInternal(room, player.id); // It becomes player's turn to attack now
-            } else if (hasFlash) {
-               room.log.push(`${player.name} is blinded by Flash and cannot play more defense cards!`);
-               applyDamageAndClearField(room, player, pDamage.amount, roomName);
-            }
+         const resolution = resolveDefenseCard(pDamage, combinedCard);
+         room.field.defenseCards.push(combinedCard);
+         if (resolution.action === 'reflect' || resolution.action === 'flick') {
+           const candidates = Object.values(room.players).filter(candidate => candidate.id !== player.id && !candidate.ascended && candidate.hp > 0);
+           const target = resolution.action === 'reflect'
+             ? room.players[pDamage.attackerId]
+             : candidates[Math.floor(Math.random() * candidates.length)];
+           player.pendingDamage = null;
+           if (!target) {
+             endTurnInternal(room, pDamage.nextTurnId || player.id);
+           } else {
+             target.pendingDamage = { ...pDamage, amount: resolution.amount };
+             room.turn = target.id;
+             room.field.defenderId = target.id;
+             room.field.defenseCards = [];
+             room.log.push(`${combinedCard.name} が攻撃を${resolution.action === 'reflect' ? 'はね返した' : '弾き飛ばした'}！`);
+           }
+         } else if (resolution.action === 'block') {
+           room.log.push(`${combinedCard.name} が攻撃を完全に止めた！`);
+           applyDamageAndClearField(room, player, 0, roomName);
+         } else if (resolution.action === 'remove_attribute') {
+           pDamage.attribute = 'none';
+           room.log.push(`${combinedCard.name} が攻撃の属性を取り除いた。`);
+           if (hasFlash) applyDamageAndClearField(room, player, pDamage.amount, roomName);
+         } else if (resolution.action === 'reduce') {
+           pDamage.amount = resolution.amount;
+           room.log.push(`${player.name} は ${combinedCard.name} で防御し、残りダメージは ${pDamage.amount}。`);
+           if (pDamage.amount <= 0 || hasFlash) applyDamageAndClearField(room, player, pDamage.amount, roomName);
          } else {
-            room.field.defenseCards.push(card);
-            room.log.push(`${card.name} (${card.attribute}) cannot block ${pDamage.attribute} attribute!`);
-            if (hasFlash) {
-               room.log.push(`${player.name} is blinded by Flash and cannot play more defense cards!`);
-               applyDamageAndClearField(room, player, pDamage.amount, roomName);
-            }
+           room.log.push(`${combinedCard.name} (${combinedCard.attribute}) では ${pDamage.attribute} 属性を防げない。`);
+           if (hasFlash) applyDamageAndClearField(room, player, pDamage.amount, roomName);
          }
        }
     }
@@ -571,10 +572,29 @@ function applyDamageAndClearField(room, player, amount, roomName) {
        room.log.push(`${player.name} は ${applied} になった。`);
      }
      const attacker = room.players[pendingDamage?.attackerId];
+     if (attacker && pendingDamage?.absorbHp) {
+       attacker.hp = Math.min(99, attacker.hp + actualDamage);
+       room.log.push(`${attacker.name} はHPを ${actualDamage} 吸収した。`);
+     }
+     if (attacker && pendingDamage?.selfDamage) {
+       attacker.hp -= actualDamage;
+       room.log.push(`${attacker.name} も ${actualDamage} ダメージを受けた。`);
+     }
      for (const defenseCard of room.field?.defenseCards || []) {
        if (attacker && defenseCard.retaliateAilment) {
          const applied = applyAilment(attacker, defenseCard.retaliateAilment);
          room.log.push(`${attacker.name} は ${defenseCard.name} により ${applied} になった。`);
+       }
+       for (const reactiveEffect of new Set([defenseCard.reactiveEffect, ...(defenseCard.reactiveEffects || [])].filter(Boolean))) {
+         if (!attacker) continue;
+         if (reactiveEffect === 'counter_damage_all') attacker.hp -= actualDamage;
+         if (reactiveEffect === 'counter_double_damage') attacker.hp -= actualDamage * 2;
+         if (reactiveEffect === 'recover_double_mp') player.mp = Math.min(99, player.mp + actualDamage * 2);
+         if (reactiveEffect === 'absorb_money') {
+           const amountToSteal = Math.min(actualDamage, attacker.money);
+           attacker.money -= amountToSteal;
+           player.money = Math.min(99, player.money + amountToSteal);
+         }
        }
      }
    }
@@ -585,7 +605,7 @@ function applyDamageAndClearField(room, player, amount, roomName) {
 
    clearFieldLater(roomName);
 
-   endTurnInternal(room, player.id);
+   endTurnInternal(room, pendingDamage?.nextTurnId || player.id);
    checkDeath(room);
    emitGameState(roomName);
 }
@@ -606,14 +626,6 @@ function withInstanceId(card) {
 function drawArtifact(room) {
   if (!room.deck.length) return null;
   return withInstanceId(room.deck[Math.floor(Math.random() * room.deck.length)]);
-}
-
-function combineAttributes(cards) {
-  const attributes = [...new Set(cards.map(c => c.attribute).filter(a => a && a !== 'none'))];
-  if (attributes.length === 0) return 'none';
-  if (attributes.length === 1) return attributes[0];
-  const nonLight = attributes.filter(a => a !== 'light');
-  return nonLight.length === 1 ? nonLight[0] : 'none';
 }
 
 function forceSale(room, seller, buyer, card) {

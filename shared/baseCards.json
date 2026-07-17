@@ -137,7 +137,8 @@
     "copies": 1,
     "description": "2回攻撃",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/paper_knife.png"
+    "imageUrl": "/godfield-flash/cards/weapon/paper_knife.png",
+    "repeatCount": 2
   },
   {
     "id": "gf_weapon_008",
@@ -237,7 +238,8 @@
     "copies": 7,
     "description": "無属性の攻撃を弾く",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/randamuken.png"
+    "imageUrl": "/godfield-flash/cards/weapon/randamuken.png",
+    "defenseEffect": "flick_weapon"
   },
   {
     "id": "gf_weapon_013",
@@ -317,7 +319,8 @@
     "copies": 1,
     "description": "HP吸収",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/ghost_sword.png"
+    "imageUrl": "/godfield-flash/cards/weapon/ghost_sword.png",
+    "attackEffect": "absorb_hp"
   },
   {
     "id": "gf_weapon_017",
@@ -483,7 +486,8 @@
     "copies": 3,
     "description": "無属性攻撃をはね返す",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/hanshaken.png"
+    "imageUrl": "/godfield-flash/cards/weapon/hanshaken.png",
+    "defenseEffect": "reflect_weapon"
   },
   {
     "id": "gf_weapon_025",
@@ -503,7 +507,8 @@
     "copies": 1,
     "description": "奇跡をはね返す",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/gekkou_no_ono.png"
+    "imageUrl": "/godfield-flash/cards/weapon/gekkou_no_ono.png",
+    "defenseEffect": "reflect_magic"
   },
   {
     "id": "gf_weapon_026",
@@ -543,7 +548,8 @@
     "copies": 1,
     "description": "奇跡を止める",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/wasuretai_tsubasa.png"
+    "imageUrl": "/godfield-flash/cards/weapon/wasuretai_tsubasa.png",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_weapon_028",
@@ -605,7 +611,8 @@
     "copies": 1,
     "description": "HP吸収",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/real_ghost_sword.png"
+    "imageUrl": "/godfield-flash/cards/weapon/real_ghost_sword.png",
+    "attackEffect": "absorb_hp"
   },
   {
     "id": "gf_weapon_031",
@@ -625,7 +632,8 @@
     "copies": 1,
     "description": "MP消費なしで奇跡を使える",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/seirei_no_tsue.png"
+    "imageUrl": "/godfield-flash/cards/weapon/seirei_no_tsue.png",
+    "supportEffect": "magic_free"
   },
   {
     "id": "gf_weapon_032",
@@ -707,7 +715,8 @@
     "copies": 1,
     "description": "奇跡を止める",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/angel_sword.png"
+    "imageUrl": "/godfield-flash/cards/weapon/angel_sword.png",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_weapon_036",
@@ -747,7 +756,8 @@
     "copies": 1,
     "description": "自分にも同じダメージ",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/jashin_no_taiken.png"
+    "imageUrl": "/godfield-flash/cards/weapon/jashin_no_taiken.png",
+    "attackEffect": "damage_to_self"
   },
   {
     "id": "gf_weapon_038",
@@ -787,7 +797,8 @@
     "copies": 1,
     "description": "奇跡を止める",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/cosmic_rod.png"
+    "imageUrl": "/godfield-flash/cards/weapon/cosmic_rod.png",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_weapon_040",
@@ -1564,7 +1575,8 @@
     "description": "奇跡を弾く",
     "weaponKind": "additional",
     "additive": true,
-    "imageUrl": "/godfield-flash/cards/weapon/sky_harpoon.png"
+    "imageUrl": "/godfield-flash/cards/weapon/sky_harpoon.png",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_weapon_078",
@@ -1627,7 +1639,8 @@
     "description": "奇跡を止める",
     "weaponKind": "additional",
     "additive": true,
-    "imageUrl": "/godfield-flash/cards/weapon/angel_no_yumi.png"
+    "imageUrl": "/godfield-flash/cards/weapon/angel_no_yumi.png",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_weapon_081",
@@ -1998,7 +2011,8 @@
     "copies": 1,
     "description": "HP吸収",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/tsuru_shoot.png"
+    "imageUrl": "/godfield-flash/cards/weapon/tsuru_shoot.png",
+    "attackEffect": "absorb_hp"
   },
   {
     "id": "gf_weapon_099",
@@ -2216,7 +2230,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を弾く",
-    "imageUrl": "/godfield-flash/cards/protector/sky_boots.png"
+    "imageUrl": "/godfield-flash/cards/protector/sky_boots.png",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_armor_110",
@@ -2292,7 +2307,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を弾く",
-    "imageUrl": "/godfield-flash/cards/protector/sky_gauntlet.png"
+    "imageUrl": "/godfield-flash/cards/protector/sky_gauntlet.png",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_armor_114",
@@ -2368,7 +2384,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を弾く",
-    "imageUrl": "/godfield-flash/cards/protector/sky_helm.png"
+    "imageUrl": "/godfield-flash/cards/protector/sky_helm.png",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_armor_118",
@@ -2406,7 +2423,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "MPなしで奇跡",
-    "imageUrl": "/godfield-flash/cards/protector/seirei_no_tabi.png"
+    "imageUrl": "/godfield-flash/cards/protector/seirei_no_tabi.png",
+    "supportEffect": "magic_free"
   },
   {
     "id": "gf_armor_120",
@@ -2463,7 +2481,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を弾く",
-    "imageUrl": "/godfield-flash/cards/protector/sky_shield.png"
+    "imageUrl": "/godfield-flash/cards/protector/sky_shield.png",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_armor_123",
@@ -2520,7 +2539,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡をはね返す",
-    "imageUrl": "/godfield-flash/cards/protector/gekkou_no_kabuto.png"
+    "imageUrl": "/godfield-flash/cards/protector/gekkou_no_kabuto.png",
+    "defenseEffect": "reflect_magic"
   },
   {
     "id": "gf_armor_126",
@@ -2577,7 +2597,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "MPなしで奇跡",
-    "imageUrl": "/godfield-flash/cards/protector/seirei_no_zukin.png"
+    "imageUrl": "/godfield-flash/cards/protector/seirei_no_zukin.png",
+    "supportEffect": "magic_free"
   },
   {
     "id": "gf_armor_129",
@@ -2596,7 +2617,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を弾く",
-    "imageUrl": "/godfield-flash/cards/protector/sky_armor.png"
+    "imageUrl": "/godfield-flash/cards/protector/sky_armor.png",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_armor_130",
@@ -2615,7 +2637,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を止める",
-    "imageUrl": "/godfield-flash/cards/protector/dragon_no_yoroi.png"
+    "imageUrl": "/godfield-flash/cards/protector/dragon_no_yoroi.png",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_armor_131",
@@ -2653,7 +2676,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡をはね返す",
-    "imageUrl": "/godfield-flash/cards/protector/gekkou_no_tate.png"
+    "imageUrl": "/godfield-flash/cards/protector/gekkou_no_tate.png",
+    "defenseEffect": "reflect_magic"
   },
   {
     "id": "gf_armor_133",
@@ -2691,7 +2715,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を止める",
-    "imageUrl": "/godfield-flash/cards/protector/angel_no_boushi.png"
+    "imageUrl": "/godfield-flash/cards/protector/angel_no_boushi.png",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_armor_135",
@@ -2729,7 +2754,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "MPなしで奇跡",
-    "imageUrl": "/godfield-flash/cards/protector/seirei_no_obi.png"
+    "imageUrl": "/godfield-flash/cards/protector/seirei_no_obi.png",
+    "supportEffect": "magic_free"
   },
   {
     "id": "gf_armor_137",
@@ -2748,7 +2774,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡をはね返す",
-    "imageUrl": "/godfield-flash/cards/protector/gekkou_no_yoroi.png"
+    "imageUrl": "/godfield-flash/cards/protector/gekkou_no_yoroi.png",
+    "defenseEffect": "reflect_magic"
   },
   {
     "id": "gf_armor_138",
@@ -2786,7 +2813,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を止める",
-    "imageUrl": "/godfield-flash/cards/protector/angel_shield.png"
+    "imageUrl": "/godfield-flash/cards/protector/angel_shield.png",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_armor_140",
@@ -2805,7 +2833,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を止める",
-    "imageUrl": "/godfield-flash/cards/protector/angel_armor.png"
+    "imageUrl": "/godfield-flash/cards/protector/angel_armor.png",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_armor_141",
@@ -3491,7 +3520,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上受けた時: 敵全体75%攻{受けたダメージ}",
-    "imageUrl": "/godfield-flash/cards/protector/kasei_no_yubiwa.png"
+    "imageUrl": "/godfield-flash/cards/protector/kasei_no_yubiwa.png",
+    "reactiveEffect": "counter_damage_all"
   },
   {
     "id": "gf_ring_177",
@@ -3511,6 +3541,7 @@
     "copies": 1,
     "description": "1ダメージ以上受けた時: 攻撃者に霧",
     "imageUrl": "/godfield-flash/cards/protector/suisei_no_yubiwa.png",
+    "reactiveEffect": "counter_fog",
     "retaliateAilment": "fog"
   },
   {
@@ -3531,6 +3562,7 @@
     "copies": 1,
     "description": "1ダメージ以上受けた時: 攻撃者に夢",
     "imageUrl": "/godfield-flash/cards/protector/mokusei_no_yubiwa.png",
+    "reactiveEffect": "counter_dream",
     "retaliateAilment": "dream"
   },
   {
@@ -3550,7 +3582,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上受けた時: 攻撃者に攻{受けたダメージ×2}",
-    "imageUrl": "/godfield-flash/cards/protector/dosei_no_yubiwa.png"
+    "imageUrl": "/godfield-flash/cards/protector/dosei_no_yubiwa.png",
+    "reactiveEffect": "counter_double_damage"
   },
   {
     "id": "gf_ring_180",
@@ -3570,6 +3603,7 @@
     "copies": 1,
     "description": "1ダメージ以上受けた時: 攻撃者に閃光",
     "imageUrl": "/godfield-flash/cards/protector/tennou_no_yubiwa.png",
+    "reactiveEffect": "counter_flash",
     "retaliateAilment": "flash"
   },
   {
@@ -3590,6 +3624,7 @@
     "copies": 1,
     "description": "1ダメージ以上受けた時: 攻撃者に暗雲",
     "imageUrl": "/godfield-flash/cards/protector/meiou_no_yubiwa.png",
+    "reactiveEffect": "counter_darkcloud",
     "retaliateAilment": "darkcloud"
   },
   {
@@ -3609,7 +3644,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上受けた時: 自分に+MP{受けたダメージ×2}",
-    "imageUrl": "/godfield-flash/cards/protector/kaiou_no_yubiwa.png"
+    "imageUrl": "/godfield-flash/cards/protector/kaiou_no_yubiwa.png",
+    "reactiveEffect": "recover_double_mp"
   },
   {
     "id": "gf_ring_183",
@@ -3628,7 +3664,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上受けた時: 攻撃者から￥{受けたダメージ}没収",
-    "imageUrl": "/godfield-flash/cards/protector/kinsei_no_yubiwa.png"
+    "imageUrl": "/godfield-flash/cards/protector/kinsei_no_yubiwa.png",
+    "reactiveEffect": "absorb_money"
   },
   {
     "id": "gf_defense_item_184",
@@ -3647,7 +3684,8 @@
     "costMp": 0,
     "copies": 3,
     "description": "攻撃の属性を取り除く",
-    "imageUrl": "/godfield-flash/cards/protector/niji_no_curtain.png"
+    "imageUrl": "/godfield-flash/cards/protector/niji_no_curtain.png",
+    "defenseEffect": "remove_attribute"
   },
   {
     "id": "gf_defense_item_185",
@@ -3666,7 +3704,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "何でもはね返す",
-    "imageUrl": "/godfield-flash/cards/protector/super_mirror.png"
+    "imageUrl": "/godfield-flash/cards/protector/super_mirror.png",
+    "defenseEffect": "reflect_any"
   },
   {
     "id": "gf_miracle_186",
@@ -3968,7 +4007,8 @@
     "copies": 1,
     "description": "攻10、HP吸収",
     "additive": false,
-    "imageUrl": "/godfield-flash/cards/magic/kyuushuu.png"
+    "imageUrl": "/godfield-flash/cards/magic/kyuushuu.png",
+    "attackEffect": "absorb_hp"
   },
   {
     "id": "gf_miracle_201",
@@ -4165,7 +4205,8 @@
     "copies": 1,
     "description": "単体攻撃武器の攻撃力を倍にする",
     "additive": false,
-    "imageUrl": "/godfield-flash/cards/magic/aura.png"
+    "imageUrl": "/godfield-flash/cards/magic/aura.png",
+    "supportEffect": "double_attack"
   },
   {
     "id": "gf_miracle_210",
@@ -4185,7 +4226,8 @@
     "copies": 1,
     "description": "単体攻撃武器を100%攻にする",
     "additive": false,
-    "imageUrl": "/godfield-flash/cards/magic/shinkirou.png"
+    "imageUrl": "/godfield-flash/cards/magic/shinkirou.png",
+    "supportEffect": "wide_attack"
   },
   {
     "id": "gf_miracle_211",
@@ -4205,7 +4247,8 @@
     "copies": 1,
     "description": "奇跡を弾く",
     "additive": false,
-    "imageUrl": "/godfield-flash/cards/magic/rankiryuu.png"
+    "imageUrl": "/godfield-flash/cards/magic/rankiryuu.png",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_miracle_212",
@@ -4225,7 +4268,8 @@
     "copies": 1,
     "description": "無属性武器を止める",
     "additive": false,
-    "imageUrl": "/godfield-flash/cards/magic/kabe.png"
+    "imageUrl": "/godfield-flash/cards/magic/kabe.png",
+    "defenseEffect": "block_weapon"
   },
   {
     "id": "gf_miracle_213",
