@@ -26,6 +26,9 @@ export default function GameRoom() {
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
   const [selectedTargetId, setSelectedTargetId] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatText, setChatText] = useState('');
+  const [teamChat, setTeamChat] = useState(false);
   const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
   const lastDamageTimestamp = useRef(null);
   const lastActionId = useRef(null);
@@ -52,10 +55,12 @@ export default function GameRoom() {
 
     socket.on('roomUpdate', (data) => {
       setRoomState(data);
+      setChatMessages(current => current.length ? current : (data.chatMessages || []));
     });
 
     socket.on('gameState', (data) => {
       setGameState(data);
+      if (data.chatMessages) setChatMessages(data.chatMessages);
       const damage = data.lastDamage;
       if (damage && damage.timestamp !== lastDamageTimestamp.current) {
         lastDamageTimestamp.current = damage.timestamp;
@@ -81,6 +86,11 @@ export default function GameRoom() {
     });
 
     socket.on('baseEditorState', data => setBaseEditorState(data));
+    socket.on('chatMessage', message => {
+      setChatMessages(current => current.some(existing => existing.id === message.id)
+        ? current
+        : [...current, message].slice(-100));
+    });
 
     socket.on('gameStateCleared', () => {
       setGameState(null);
@@ -111,6 +121,33 @@ export default function GameRoom() {
       setExchangeValues({ hp: gameState.me.hp, mp: gameState.me.mp, money: gameState.me.money });
     }
   }, [gameState?.phase, gameState?.me]);
+
+  const myTeam = gameState?.me?.team
+    || roomState?.players?.find(player => player.id === socketId)?.team;
+  const submitChat = event => {
+    event.preventDefault();
+    if (!chatText.trim()) return;
+    socket.emit('sendChat', { roomName: id, text: chatText, teamOnly: teamChat && Boolean(myTeam) });
+    setChatText('');
+  };
+  const renderChat = () => (
+    <div className="chat-panel">
+      <div className="chat-messages">
+        {chatMessages.slice(-30).map(message => (
+          <div key={message.id} className={message.teamOnly ? 'team-message' : ''}>
+            <strong>{message.senderName}</strong>{message.teamOnly ? ' [チーム]' : ''}: {message.text}
+          </div>
+        ))}
+      </div>
+      <form onSubmit={submitChat} className="chat-form">
+        <input value={chatText} maxLength={200} onChange={event => setChatText(event.target.value)} placeholder="メッセージ" />
+        {myTeam && role === 'player' && (
+          <label><input type="checkbox" checked={teamChat} onChange={event => setTeamChat(event.target.checked)} />チーム</label>
+        )}
+        <button type="submit" className="btn btn-secondary">送信</button>
+      </form>
+    </div>
+  );
 
   if (!gameState) {
     return (
@@ -168,6 +205,7 @@ export default function GameRoom() {
           )}
         </div>
         <RoomBaseEditor socket={socket} roomName={id} editorState={baseEditorState} myId={socketId} />
+        {renderChat()}
       </div>
     );
   }
@@ -481,6 +519,7 @@ export default function GameRoom() {
                <div style={{ textAlign: 'center', borderBottom: '1px solid #ccc', paddingBottom: '4px', marginBottom: '8px', fontWeight: 'bold' }}>※ 起こした奇跡 (Log)</div>
                {gameState.log.slice(-10).map((l, i) => <div key={i}>{l}</div>)}
             </div>
+            {renderChat()}
          </div>
       </div>
 

@@ -76,6 +76,7 @@ function emitRoomUpdate(roomName) {
       id: player.id, name: player.name, ready: player.ready, team: player.team || null, isBot: Boolean(player.isBot),
     })),
     spectators: Object.values(room.spectators || {}).map(spectator => ({ id: spectator.id, name: spectator.name })),
+    chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly),
   });
 }
 
@@ -116,6 +117,7 @@ io.on('connection', (socket) => {
         turn: null, // socket.id of the active player
         phase: 'main', // main, defense
         log: [],
+        chatMessages: [],
         field: null,
         lastDamage: null,
         lastAction: null,
@@ -220,6 +222,31 @@ io.on('connection', (socket) => {
     if (!room || room.state !== 'waiting' || room.hostId !== socket.id || !room.players[botId]?.isBot) return;
     delete room.players[botId];
     emitRoomUpdate(roomName);
+  });
+
+  socket.on('sendChat', ({ roomName, text, teamOnly = false }) => {
+    const room = rooms[roomName];
+    const player = room?.players[socket.id];
+    const spectator = room?.spectators?.[socket.id];
+    const messageText = typeof text === 'string' ? text.trim().slice(0, 200) : '';
+    if (!room || (!player && !spectator) || !messageText) return;
+    const isTeamMessage = Boolean(teamOnly && player?.team);
+    const message = {
+      id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+      senderId: socket.id,
+      senderName: player?.name || spectator.name,
+      text: messageText,
+      teamOnly: isTeamMessage,
+      team: isTeamMessage ? player.team : null,
+      timestamp: Date.now(),
+    };
+    room.chatMessages = [...(room.chatMessages || []), message].slice(-100);
+    Object.values(room.players).forEach(recipient => {
+      if (!isTeamMessage || recipient.team === message.team) io.to(recipient.id).emit('chatMessage', message);
+    });
+    if (!isTeamMessage) {
+      Object.values(room.spectators || {}).forEach(recipient => io.to(recipient.id).emit('chatMessage', message));
+    }
   });
 
   socket.on('lockBaseCard', ({ roomName, cardId }) => {
@@ -1417,6 +1444,7 @@ function emitGameState(roomName) {
       lastDamage: room.lastDamage,
       lastAction: room.lastAction,
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId || event.targetId === id),
+      chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly || message.team === room.players[id].team),
       me: room.players[id],
       opponent: room.players[playerIds.find(p => p !== id)],
       opponents: playerIds.filter(playerId => playerId !== id).map(playerId => ({
@@ -1460,6 +1488,7 @@ function emitGameState(roomName) {
       lastDamage: room.lastDamage,
       lastAction: room.lastAction,
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId),
+      chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly),
       me: { id: spectator.id, name: spectator.name, hp: 0, mp: 0, money: 0, hand: [], learnedMiracles: [], ailments: [], ascended: true },
       opponent: visiblePlayers[0] || null,
       opponents: visiblePlayers,
