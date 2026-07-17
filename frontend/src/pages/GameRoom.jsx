@@ -120,6 +120,17 @@ export default function GameRoom() {
           <button className="btn btn-secondary" onClick={() => socket.emit('toggleReady', { roomName: id })}>
             {roomState?.players?.find(player => player.id === socketId)?.ready ? '準備を取り消す' : '準備完了'}
           </button>
+          <label>
+            チーム
+            <select
+              value={roomState?.players?.find(player => player.id === socketId)?.team || ''}
+              onChange={event => socket.emit('setTeam', { roomName: id, team: event.target.value || null })}
+            >
+              <option value="">個人戦</option>
+              <option value="red">赤</option>
+              <option value="blue">青</option>
+            </select>
+          </label>
           <div className="ready-status-list">
             {roomState?.players?.map(player => (
               <span key={player.id}>{player.name}: {player.ready ? '準備完了' : '準備中'}</span>
@@ -136,8 +147,9 @@ export default function GameRoom() {
 
   const { me, opponent: firstOpponent, turn, phase, field } = gameState;
   const opponents = gameState.opponents?.length ? gameState.opponents : [firstOpponent].filter(Boolean);
-  const opponent = opponents.find(player => player.id === selectedTargetId && !player.ascended && player.hp > 0)
-    || opponents.find(player => !player.ascended && player.hp > 0)
+  const targetableOpponents = opponents.filter(player => !(me.team && player.team === me.team));
+  const opponent = targetableOpponents.find(player => player.id === selectedTargetId && !player.ascended && player.hp > 0)
+    || targetableOpponents.find(player => !player.ascended && player.hp > 0)
     || firstOpponent;
   const playerNameById = playerId => playerId === me.id
     ? me.name
@@ -368,10 +380,10 @@ export default function GameRoom() {
 
          {/* Right: Player List & Log */}
          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            {opponents.length > 1 && (
+            {targetableOpponents.length > 1 && (
               <div className="target-selector">
                 <span>対象</span>
-                {opponents.map(player => (
+                {targetableOpponents.map(player => (
                   <button
                     key={player.id}
                     type="button"

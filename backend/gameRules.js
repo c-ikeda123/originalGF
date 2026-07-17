@@ -81,6 +81,23 @@ function getNextAlivePlayerId(turnOrder, players, currentId) {
   return null;
 }
 
+function areEnemies(first, second) {
+  if (!first || !second || first.id === second.id) return false;
+  if (first.team && second.team) return first.team !== second.team;
+  return true;
+}
+
+function getWinningSide(players) {
+  const survivors = Object.values(players).filter(player => !player.ascended && player.hp > 0);
+  if (!survivors.length) return { ended: true, winnerId: null, winnerTeam: null };
+  const teams = new Set(survivors.map(player => player.team).filter(Boolean));
+  if (teams.size === 1 && survivors.every(player => player.team)) {
+    return { ended: true, winnerId: null, winnerTeam: [...teams][0] };
+  }
+  if (survivors.length === 1) return { ended: true, winnerId: survivors[0].id, winnerTeam: null };
+  return { ended: false, winnerId: null, winnerTeam: null };
+}
+
 function isDefenseCard(card) {
   return Boolean(card && (
     (card.defense || 0) > 0
@@ -322,6 +339,7 @@ function processEndOfTurnAilments(player, random = Math.random) {
 
 module.exports = {
   applyAilment,
+  areEnemies,
   combineAttackCards,
   canDefendAttribute,
   createAttackQueue,
@@ -332,6 +350,7 @@ module.exports = {
   getAssistantAction,
   getEarthArtifactMode,
   getNextAlivePlayerId,
+  getWinningSide,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDefenseCard,

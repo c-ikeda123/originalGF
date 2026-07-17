@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   applyAilment,
+  areEnemies,
   combineAttackCards,
   canDefendAttribute,
   createAttackQueue,
@@ -12,6 +13,7 @@ const {
   getAssistantAction,
   getEarthArtifactMode,
   getNextAlivePlayerId,
+  getWinningSide,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDefenseCard,
@@ -57,6 +59,17 @@ test('月の守護神は攻撃10にオーラと蜃気楼を合成する', () => 
   assert.equal(wide.attack, 10);
   assert.equal(wide.hitRate, 100);
   assert.equal(wide.target, 'all');
+});
+
+test('チーム戦では同陣営を攻撃対象とせず最後の生存陣営が勝つ', () => {
+  const red1 = { id: 'A', team: 'red', hp: 20, ascended: false };
+  const red2 = { id: 'B', team: 'red', hp: 10, ascended: false };
+  const blue = { id: 'C', team: 'blue', hp: 0, ascended: true };
+  assert.equal(areEnemies(red1, red2), false);
+  assert.equal(areEnemies(red1, blue), true);
+  assert.deepEqual(getWinningSide({ A: red1, B: red2, C: blue }), {
+    ended: true, winnerId: null, winnerTeam: 'red',
+  });
 });
 
 test('防具はメインフェーズで使用できず、防御フェーズで使用できる', () => {

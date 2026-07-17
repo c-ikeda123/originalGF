@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const {
   applyAilment,
+  areEnemies,
   combineAttackCards,
   cureAilments,
   createAttackQueue,
@@ -14,6 +15,7 @@ const {
   getAssistantAction,
   getEarthArtifactMode,
   getNextAlivePlayerId,
+  getWinningSide,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDefenseCard,
@@ -114,6 +116,7 @@ io.on('connection', (socket) => {
         soundEvents: [],
         soundSeq: 0,
         winnerId: null,
+        winnerTeam: null,
         followUpAttacks: [],
         deck: [] // The shared deck
       };
@@ -125,6 +128,7 @@ io.on('connection', (socket) => {
       name: playerName,
       deck: [], // This will be ignored in favor of shared room deck
       ready: false,
+      team: null,
       // Game stats
       hp: 40,
       mp: 0,
@@ -149,6 +153,10 @@ io.on('connection', (socket) => {
     if (Object.values(room.players).some(player => !player.ready)) {
       return socket.emit('errorMsg', '全員が準備完了になるまで開始できません。');
     }
+    const selectedTeams = Object.values(room.players).map(player => player.team).filter(Boolean);
+    if (selectedTeams.length && (selectedTeams.length !== Object.keys(room.players).length || new Set(selectedTeams).size < 2)) {
+      return socket.emit('errorMsg', 'チーム戦では全員を赤・青の2チームに分けてください。');
+    }
     if (Object.keys(room.players).length < 2) return socket.emit('errorMsg', '対戦開始には2人以上必要です。');
     const baseCards = GF_BASE_CARDS.map(card => ({ ...card, ...(room.baseCardsEdits[card.id] || {}) }));
     const mergedCards = baseCards.concat(room.customCards.map(card => ({ ...card, copies: card.copies ?? 3 })));
@@ -167,6 +175,15 @@ io.on('connection', (socket) => {
     const player = room?.players[socket.id];
     if (!player || room.state !== 'waiting') return;
     player.ready = !player.ready;
+    emitRoomUpdate(roomName);
+  });
+
+  socket.on('setTeam', ({ roomName, team }) => {
+    const room = rooms[roomName];
+    const player = room?.players[socket.id];
+    if (!player || room.state !== 'waiting' || ![null, 'red', 'blue'].includes(team)) return;
+    player.team = team;
+    player.ready = false;
     emitRoomUpdate(roomName);
   });
 
@@ -224,6 +241,7 @@ io.on('connection', (socket) => {
     room.soundEvents = [];
     room.soundSeq = 0;
     room.winnerId = null;
+    room.winnerTeam = null;
     room.pendingBuy = null;
     room.editLocks = {};
     room.log = [];
@@ -353,6 +371,10 @@ io.on('connection', (socket) => {
     const opponentId = targetId || getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
     const opponent = room.players[opponentId];
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
+    if (!opponent || !areEnemies(player, opponent)) {
+      socket.emit('errorMsg', '同じチームの参加者は対象にできません。');
+      return;
+    }
 
     cards.forEach(usedCard => {
       if (usedCard.selfAilment) {
@@ -802,7 +824,7 @@ function flushReplacementDraws(room) {
 
 function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, options = {}) {
   const targets = card.target === 'all'
-    ? Object.values(room.players).filter(player => player.id !== attacker.id && !player.ascended && player.hp > 0)
+    ? Object.values(room.players).filter(player => areEnemies(attacker, player) && !player.ascended && player.hp > 0)
     : [room.players[card.forcedTargetId || nextTurnId]].filter(Boolean);
   room.attackQueue = createAttackQueue(targets.map(target => target.id), card.repeatCount || 1);
   room.attackContext = {
@@ -908,7 +930,7 @@ function setRandomAssistant(player, room) {
 function runAssistantAction(room, player, roomName, { nextTurnId = player.id, deferAttack = false } = {}) {
   if (!shouldAssistantAct(player.assistant)) return;
   const action = getAssistantAction(player.assistant.type);
-  const enemies = Object.values(room.players).filter(candidate => candidate.id !== player.id && !candidate.ascended && candidate.hp > 0);
+  const enemies = Object.values(room.players).filter(candidate => areEnemies(player, candidate) && !candidate.ascended && candidate.hp > 0);
   const enemy = enemies[Math.floor(Math.random() * enemies.length)];
   if (!action) return;
   addSoundEvent(room, 'assistant');
@@ -1095,7 +1117,7 @@ function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false } 
     if (room.state === 'ended' || room.attackContext) return;
     if (!skipAssistantOpportunity && endingPlayer && endingPlayer.id !== nextTurnId) {
       Object.values(room.players)
-        .filter(player => player.id !== endingPlayer.id && !player.ascended && player.hp > 0 && player.assistant)
+        .filter(player => areEnemies(endingPlayer, player) && !player.ascended && player.hp > 0 && player.assistant)
         .forEach(player => runAssistantAction(room, player, room.name, { nextTurnId, deferAttack: true }));
       if (startNextFollowUpAttack(room, room.name)) return;
     }
@@ -1199,19 +1221,24 @@ function checkDeath(room) {
   }
   if (room.followUpAttacks?.length || room.attackContext) return;
 
-  const survivors = players.filter(player => !player.ascended && player.hp > 0);
-  if (room.state === 'playing' && players.length > 1 && survivors.length <= 1) {
+  const winningSide = getWinningSide(room.players);
+  if (room.state === 'playing' && players.length > 1 && winningSide.ended) {
     room.state = 'ended';
     room.phase = 'ended';
     room.turn = null;
-    room.winnerId = survivors[0]?.id || null;
-    if (room.winnerId) {
-      addSoundEvent(room, 'game_win', { targetId: room.winnerId });
-      addSoundEvent(room, 'winner', { targetId: room.winnerId, delayMs: 500 });
+    room.winnerId = winningSide.winnerId;
+    room.winnerTeam = winningSide.winnerTeam;
+    const winningPlayerIds = players
+      .filter(player => player.id === room.winnerId || (room.winnerTeam && player.team === room.winnerTeam))
+      .map(player => player.id);
+    if (winningPlayerIds.length) {
+      winningPlayerIds.forEach(targetId => addSoundEvent(room, 'game_win', { targetId }));
+      winningPlayerIds.forEach(targetId => addSoundEvent(room, 'winner', { targetId, delayMs: 500 }));
     } else {
       addSoundEvent(room, 'game_draw');
     }
-    room.log.push(survivors[0] ? `${survivors[0].name}の勝利！` : '引き分けになった。');
+    const winnerName = room.winnerId ? room.players[room.winnerId]?.name : room.winnerTeam;
+    room.log.push(winnerName ? `${winnerName}の勝利！` : '引き分けになった。');
   }
 }
 
@@ -1219,6 +1246,7 @@ function startGame(roomName) {
   const room = rooms[roomName];
   room.state = 'playing';
   room.winnerId = null;
+  room.winnerTeam = null;
   room.lastDamage = null;
   room.lastAction = null;
   room.soundEvents = [];
@@ -1292,7 +1320,9 @@ function emitGameState(roomName) {
         hand: room.players[playerId].hand.map(() => ({ hidden: true })),
       })),
       gameStateStr: room.state,
-      winner: room.winnerId ? { id: room.winnerId, name: room.players[room.winnerId]?.name } : null,
+      winner: room.winnerId
+        ? { id: room.winnerId, name: room.players[room.winnerId]?.name }
+        : (room.winnerTeam ? { team: room.winnerTeam, name: `${room.winnerTeam}チーム` } : null),
       buyOffer: null
     };
 
