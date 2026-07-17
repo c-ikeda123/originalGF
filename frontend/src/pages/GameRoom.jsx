@@ -371,6 +371,23 @@ export default function GameRoom() {
     </div>
   );
 
+  const renderPlayerStatus = (player, isSelf = false) => player && (
+    <div className={`battle-player ${turn === player.id ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}>
+      <span className="battle-player-marker">●</span>
+      <span className="battle-player-name">{player.name}{isSelf ? ' (You)' : ''}</span>
+      {hasFog && !isSelf ? (
+        <span className="battle-player-fog">[霧]</span>
+      ) : (
+        <span className="battle-player-stats">
+          <span>HP <b>{player.hp}</b></span>
+          <span>MP <b>{player.mp}</b></span>
+          <span>￥ <b>{player.money}</b></span>
+        </span>
+      )}
+      {player.ailments.length > 0 && <span className="battle-player-ailments">{renderAilments(player)}</span>}
+    </div>
+  );
+
   const actionTargetName = playerNameById(actionAnim?.defenderId);
   const damageTargetName = playerNameById(damageAnim?.targetId);
   const actionLabel = actionAnim?.outcome === 'evade' ? '回避'
@@ -378,99 +395,70 @@ export default function GameRoom() {
       : actionAnim?.outcome === 'hit' ? '命中' : '使用';
 
   return (
-    <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', height: '100vh', padding: '10px' }}>
+    <div className="gf-game-screen">
       {gameState.spectator && <div className="spectator-banner">観戦中（操作はできません）</div>}
-      
-      {/* Top Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', background: 'var(--gf-green)', color: 'white', padding: '4px 10px', borderRadius: '4px' }}>
-         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>← 修行 (Room: {id})</span>
-         </div>
-         <div style={{ fontWeight: 'bold' }}>{gameState.gameStateStr === 'ended' ? '決着' : 'G.F.1'}</div>
-         {remainingSeconds !== null && <div className={remainingSeconds <= 10 ? 'timer-warning' : ''}>残り {remainingSeconds}秒</div>}
-         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <button className="btn" style={{ padding: '2px 8px', fontSize: '0.8rem' }}>教典</button>
-         </div>
+
+      <div className="gf-battle-header">
+        <button type="button" onClick={() => navigate('/')}>修行</button>
+        <span>部屋 {id}</span>
+        <strong>{gameState.gameStateStr === 'ended' ? '決着' : 'God Field'}</strong>
+        {remainingSeconds !== null && <span className={remainingSeconds <= 10 ? 'timer-warning' : ''}>残り {remainingSeconds}秒</span>}
+        <button type="button">教典</button>
       </div>
 
-      {/* Main Area */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '10px', position: 'relative' }}>
-         
-         {/* Damage Overlay */}
-         {damageAnim && (
-           <div className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'}`}>
-             <small>{damageTargetName}</small>
-             <div>{damageAnim.amount} <span>ダメージ</span></div>
-           </div>
-         )}
+      <div className="gf-battle-shell">
+        {damageAnim && (
+          <div className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'}`}>
+            <small>{damageTargetName}</small>
+            <div>{damageAnim.amount} <span>damage</span></div>
+          </div>
+        )}
 
-         {actionAnim && (
-           <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`}>
-             <div className="combat-action-card">
-               {actionAnim.card.imageUrl
-                 ? <img src={actionAnim.card.imageUrl} alt="" />
-                 : <span>{actionAnim.card.name.charAt(0)}</span>}
-             </div>
-             <div>
-               <strong>{actionAnim.card.name}</strong>
-               <span>{actionTargetName}：{actionLabel}</span>
-             </div>
-           </div>
-         )}
-
-         {/* Left/Center: Field */}
-         <div style={{ display: 'flex', gap: '10px', padding: '10px' }}>
-            {/* Attacker Box */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-               <div className="player-pill" style={{ marginBottom: '10px', width: '150px', justifyContent: 'center', background: '#f1f5f9' }}>
-                 {field ? (playerNameById(field.attackerId) || '---') : '---'}
-               </div>
-               
-               {field && renderFieldCard(field.attackCard)}
-               {!field && selectedCards.length > 0 && (
-                 <div className="selected-field-preview">
-                   <div className="selected-field-title">選択中 ({selectedCards.length})</div>
-                   <div className="selected-field-cards">
-                     {selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
-                       <div key={card.instanceId}>{renderFieldCard(card)}</div>
-                     ))}
-                   </div>
-                 </div>
-               )}
-               
-               {field && field.attackCard.attack > 0 && (
-                 <div style={{ marginTop: 'auto', background: '#eaffea', border: '2px solid #555', borderRadius: '8px', padding: '4px 20px', fontSize: '1.2rem', fontWeight: 'bold' }}>
-                   攻{field.attackCard.attack}
-                 </div>
-               )}
+        {actionAnim && (
+          <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`}>
+            <div className="combat-action-card">
+              {actionAnim.card.imageUrl ? <img src={actionAnim.card.imageUrl} alt="" /> : <span>{actionAnim.card.name.charAt(0)}</span>}
             </div>
-            
-            <div style={{ alignSelf: 'flex-start', color: '#ff3333', fontSize: '2rem', fontWeight: 'bold', marginTop: '5px' }}>➡</div>
+            <div><strong>{actionAnim.card.name}</strong><span>{actionTargetName}：{actionLabel}</span></div>
+          </div>
+        )}
 
-            {/* Defender Box */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,255,255,0.3)', borderRadius: '12px', padding: '10px' }}>
-               <div className="player-pill" style={{ marginBottom: '10px', width: '150px', justifyContent: 'center', background: '#f1f5f9' }}>
-                 {field && field.defenderId ? (playerNameById(field.defenderId) || '---') : '---'}
-               </div>
-               
-               {field && field.defenseCards && field.defenseCards.map((c, i) => (
-                  <div key={i} style={{ marginBottom: '5px' }}>{renderFieldCard(c)}</div>
-               ))}
-
-               {field && selectedCards.length > 0 && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
-                 <div key={card.instanceId} className="pending-defense-card">{renderFieldCard(card)}</div>
-               ))}
-
-               {field && field.defenderId && (
-                 <div style={{ marginTop: 'auto', background: '#eaffea', border: '2px solid #555', borderRadius: '8px', padding: '4px 20px', fontSize: '1.2rem', fontWeight: 'bold' }}>
-                   守{field.defenseCards ? field.defenseCards.reduce((acc, c) => acc + (c.defense||0), 0) : 0}
-                 </div>
-               )}
+        <main className="gf-battle-stage">
+          <div className="gf-field-cards">
+            {field && (
+              <section className="gf-field-group attacker">
+                <div className="gf-field-owner">{playerNameById(field.attackerId) || '---'} ▶</div>
+                {renderFieldCard(field.attackCard)}
+              </section>
+            )}
+            {field && field.defenseCards?.length > 0 && (
+              <section className="gf-field-group defender">
+                <div className="gf-field-owner">{playerNameById(field.defenderId) || '---'}</div>
+                {field.defenseCards.map((card, index) => <div key={index}>{renderFieldCard(card)}</div>)}
+              </section>
+            )}
+            {field && selectedCards.length > 0 && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
+              <div key={card.instanceId} className="pending-defense-card">{renderFieldCard(card)}</div>
+            ))}
+            {!field && selectedCards.length > 0 && (
+              <div className="selected-field-preview">
+                <div className="selected-field-title">選択中 ({selectedCards.length})</div>
+                <div className="selected-field-cards">
+                  {selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => <div key={card.instanceId}>{renderFieldCard(card)}</div>)}
+                </div>
+              </div>
+            )}
+          </div>
+          {field && (
+            <div className="gf-combat-totals">
+              <span>Atk{field.attackCard.attack || 0}</span>
+              <span>{field.defenderId ? `Dfs${field.defenseCards?.reduce((sum, card) => sum + (card.defense || 0), 0) || 0}` : '(No Defense)'}</span>
             </div>
-         </div>
+          )}
+        </main>
 
-         {/* Right: Player List & Log */}
-         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <aside className="gf-battle-sidebar">
+          <div className="battle-player-list">
             {targetableOpponents.length > 1 && (
               <div className="target-selector">
                 <span>対象</span>
@@ -483,91 +471,29 @@ export default function GameRoom() {
                     disabled={player.ascended || player.hp <= 0}
                     onClick={() => setSelectedTargetId(player.id)}
                   >
-                    {player.name}（HP {player.hp}）
+                    {player.name}
                   </button>
                 ))}
               </div>
             )}
-            
-            {/* Opponent */}
-            {opponent && (
-               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div className={`player-pill ${turn === opponent.id ? 'active' : ''}`} style={{ flex: 1 }}>
-                     <span style={{ marginRight: '10px', color: '#94a3b8' }}>●</span>
-                     <span style={{ flex: 1, color: 'var(--gf-blue)' }}>{opponent.name}</span>
-                     
-                     {hasFog ? (
-                        <span style={{ fontSize: '0.7rem', color: '#666' }}>[霧]</span>
-                     ) : (
-                        <div style={{ fontSize: '0.7rem', display: 'flex', gap: '4px', fontWeight: 'normal' }}>
-                           <span title="HP">HP <span style={{fontWeight:'bold'}}>{opponent.hp}</span></span>
-                           <span title="MP">MP <span style={{fontWeight:'bold'}}>{opponent.mp}</span></span>
-                           <span title="Money">¥ <span style={{fontWeight:'bold'}}>{opponent.money}</span></span>
-                        </div>
-                     )}
-                  </div>
-                  {/* Status Icons below or inside. GF puts them inside or below. We put them below. */}
-               </div>
-            )}
-            {opponent && opponent.ailments.length > 0 && (
-               <div style={{ paddingLeft: '20px' }}>{renderAilments(opponent)}</div>
-            )}
-            {opponent && renderAssistant(opponent.assistant)}
-
-            {/* Empty Slots to look like GF */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity: 0.5 }}>
-               <div className="player-pill" style={{ flex: 1 }}>
-                  <span style={{ marginRight: '10px', color: '#94a3b8' }}>●</span>
-                  <span style={{ flex: 1 }}>---</span>
-               </div>
-            </div>
-
-            {/* Me */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-               <div className={`player-pill ${turn === me.id ? 'active' : ''}`} style={{ flex: 1 }}>
-                  <span style={{ marginRight: '10px', color: '#94a3b8' }}>●</span>
-                  <span style={{ flex: 1, color: 'var(--gf-blue)' }}>{me.name}</span>
-                  <div style={{ fontSize: '0.7rem', display: 'flex', gap: '4px', fontWeight: 'normal' }}>
-                     <span title="HP">HP <span style={{fontWeight:'bold'}}>{me.hp}</span></span>
-                     <span title="MP">MP <span style={{fontWeight:'bold'}}>{me.mp}</span></span>
-                     <span title="Money">¥ <span style={{fontWeight:'bold'}}>{me.money}</span></span>
-                  </div>
-               </div>
-            </div>
-            {me.ailments.length > 0 && (
-               <div style={{ paddingLeft: '20px' }}>{renderAilments(me)}</div>
-            )}
+            {opponents.map(player => <div key={player.id}>{renderPlayerStatus(player)}{renderAssistant(player.assistant)}</div>)}
+            {renderPlayerStatus(me, true)}
             {renderAssistant(me.assistant)}
+          </div>
+          <div className="gf-battle-log">
+            {gameState.log.slice(-12).map((line, index) => <div key={index}>{line}</div>)}
+          </div>
+          {renderChat()}
+        </aside>
 
-            {/* Log / Actions Box */}
-            <div className="glass-panel" style={{ flex: 1, marginTop: '20px', padding: '10px', fontSize: '0.8rem', overflowY: 'auto', background: 'white' }}>
-               <div style={{ textAlign: 'center', borderBottom: '1px solid #ccc', paddingBottom: '4px', marginBottom: '8px', fontWeight: 'bold' }}>※ 起こした奇跡 (Log)</div>
-               {gameState.log.slice(-10).map((l, i) => <div key={i}>{l}</div>)}
+        <section className="gf-hand-dock">
+          {error && <div className="battle-error-toast">{error}</div>}
+          {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
+            <div className="hovered-card-detail" style={{ left: `${Math.min(hoveredCardIndex * 58, window.innerWidth - 240)}px` }}>
+              {renderFieldCard(getDisplayedCard(me.hand[hoveredCardIndex], hoveredCardIndex))}
             </div>
-            {renderChat()}
-         </div>
-      </div>
-
-      {/* Bottom Area: Hand & Actions */}
-      <div style={{ background: '#7bd7c6', padding: '10px', borderTop: '2px solid var(--gf-green)', position: 'relative' }}>
-         
-         {/* Error Toast */}
-         {error && (
-            <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,0,0,0.8)', color: 'white', padding: '5px 15px', borderRadius: '20px', fontWeight: 'bold', zIndex: 1000, boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }}>
-               {error}
-            </div>
-         )}
-
-         {/* Hovered Card Detail */}
-         {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
-            <div style={{ position: 'absolute', top: '-85px', left: `${Math.min(hoveredCardIndex * 70, window.innerWidth - 240)}px`, zIndex: 100 }}>
-               {renderFieldCard(getDisplayedCard(me.hand[hoveredCardIndex], hoveredCardIndex))}
-            </div>
-         )}
-
-         <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '5px' }}>
-            {me.hand.map((c, i) => renderSquareCard(c, i))}
-         </div>
+          )}
+          <div className="gf-hand-cards">{me.hand.map((card, index) => renderSquareCard(card, index))}</div>
          {me.learnedMiracles?.length > 0 && (
            <div className="learned-miracles">
              <span>習得済み奇跡</span>
@@ -589,10 +515,7 @@ export default function GameRoom() {
              ))}
            </div>
          )}
-         <div style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '4px' }}>
-           カードを選択して「使用」。複数選択で武器＋装飾品などを合体できます（ダブルクリックで単体使用）。
-         </div>
-         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
+          <div className="gf-hand-actions">
             {isMyTurn && (phase === 'main' || phase === 'defense') && selectedCards.length > 0 && (
                <button className="btn" onClick={() => handlePlayCard(selectedCards[0])}>選択カードを使用 ({selectedCards.length})</button>
             )}
@@ -605,7 +528,9 @@ export default function GameRoom() {
             {isMyTurn && phase === 'main' && selectedCards.length > 0 && (
                <button className="btn btn-secondary" onClick={() => { socket.emit('discardCards', { roomName: id, cardIndices: selectedCards }); setSelectedCards([]); }}>捨てる ({selectedCards.length})</button>
             )}
-         </div>
+          </div>
+          <button type="button" className="gf-back-button" onClick={() => navigate('/')}>Back</button>
+        </section>
       </div>
 
       {isMyTurn && phase === 'exchange' && (
