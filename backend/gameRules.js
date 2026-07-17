@@ -335,6 +335,17 @@ function applyAilment(player, ailment) {
   return ailment;
 }
 
+function getActivatedCards(cards, isSell = false) {
+  return isSell ? cards.filter(card => card.effect === 'sell') : cards;
+}
+
+function applySelfAilments(player, cards) {
+  return cards.flatMap(card => {
+    if (!card.selfAilment) return [];
+    return [{ card, ailment: applyAilment(player, card.selfAilment) }];
+  });
+}
+
 function cureAilments(player, ailments) {
   const cured = ailments === 'all' ? [...player.ailments] : player.ailments.filter(value => ailments.includes(value));
   player.ailments = ailments === 'all' ? [] : player.ailments.filter(value => !ailments.includes(value));
@@ -422,6 +433,7 @@ function clearFieldIfCurrent(room, scheduledField) {
 module.exports = {
   FIELD_CLEAR_DELAY_MS,
   applyAilment,
+  applySelfAilments,
   areEnemies,
   canDiscardCardCount,
   canPlayerPray,
@@ -435,6 +447,7 @@ module.exports = {
   createMoonAssistantAttack,
   cureAilments,
   getAssistantAction,
+  getActivatedCards,
   getEarthArtifactMode,
   getDamageResolutionDelay,
   getDamageAfterDefense,

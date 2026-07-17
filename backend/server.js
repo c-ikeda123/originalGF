@@ -5,6 +5,7 @@ const cors = require('cors');
 const path = require('path');
 const {
   applyAilment,
+  applySelfAilments,
   areEnemies,
   canDiscardCardCount,
   canPlayerPray,
@@ -18,6 +19,7 @@ const {
   createMoonAssistantAttack,
   FIELD_CLEAR_DELAY_MS,
   getAssistantAction,
+  getActivatedCards,
   getCounterAilment,
   getDamageAfterDefense,
   getDamageResolutionDelay,
@@ -537,13 +539,13 @@ io.on('connection', (socket) => {
 
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
 
-    cards.forEach(usedCard => {
-      if (usedCard.selfAilment) {
-        const applied = applyAilment(player, usedCard.selfAilment);
-        addSoundEvent(room, 'harm_add');
-        addAilmentEffect(room, player, applied);
-        room.log.push(`${player.name} は ${applied} になった。`);
-      }
+    const activatedCards = getActivatedCards(cards, isSell);
+    applySelfAilments(player, activatedCards).forEach(({ card: usedCard, ailment: applied }) => {
+      addSoundEvent(room, 'harm_add');
+      addAilmentEffect(room, player, applied);
+      room.log.push(`${player.name} は ${usedCard.name} により ${applied} になった。`);
+    });
+    activatedCards.forEach(usedCard => {
       if (usedCard.cureAilments) {
         const cured = cureAilments(player, usedCard.cureAilments);
         if (cured.length) addSoundEvent(room, 'harm_remove');

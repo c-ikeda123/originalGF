@@ -2,6 +2,7 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 const {
   applyAilment,
+  applySelfAilments,
   areEnemies,
   canDiscardCardCount,
   canPlayerPray,
@@ -16,6 +17,7 @@ const {
   FIELD_CLEAR_DELAY_MS,
   cureAilments,
   getAssistantAction,
+  getActivatedCards,
   getCounterAilment,
   getDamageAfterDefense,
   getEarthArtifactMode,
@@ -205,6 +207,20 @@ test('病気の重複付与は一段階悪化する', () => {
   const player = { ailments: ['cold'] };
   assert.equal(applyAilment(player, 'cold'), 'fever');
   assert.deepEqual(player.ailments, ['fever']);
+});
+
+test('熱狂仮面を防御に使うと使用者が熱病になる', () => {
+  const heatMask = require('../shared/baseCards.json').find(card => card.name === '熱狂仮面');
+  const player = { ailments: [] };
+  assert.deepEqual(applySelfAilments(player, [heatMask]).map(result => result.ailment), ['fever']);
+  assert.deepEqual(player.ailments, ['fever']);
+});
+
+test('売却対象の神器は使用時効果を発動しない', () => {
+  const sell = { type: 'trade', effect: 'sell' };
+  const heatMask = { type: 'armor', selfAilment: 'fever' };
+  assert.deepEqual(getActivatedCards([sell, heatMask], true), [sell]);
+  assert.deepEqual(getActivatedCards([heatMask], false), [heatMask]);
 });
 
 test('ターン終了時に病気のHP変化と5%の悪化を処理する', () => {
