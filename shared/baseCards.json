@@ -838,7 +838,8 @@
     "copies": 1,
     "description": "MPを全消費し攻撃力MP×2",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/magical_stick.png"
+    "imageUrl": "/godfield-flash/cards/weapon/magical_stick.png",
+    "attackEffect": "magical"
   },
   {
     "id": "gf_weapon_042",
@@ -1286,7 +1287,8 @@
     "copies": 1,
     "description": "攻撃先が自分を含めランダム。ウス所持者に99ダメージ",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/abunai_kine.png"
+    "imageUrl": "/godfield-flash/cards/weapon/abunai_kine.png",
+    "attackEffect": "pestle"
   },
   {
     "id": "gf_weapon_064",
@@ -2172,7 +2174,12 @@
     "copies": 1,
     "description": "昇天時に75%攻30",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/shoutenkyuu.png"
+    "imageUrl": "/godfield-flash/cards/weapon/shoutenkyuu.png",
+    "dyingAttack": {
+      "attack": 30,
+      "hitRate": 75,
+      "target": "all"
+    }
   },
   {
     "id": "gf_weapon_107",
@@ -2192,7 +2199,8 @@
     "copies": 1,
     "description": "1ダメージ以上で即死",
     "weaponKind": "normal",
-    "imageUrl": "/godfield-flash/cards/weapon/demon_hand.png"
+    "imageUrl": "/godfield-flash/cards/weapon/demon_hand.png",
+    "lethalOnDamage": true
   },
   {
     "id": "gf_armor_108",
@@ -3330,6 +3338,7 @@
     "copies": 1,
     "description": "使用者に夢、手札を一新",
     "imageUrl": "/godfield-flash/cards/protector/yumemiru_boushi.png",
+    "redrawHand": true,
     "selfAilment": "dream"
   },
   {
@@ -4710,7 +4719,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "キネ発動時99ダメージ。捨てると戻り1ダメージ",
-    "imageUrl": "/godfield-flash/cards/sundry/abunai_usu.png"
+    "imageUrl": "/godfield-flash/cards/sundry/abunai_usu.png",
+    "mortar": true
   },
   {
     "id": "gf_trade_235",

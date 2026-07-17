@@ -289,6 +289,12 @@ io.on('connection', (socket) => {
         const cured = cureAilments(player, usedCard.cureAilments);
         if (cured.length) room.log.push(`${player.name} の災い（${cured.join('、')}）が治った。`);
       }
+      if (usedCard.redrawHand) {
+        const handSize = player.hand.length;
+        player.hand = [];
+        for (let i = 0; i < handSize; i++) player.hand.push(drawArtifact(room));
+        room.log.push(`${player.name} の手札が一新された。`);
+      }
     });
 
     if (isSell) {
@@ -322,6 +328,17 @@ io.on('connection', (socket) => {
     }
 
     const combinedCard = combineAttackCards(cards);
+    if (combinedCard.attackEffect === 'magical') {
+      combinedCard.attack = player.mp * 2;
+      player.mp = 0;
+    }
+    if (combinedCard.attackEffect === 'pestle') {
+      const alivePlayers = Object.values(room.players).filter(candidate => !candidate.ascended && candidate.hp > 0);
+      const mortarOwner = alivePlayers.find(candidate => candidate.hand.some(heldCard => heldCard.mortar));
+      const target = mortarOwner || alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
+      combinedCard.forcedTargetId = target?.id;
+      if (mortarOwner) combinedCard.attack = 99;
+    }
 
     room.log.push(`${player.name} played ${combinedCard.name}!`);
     room.lastAction = createActionEvent(player, opponent, combinedCard, 'use');
@@ -504,11 +521,21 @@ io.on('connection', (socket) => {
       .filter(index => Number.isInteger(index) && index >= 0 && index < player.hand.length)
       .sort((a, b) => b - a);
     if (!indices.length) return socket.emit('errorMsg', '捨てる神器を選択してください。');
-    const discarded = indices.map(index => player.hand[index]);
-    indices.forEach(index => player.hand.splice(index, 1));
+    const discarded = [];
+    indices.forEach(index => {
+      const selectedCard = player.hand[index];
+      if (selectedCard.mortar) {
+        player.hp = Math.max(0, player.hp - 1);
+        room.log.push(`${selectedCard.name} は戻ってきて ${player.name} に1ダメージ！`);
+      } else {
+        discarded.push(...player.hand.splice(index, 1));
+      }
+    });
     for (let i = 0; i < discarded.length && player.hand.length < 18; i++) player.hand.push(drawArtifact(room));
-    room.log.push(`${player.name} は ${discarded.map(discardedCard => discardedCard.name).join('、')} を捨てた。`);
+    if (discarded.length) room.log.push(`${player.name} は ${discarded.map(discardedCard => discardedCard.name).join('、')} を捨てた。`);
     const next = Object.keys(room.players).find(id => id !== socket.id);
+    checkDeath(room);
+    if (room.state === 'ended') return emitGameState(roomName);
     endTurnInternal(room, next);
     emitGameState(roomName);
   });
@@ -556,6 +583,10 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      }
    }
    player.hp = Math.max(0, player.hp - actualDamage);
+   if (pendingDamage?.lethalOnDamage && actualDamage > 0) {
+     player.hp = 0;
+     room.log.push(`${player.name} は即死攻撃を受けた。`);
+   }
    room.log.push(isDarkAttack && actualDamage > 0
      ? `${player.name} took dark damage and ascended!`
      : `${player.name} took ${actualDamage} damage!`);
@@ -633,7 +664,7 @@ function drawArtifact(room) {
 function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName) {
   const targets = card.target === 'all'
     ? Object.values(room.players).filter(player => player.id !== attacker.id && !player.ascended && player.hp > 0)
-    : [room.players[nextTurnId]].filter(Boolean);
+    : [room.players[card.forcedTargetId || nextTurnId]].filter(Boolean);
   room.attackQueue = createAttackQueue(targets.map(target => target.id), card.repeatCount || 1);
   room.attackContext = {
     attackerId: attacker.id,
@@ -665,6 +696,7 @@ function startNextQueuedAttack(room, roomName) {
       sourceType: context.card.sourceType || context.card.type,
       absorbHp: context.card.absorbHp,
       selfDamage: context.card.selfDamage,
+      lethalOnDamage: context.card.lethalOnDamage,
       nextTurnId: context.nextTurnId,
       ailments: context.ailments,
     };
@@ -785,6 +817,16 @@ function checkDeath(room) {
            if (player.hand.length < 18) player.hand.push(drawArtifact(room));
            room.log.push(`${reviver.name} により ${player.name} はHP${player.hp}で復活した。`);
            return;
+         }
+         const dyingAttackIndex = player.hand.findIndex(card => card.dyingAttack);
+         if (dyingAttackIndex >= 0) {
+           const [dyingCard] = player.hand.splice(dyingAttackIndex, 1);
+           players.filter(target => target.id !== player.id && !target.ascended && target.hp > 0).forEach(target => {
+             if (Math.random() * 100 < dyingCard.dyingAttack.hitRate) {
+               target.hp = Math.max(0, target.hp - dyingCard.dyingAttack.attack);
+               room.log.push(`${player.name} の ${dyingCard.name} が ${target.name} に ${dyingCard.dyingAttack.attack} ダメージ！`);
+             }
+           });
          }
          player.ascended = true;
          room.log.push(`${player.name} has ascended (died)!`);
