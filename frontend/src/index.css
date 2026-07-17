@@ -1947,7 +1947,18 @@ h1, h2, h3, h4, h5, h6 {
   top: 40px;
   right: 6px;
   left: 6px;
-  height: 46px;
+  height: 22px;
+  overflow: hidden;
+  font: 13px/22px Georgia, 'Yu Mincho', serif;
+  white-space: nowrap;
+}
+
+.gf-game-screen .gf-card-field .card-description-text {
+  position: absolute;
+  top: 62px;
+  right: 6px;
+  left: 6px;
+  height: 22px;
   overflow: hidden;
   font: 13px/22px Georgia, 'Yu Mincho', serif;
   white-space: nowrap;

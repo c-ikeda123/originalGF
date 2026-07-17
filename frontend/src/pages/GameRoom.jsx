@@ -457,6 +457,7 @@ export default function GameRoom() {
         <div className="details">
            <div className="card-name">{card.name}</div>
            <div className="card-stat-text">{statText}</div>
+           <div className="card-description-text">{card.description}</div>
         </div>
         {card.costMoney > 0 && <div className="card-price">¥{card.costMoney}</div>}
       </div>
