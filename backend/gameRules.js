@@ -95,6 +95,14 @@ function canDefendAttribute(attackAttribute, defenseAttribute) {
   return mapping[attackAttribute]?.includes(defenseAttribute) || false;
 }
 
+function createAttackQueue(targetIds, repeatCount = 1) {
+  const queue = [];
+  for (let repeat = 1; repeat <= Math.max(1, repeatCount); repeat++) {
+    targetIds.forEach(targetId => queue.push({ targetId, repeat }));
+  }
+  return queue;
+}
+
 function resolveDefenseCard(pendingDamage, card) {
   const effects = new Set([card.defenseEffect, ...(card.defenseEffects || [])].filter(Boolean));
   const sourceType = pendingDamage.sourceType;
@@ -170,6 +178,7 @@ module.exports = {
   applyAilment,
   combineAttackCards,
   canDefendAttribute,
+  createAttackQueue,
   cureAilments,
   isDefenseCard,
   processEndOfTurnAilments,

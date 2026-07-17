@@ -7,6 +7,7 @@ const {
   applyAilment,
   combineAttackCards,
   cureAilments,
+  createAttackQueue,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDefenseCard,
@@ -331,38 +332,7 @@ io.on('connection', (socket) => {
        // We can just handle this visually on frontend, backend doesn't need to change play logic.
        
        if (combinedCard.type === 'weapon') {
-         // Attack logic
-         const hitResult = rollAttack(combinedCard, opponent.ailments);
-         room.lastAction = createActionEvent(player, opponent, combinedCard, hitResult.outcome);
-         if (hitResult.hit) {
-           room.log.push(hitResult.outcome === 'unavoidable' ? `${combinedCard.name} は不可避！` : `${combinedCard.name} が命中！`);
-
-           room.phase = 'defense';
-           room.turn = opponentId; // Opponent's turn to defend
-           room.players[opponentId].pendingDamage = {
-             amount: combinedCard.attack,
-             attribute: combinedCard.attribute,
-             source: player.name,
-             attackerId: player.id,
-             sourceType: combinedCard.sourceType || combinedCard.type,
-             absorbHp: combinedCard.absorbHp,
-             selfDamage: combinedCard.selfDamage,
-             nextTurnId: opponentId,
-             ailments: cards.filter(usedCard => usedCard.ailmentTrigger === 'damage').map(usedCard => usedCard.ailmentInflict).filter(Boolean),
-           };
-           room.field = {
-             attackerId: player.id,
-             attackCard: combinedCard,
-             defenderId: opponentId,
-             defenseCards: []
-           };
-           room.log.push(`${opponent.name} is defending...`);
-         } else {
-           room.log.push(`${opponent.name} は ${combinedCard.name} を回避！`);
-           room.field = { attackerId: player.id, attackCard: combinedCard, missed: true };
-           clearFieldLater(roomName);
-           endTurnInternal(room, opponentId);
-         }
+         queueAttackSequence(room, player, opponentId, combinedCard, cards, roomName);
        } else if (card.type === 'item') {
          if (card.healHp) player.hp = Math.min(99, player.hp + card.healHp);
          if (card.healMp) player.mp = Math.min(99, player.mp + card.healMp);
@@ -386,30 +356,7 @@ io.on('connection', (socket) => {
          endTurnInternal(room, opponentId);
        } else if (combinedCard.type === 'miracle') {
          if (combinedCard.attack > 0) {
-           const hitResult = rollAttack(combinedCard, opponent.ailments);
-           room.lastAction = createActionEvent(player, opponent, combinedCard, hitResult.outcome);
-           if (hitResult.hit) {
-             room.phase = 'defense';
-             room.turn = opponentId;
-             opponent.pendingDamage = {
-               amount: combinedCard.attack,
-               attribute: combinedCard.attribute,
-               source: player.name,
-               attackerId: player.id,
-               sourceType: combinedCard.sourceType || combinedCard.type,
-               absorbHp: combinedCard.absorbHp,
-               selfDamage: combinedCard.selfDamage,
-               nextTurnId: opponentId,
-               ailments: cards.filter(usedCard => usedCard.ailmentTrigger === 'damage').map(usedCard => usedCard.ailmentInflict).filter(Boolean),
-             };
-             room.field = { attackerId: player.id, attackCard: combinedCard, defenderId: opponentId, defenseCards: [] };
-             room.log.push(hitResult.outcome === 'unavoidable' ? `${combinedCard.name} は不可避！` : `${combinedCard.name} が命中！`);
-           } else {
-             room.field = { attackerId: player.id, attackCard: combinedCard, missed: true };
-             room.log.push(`${opponent.name} は ${combinedCard.name} を回避！`);
-             clearFieldLater(roomName);
-             endTurnInternal(room, opponentId);
-           }
+           queueAttackSequence(room, player, opponentId, combinedCard, cards, roomName);
          } else {
             if (card.ailmentInflict && card.ailmentTrigger === 'use') {
               const applied = applyAilment(opponent, card.ailmentInflict);
@@ -439,7 +386,8 @@ io.on('connection', (socket) => {
              : candidates[Math.floor(Math.random() * candidates.length)];
            player.pendingDamage = null;
            if (!target) {
-             endTurnInternal(room, pDamage.nextTurnId || player.id);
+             player.pendingDamage = pDamage;
+             applyDamageAndClearField(room, player, 0, roomName);
            } else {
              target.pendingDamage = { ...pDamage, amount: resolution.amount };
              room.turn = target.id;
@@ -648,8 +596,17 @@ function applyDamageAndClearField(room, player, amount, roomName) {
    // Store last damage to trigger UI animation
    room.lastDamage = { amount: actualDamage, targetId: player.id, timestamp: Date.now() };
 
+   checkDeath(room);
+   if (room.state === 'ended') {
+     emitGameState(roomName);
+     return;
+   }
+   if (room.attackContext) {
+     startNextQueuedAttack(room, roomName);
+     emitGameState(roomName);
+     return;
+   }
    clearFieldLater(roomName);
-
    endTurnInternal(room, pendingDamage?.nextTurnId || player.id);
    checkDeath(room);
    emitGameState(roomName);
@@ -671,6 +628,62 @@ function withInstanceId(card) {
 function drawArtifact(room) {
   if (!room.deck.length) return null;
   return withInstanceId(room.deck[Math.floor(Math.random() * room.deck.length)]);
+}
+
+function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName) {
+  const targets = card.target === 'all'
+    ? Object.values(room.players).filter(player => player.id !== attacker.id && !player.ascended && player.hp > 0)
+    : [room.players[nextTurnId]].filter(Boolean);
+  room.attackQueue = createAttackQueue(targets.map(target => target.id), card.repeatCount || 1);
+  room.attackContext = {
+    attackerId: attacker.id,
+    nextTurnId,
+    card,
+    ailments: cards.filter(usedCard => usedCard.ailmentTrigger === 'damage').map(usedCard => usedCard.ailmentInflict).filter(Boolean),
+  };
+  startNextQueuedAttack(room, roomName);
+}
+
+function startNextQueuedAttack(room, roomName) {
+  const context = room.attackContext;
+  while (context && room.attackQueue.length) {
+    const queued = room.attackQueue.shift();
+    const attacker = room.players[context.attackerId];
+    const target = room.players[queued.targetId];
+    if (!attacker || !target || target.ascended || target.hp <= 0) continue;
+    const hitResult = rollAttack(context.card, target.ailments);
+    room.lastAction = createActionEvent(attacker, target, context.card, hitResult.outcome);
+    if (!hitResult.hit) {
+      room.log.push(`${target.name} は ${context.card.name}（${queued.repeat}回目）を回避！`);
+      continue;
+    }
+    target.pendingDamage = {
+      amount: context.card.attack,
+      attribute: context.card.attribute,
+      source: attacker.name,
+      attackerId: attacker.id,
+      sourceType: context.card.sourceType || context.card.type,
+      absorbHp: context.card.absorbHp,
+      selfDamage: context.card.selfDamage,
+      nextTurnId: context.nextTurnId,
+      ailments: context.ailments,
+    };
+    room.phase = 'defense';
+    room.turn = target.id;
+    room.field = { attackerId: attacker.id, attackCard: context.card, defenderId: target.id, defenseCards: [] };
+    room.log.push(hitResult.outcome === 'unavoidable'
+      ? `${context.card.name} は ${target.name} に不可避！`
+      : `${context.card.name}（${queued.repeat}回目）が ${target.name} に命中！`);
+    return true;
+  }
+  if (context) {
+    const nextTurnId = context.nextTurnId;
+    room.attackQueue = [];
+    room.attackContext = null;
+    clearFieldLater(roomName);
+    endTurnInternal(room, nextTurnId);
+  }
+  return false;
 }
 
 const ASSISTANT_TYPES = ['mars', 'mercury', 'jupiter', 'saturn', 'uranus', 'pluto', 'neptune', 'venus', 'earth', 'moon'];
@@ -794,6 +807,8 @@ function startGame(roomName) {
   room.lastDamage = null;
   room.lastAction = null;
   room.field = null;
+  room.attackQueue = [];
+  room.attackContext = null;
   
   const playerIds = Object.keys(room.players);
   

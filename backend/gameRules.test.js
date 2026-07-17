@@ -4,6 +4,7 @@ const {
   applyAilment,
   combineAttackCards,
   canDefendAttribute,
+  createAttackQueue,
   cureAilments,
   isDefenseCard,
   processEndOfTurnAilments,
@@ -90,4 +91,15 @@ test('攻撃補助雑貨とMP無料化雑貨を攻撃に組み合わせられる
   assert.equal(validateCardPlay([weapon, powder], 'main').valid, true);
   assert.equal(validateCardPlay([weapon, free], 'main').valid, true);
   assert.equal(combineAttackCards([weapon, powder]).attack, 15);
+});
+
+test('全体・複数回攻撃は各対象を回数分だけ順番に処理する', () => {
+  assert.deepEqual(createAttackQueue(['B', 'C'], 2), [
+    { targetId: 'B', repeat: 1 },
+    { targetId: 'C', repeat: 1 },
+    { targetId: 'B', repeat: 2 },
+    { targetId: 'C', repeat: 2 },
+  ]);
+  const repeated = combineAttackCards([{ name: '連撃', type: 'weapon', attack: 3, repeatCount: 2 }]);
+  assert.equal(repeated.repeatCount, 2);
 });
