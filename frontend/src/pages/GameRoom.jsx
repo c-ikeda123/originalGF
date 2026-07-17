@@ -4,6 +4,7 @@ import io from 'socket.io-client';
 import '../index.css';
 import RoomBaseEditor from './RoomBaseEditor';
 import { playSound } from '../soundEffects';
+import { getDreamDisplayedCard } from '../utils/dreamCards';
 
 let socket;
 const serverUrl = import.meta.env.VITE_SERVER_URL
@@ -374,16 +375,8 @@ export default function GameRoom() {
     return false;
   };
 
-  const isHiddenByDream = (card) => {
-    if (!hasDream) return false;
-    const value = [...String(card.instanceId || card.id)].reduce((sum, character) => sum + character.charCodeAt(0), 0);
-    return value % 2 === 0;
-  };
-
   const getDisplayedCard = (card, index) => {
-    if (!isHiddenByDream(card) || me.hand.length < 2) return card;
-    const decoy = me.hand[(index + 1) % me.hand.length];
-    return { ...decoy, instanceId: card.instanceId };
+    return getDreamDisplayedCard(me.hand, index, hasDream) || card;
   };
 
   const handlePlayCard = (cardIndex) => {
@@ -420,7 +413,7 @@ export default function GameRoom() {
          key={realCard.instanceId} 
          className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${usable ? '' : 'disabled'}`}
          aria-disabled={!usable}
-         title={usable ? realCard.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません')}
+         title={usable ? card.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません')}
          onClick={() => toggleCard(index)}
          onDoubleClick={() => usable && handlePlayCard(index)}
          onMouseEnter={() => setHoveredCardIndex(index)}
