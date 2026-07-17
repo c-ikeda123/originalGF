@@ -230,6 +230,22 @@ function createDyingAttackCard(card) {
   };
 }
 
+function getEarthArtifactMode(card) {
+  if (card?.attack > 0 && ['weapon', 'miracle'].includes(card.type)) return 'attack';
+  if (card?.effect === 'sell') return 'sell';
+  if (card?.effect === 'buy') return 'buy';
+  return 'add_and_use';
+}
+
+function createMoonAssistantAttack(miracle) {
+  if (!['wide_attack', 'double_attack'].includes(miracle?.supportEffect)) return miracle;
+  return combineAttackCards([{
+    id: 'assistant_moon_attack', name: '月の守護神', type: 'incarnation', sourceType: 'incarnation',
+    imageUrl: '/godfield-flash/cards/assistant/moon.png', attack: 10, hitRate: 100,
+    attribute: 'none', target: 'single',
+  }, miracle]);
+}
+
 function resolveDefenseCard(pendingDamage, card) {
   const effects = new Set([card.defenseEffect, ...(card.defenseEffects || [])].filter(Boolean));
   const sourceType = pendingDamage.sourceType;
@@ -311,8 +327,10 @@ module.exports = {
   createAttackQueue,
   createCounterAttackCard,
   createDyingAttackCard,
+  createMoonAssistantAttack,
   cureAilments,
   getAssistantAction,
+  getEarthArtifactMode,
   getNextAlivePlayerId,
   isDefenseCard,
   processEndOfTurnAilments,

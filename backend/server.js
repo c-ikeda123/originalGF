@@ -10,7 +10,9 @@ const {
   createAttackQueue,
   createCounterAttackCard,
   createDyingAttackCard,
+  createMoonAssistantAttack,
   getAssistantAction,
+  getEarthArtifactMode,
   getNextAlivePlayerId,
   isDefenseCard,
   processEndOfTurnAilments,
@@ -897,6 +899,16 @@ function runAssistantAction(room, player, roomName, { nextTurnId = player.id, de
   if (!action) return;
   addSoundEvent(room, 'assistant');
   room.log.push(`${player.name} の守護神 ${player.assistant.type} が行動した。`);
+  const scheduleAttack = card => {
+    if (!enemy) return false;
+    card.forcedTargetId = enemy.id;
+    if (deferAttack) {
+      queueFollowUpAttack(room, player.id, nextTurnId, card, { skipAssistantOpportunity: true });
+    } else {
+      queueAttackSequence(room, player, player.id, card, [card], roomName, { assistantAction: true });
+    }
+    return true;
+  };
   if (action.kind === 'attack' && enemy) {
     const card = {
       id: `assistant_${player.assistant.type}`,
@@ -913,11 +925,7 @@ function runAssistantAction(room, player, roomName, { nextTurnId = player.id, de
       ailmentInflict: action.ailment,
       ailmentTrigger: action.ailment ? 'damage' : null,
     };
-    if (deferAttack) {
-      queueFollowUpAttack(room, player.id, nextTurnId, card, { skipAssistantOpportunity: true });
-    } else {
-      queueAttackSequence(room, player, player.id, card, [card], roomName, { assistantAction: true });
-    }
+    scheduleAttack(card);
     return;
   }
   if (action.kind === 'ailment' && enemy) {
@@ -951,20 +959,45 @@ function runAssistantAction(room, player, roomName, { nextTurnId = player.id, de
     player.money = Math.min(99, player.money + action.value);
     addSoundEvent(room, 'yen_increase');
   }
-  if (action.kind === 'add_item' && player.hand.length < 18) {
-    player.hand.push(drawArtifact(room));
-    addSoundEvent(room, 'card');
+  if (action.kind === 'add_item') {
+    const artifact = drawArtifact(room);
+    const artifactMode = getEarthArtifactMode(artifact);
+    if (artifactMode === 'attack') {
+      scheduleAttack(artifact);
+    } else if (artifactMode === 'sell' && enemy) {
+      forceSale(room, player, enemy, drawArtifact(room));
+    } else if (artifactMode === 'buy' && enemy) {
+      const offered = enemy.hand[Math.floor(Math.random() * enemy.hand.length)];
+      const price = offered?.type === 'miracle' ? 0 : Math.max(0, offered?.costMoney || 0);
+      if (offered && player.money >= price && player.hand.length < 18) {
+        player.money -= price;
+        enemy.money = Math.min(99, enemy.money + price);
+        player.hand.push(enemy.hand.splice(enemy.hand.indexOf(offered), 1)[0]);
+        addSoundEvent(room, 'seizure');
+      } else {
+        addSoundEvent(room, 'no_change');
+      }
+    } else {
+      if (player.hand.length < 18) player.hand.push(drawArtifact(room));
+      if (artifact?.healHp) player.hp = Math.min(99, player.hp + artifact.healHp);
+      if (artifact?.healMp) player.mp = Math.min(99, player.mp + artifact.healMp);
+      if (artifact?.moneyGain) player.money = Math.min(99, player.money + artifact.moneyGain);
+      if (artifact?.cureAilments) cureAilments(player, artifact.cureAilments);
+      if (artifact?.ailmentInflict && enemy) applyAilment(enemy, artifact.ailmentInflict);
+      if (artifact?.setAssistant) setRandomAssistant(player, room);
+      if (artifact?.removeItems && enemy) removeRandomEntries(enemy.hand, artifact.removeItems);
+      if (artifact?.removeMiracles && enemy) removeRandomEntries(enemy.learnedMiracles, artifact.removeMiracles);
+      addSoundEvent(room, 'card');
+    }
   }
   if (action.kind === 'random_miracle') {
-    const miracles = GF_BASE_CARDS.filter(card => card.type === 'miracle');
+    const miracles = GF_BASE_CARDS.filter(card => card.type === 'miracle'
+      && !['flick_magic', 'block_weapon'].includes(card.defenseEffect));
     const miracle = { ...miracles[Math.floor(Math.random() * miracles.length)] };
-    if (miracle.attack > 0 && enemy) {
-      miracle.forcedTargetId = enemy.id;
-      if (deferAttack) {
-        queueFollowUpAttack(room, player.id, nextTurnId, miracle, { skipAssistantOpportunity: true });
-      } else {
-        queueAttackSequence(room, player, player.id, miracle, [miracle], roomName, { assistantAction: true });
-      }
+    if (['wide_attack', 'double_attack'].includes(miracle.supportEffect)) {
+      scheduleAttack(createMoonAssistantAttack(miracle));
+    } else if (miracle.attack > 0 && enemy) {
+      scheduleAttack(miracle);
     } else {
       if (miracle.ailmentInflict && enemy) applyAilment(enemy, miracle.ailmentInflict);
       if (miracle.cureAilments) cureAilments(player, miracle.cureAilments);

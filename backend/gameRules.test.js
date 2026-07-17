@@ -7,8 +7,10 @@ const {
   createAttackQueue,
   createCounterAttackCard,
   createDyingAttackCard,
+  createMoonAssistantAttack,
   cureAilments,
   getAssistantAction,
+  getEarthArtifactMode,
   getNextAlivePlayerId,
   isDefenseCard,
   processEndOfTurnAilments,
@@ -38,6 +40,23 @@ test('昇天弓は元の神器情報を保った防御可能な全体攻撃を�
   assert.deepEqual({ attack: attack.attack, hitRate: attack.hitRate, target: attack.target, sourceType: attack.sourceType }, {
     attack: 30, hitRate: 75, target: 'all', sourceType: 'weapon',
   });
+});
+
+test('地球の守護神は引いた神器の種類に応じて行動を選ぶ', () => {
+  assert.equal(getEarthArtifactMode({ type: 'weapon', attack: 4 }), 'attack');
+  assert.equal(getEarthArtifactMode({ type: 'trade', effect: 'sell' }), 'sell');
+  assert.equal(getEarthArtifactMode({ type: 'trade', effect: 'buy' }), 'buy');
+  assert.equal(getEarthArtifactMode({ type: 'miracle', healHp: 10 }), 'add_and_use');
+});
+
+test('月の守護神は攻撃10にオーラと蜃気楼を合成する', () => {
+  const doubled = createMoonAssistantAttack({ name: 'オーラ', type: 'miracle', supportEffect: 'double_attack' });
+  assert.equal(doubled.attack, 20);
+  assert.equal(doubled.target, 'single');
+  const wide = createMoonAssistantAttack({ name: '蜃気楼', type: 'miracle', supportEffect: 'wide_attack' });
+  assert.equal(wide.attack, 10);
+  assert.equal(wide.hitRate, 100);
+  assert.equal(wide.target, 'all');
 });
 
 test('防具はメインフェーズで使用できず、防御フェーズで使用できる', () => {
