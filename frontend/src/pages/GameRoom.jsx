@@ -491,7 +491,7 @@ export default function GameRoom() {
 
   const renderPlayerStatus = (player, isSelf = false) => player && (
     <div
-      className={`battle-player ${isSelf ? 'self' : 'opponent'} team-${player.team || 'single'} ${opponent?.id === player.id ? 'selected-target' : ''} ${turn === player.id && !isResolvingDamage ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}
+      className={`battle-player ${isSelf ? 'self' : 'opponent'} team-${player.team || 'single'} ${isMyTurn && phase === 'main' && opponent?.id === player.id ? 'selected-target' : ''} ${turn === player.id && !isResolvingDamage ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}
       role={!isSelf && targetableOpponents.length > 1 ? 'button' : undefined}
       tabIndex={!isSelf && targetableOpponents.length > 1 ? 0 : undefined}
       onClick={() => !isSelf && targetableOpponents.length > 1 && player.hp > 0 && !player.ascended && setSelectedTargetId(player.id)}
