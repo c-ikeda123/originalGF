@@ -18,6 +18,7 @@ const {
   getDamageResolutionDelay,
   getEarthArtifactMode,
   getNextAlivePlayerId,
+  getReplacementDrawCount,
   getWinningSide,
   isActionLocked,
   isDefenseCard,
@@ -516,7 +517,10 @@ io.on('connection', (socket) => {
 
     // Replacements are dealt after the whole action, so freshly drawn cards
     // cannot be used to defend against the attack that generated them.
-    const replacementCount = isSingleTrade && card.effect === 'buy' ? 0 : consumedIndices.length + (learnedMiracle ? 1 : 0);
+    const replacementCount = getReplacementDrawCount(
+      consumedIndices.length,
+      isSingleTrade && card.effect === 'buy',
+    );
     queueReplacementDraws(player, replacementCount);
 
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);

@@ -365,6 +365,10 @@ function isActionLocked(room, now = Date.now()) {
   return (room?.actionLockedUntil || 0) > now;
 }
 
+function getReplacementDrawCount(consumedCardCount, isDeferredBuy = false) {
+  return isDeferredBuy ? 0 : Math.max(0, consumedCardCount);
+}
+
 function clearFieldIfCurrent(room, scheduledField) {
   if (!room || !scheduledField || room.field !== scheduledField) return false;
   room.field = null;
@@ -387,6 +391,7 @@ module.exports = {
   getEarthArtifactMode,
   getDamageResolutionDelay,
   getNextAlivePlayerId,
+  getReplacementDrawCount,
   getWinningSide,
   isActionLocked,
   isDefenseCard,

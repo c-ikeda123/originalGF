@@ -16,6 +16,7 @@ const {
   getEarthArtifactMode,
   getDamageResolutionDelay,
   getNextAlivePlayerId,
+  getReplacementDrawCount,
   getWinningSide,
   isActionLocked,
   isDefenseCard,
@@ -33,6 +34,12 @@ test('ダメージ演出中は次の行動を待機する', () => {
   assert.equal(getDamageResolutionDelay(10), 2150);
   assert.equal(isActionLocked({ actionLockedUntil: 2500 }, 2499), true);
   assert.equal(isActionLocked({ actionLockedUntil: 2500 }, 2500), false);
+});
+
+test('習得済み奇跡は手札を消費していないので補充しない', () => {
+  assert.equal(getReplacementDrawCount(0), 0);
+  assert.equal(getReplacementDrawCount(1), 1);
+  assert.equal(getReplacementDrawCount(1, true), 0);
 });
 
 test('古い盤面の消去予約は新しい敵攻撃を消さない', () => {
