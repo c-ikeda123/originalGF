@@ -1855,6 +1855,19 @@ h1, h2, h3, h4, h5, h6 {
   object-fit: contain;
 }
 
+.revive-effect-label {
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  padding: 3px 18px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #fffde7;
+  color: #b45309;
+  font: bold 22px/30px Georgia, 'Yu Mincho', serif;
+  text-shadow: 0 1px #fff;
+}
+
 @keyframes resourceEffectPop {
   0% { opacity: 0; transform: translate(-50%, 20px) scale(0.45); }
   18% { opacity: 1; transform: translate(-50%, -6px) scale(1.08); }
@@ -1903,6 +1916,59 @@ h1, h2, h3, h4, h5, h6 {
   18% { opacity: 1; transform: translate(-50%, -50%) scale(0.9); }
   28%, 72% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
   100% { opacity: 0; transform: translate(-50%, -68%) scale(1.03); }
+}
+
+.assistant-effect-overlay {
+  position: absolute;
+  top: 27%;
+  left: 50%;
+  z-index: 127;
+  display: grid;
+  grid-template-columns: 128px auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 12px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: assistantEffectEnter 1.25s ease-out forwards;
+}
+
+.assistant-effect-overlay.target-me {
+  top: 62%;
+}
+
+.assistant-effect-overlay img {
+  grid-row: 1 / 3;
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 14px #fff7a8) drop-shadow(0 5px 2px rgba(0, 0, 0, 0.55));
+}
+
+.assistant-effect-overlay strong {
+  align-self: end;
+  color: #fffde7;
+  font: bold 26px/34px Georgia, 'Yu Mincho', serif;
+  text-shadow: 0 3px 2px #003c38, 0 0 8px #facc15;
+  white-space: nowrap;
+}
+
+.assistant-effect-overlay span {
+  align-self: start;
+  color: #fff;
+  font: bold 15px/24px Georgia, 'Yu Mincho', serif;
+  text-shadow: 0 2px 2px #000;
+}
+
+.assistant-effect-overlay.assistant_remove img {
+  filter: grayscale(0.7) drop-shadow(0 5px 2px rgba(0, 0, 0, 0.55));
+}
+
+@keyframes assistantEffectEnter {
+  0% { opacity: 0; transform: translate(-50%, 20px) scale(0.3); }
+  22% { opacity: 1; transform: translate(-50%, -8px) scale(1.08); }
+  34%, 72% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -45px) scale(0.9); }
 }
 
 .ascension-overlay {

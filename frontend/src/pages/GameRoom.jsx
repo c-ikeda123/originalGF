@@ -9,10 +9,12 @@ let socket;
 const serverUrl = import.meta.env.VITE_SERVER_URL
   || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
 const RESOURCE_EFFECT_TYPES = new Set(['hp_increase', 'mp_increase', 'yen_increase']);
+const ASSISTANT_EFFECT_TYPES = new Set(['assistant_add', 'assistant_action', 'assistant_remove']);
 const EFFECT_LABELS = {
   cold: '風邪', fever: '熱病', hell: '地獄病', heaven: '天国病', fog: '霧',
   glory: '閃光', illusion: '夢', dark_cloud: '暗雲', harm_remove: '災い解除',
   reflect: '反射', flick: '弾き', block: '防御', seizure: '奇跡消去', no_change: '効果なし',
+  assistant_add: '守護神降臨', assistant_action: '守護神行動', assistant_remove: '守護神離脱',
 };
 
 export default function GameRoom() {
@@ -552,6 +554,18 @@ export default function GameRoom() {
             >
               <img className="resource-effect-label" src={`/godfield-flash/ui/game/effect/${effectAnim.type}.png`} alt="" />
               <div className="resource-effect-number">{renderEffectNumber(effectAnim.type, effectAnim.amount)}</div>
+              {effectAnim.revived && <span className="revive-effect-label">復活</span>}
+            </div>
+          ) : ASSISTANT_EFFECT_TYPES.has(effectAnim.type) ? (
+            <div
+              key={effectAnim.id}
+              className={`assistant-effect-overlay ${effectAnim.type} ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              role="status"
+              aria-label={`${effectAnim.playerName}の${EFFECT_LABELS[effectAnim.type]}`}
+            >
+              <img src={`/godfield-flash/ui/game/assistant/${effectAnim.assistantType}.png`} alt="" />
+              <strong>{EFFECT_LABELS[effectAnim.type]}</strong>
+              <span>{effectAnim.playerName}</span>
             </div>
           ) : (
             <div
