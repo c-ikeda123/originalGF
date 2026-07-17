@@ -387,7 +387,17 @@ export default function GameRoom() {
   );
 
   const renderPlayerStatus = (player, isSelf = false) => player && (
-    <div className={`battle-player ${isSelf ? 'self' : 'opponent'} team-${player.team || 'single'} ${turn === player.id ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}>
+    <div
+      className={`battle-player ${isSelf ? 'self' : 'opponent'} team-${player.team || 'single'} ${opponent?.id === player.id ? 'selected-target' : ''} ${turn === player.id ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}
+      role={!isSelf && targetableOpponents.length > 1 ? 'button' : undefined}
+      tabIndex={!isSelf && targetableOpponents.length > 1 ? 0 : undefined}
+      onClick={() => !isSelf && targetableOpponents.length > 1 && player.hp > 0 && !player.ascended && setSelectedTargetId(player.id)}
+      onKeyDown={event => {
+        if ((event.key === 'Enter' || event.key === ' ') && !isSelf && targetableOpponents.length > 1 && player.hp > 0 && !player.ascended) {
+          setSelectedTargetId(player.id);
+        }
+      }}
+    >
       <span className="battle-player-marker">●</span>
       <span className="battle-player-name">{player.name}{isSelf ? ' (You)' : ''}</span>
       {hasFog && !isSelf ? (
@@ -481,23 +491,6 @@ export default function GameRoom() {
 
         <aside className="gf-battle-sidebar">
           <div className="battle-player-list">
-            {targetableOpponents.length > 1 && (
-              <div className="target-selector">
-                <span>対象</span>
-                {targetableOpponents.map(player => (
-                  <button
-                    key={player.id}
-                    type="button"
-                    className={`btn btn-secondary ${opponent?.id === player.id ? 'selected' : ''}`}
-                    data-target={player.id}
-                    disabled={player.ascended || player.hp <= 0}
-                    onClick={() => setSelectedTargetId(player.id)}
-                  >
-                    {player.name}
-                  </button>
-                ))}
-              </div>
-            )}
             {opponents.map(player => <div key={player.id}>{renderPlayerStatus(player)}{renderAssistant(player.assistant)}</div>)}
             {renderPlayerStatus(me, true)}
             {renderAssistant(me.assistant)}
