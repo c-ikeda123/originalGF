@@ -1406,3 +1406,60 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: none;
   font-size: 9px;
 }
+
+.gf-field-cards {
+  gap: 4px 8px;
+}
+
+.gf-field-group {
+  width: 150px;
+  gap: 1px;
+}
+
+.gf-field-owner {
+  width: 120px;
+  height: 15px;
+  box-sizing: border-box;
+  padding: 0 5px 0 14px;
+  border: 0;
+  background: url('/godfield-flash/ui/game/commander/single.png') 0 0 / 120px 15px no-repeat;
+  font: bold 8px/15px Arial, sans-serif;
+}
+
+.gf-game-screen .gf-card-field {
+  width: 150px;
+  height: 45px;
+  box-sizing: border-box;
+  border: 0;
+  background: url('/godfield-flash/ui/game/card.png') 0 0 / 150px 45px no-repeat;
+  box-shadow: none;
+}
+
+.gf-game-screen .gf-card-field .image-area {
+  width: 45px;
+  height: 44px;
+  flex: none;
+  border: 0;
+  background-size: 40px 40px;
+  background-repeat: no-repeat;
+}
+
+.gf-game-screen .gf-card-field .details {
+  height: 44px;
+  box-sizing: border-box;
+  padding: 2px 3px;
+  overflow: hidden;
+}
+
+.gf-game-screen .gf-card-field .card-name {
+  font: bold 9px/11px Georgia, serif;
+}
+
+.gf-game-screen .gf-card-field .card-stat-text {
+  font-size: 7px !important;
+  line-height: 9px;
+}
+
+.hovered-card-detail {
+  top: -47px;
+}
