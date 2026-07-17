@@ -36,3 +36,15 @@ export function canAddCardToSelection(selectedCards, nextCard, phase, hasFlash =
     && cards.every(card => card === actionMiracles[0] || card.supportEffect === 'magic_free');
   return attackCombination || magicFreeAction;
 }
+
+export function getNextCardSelection(selectedIndices, nextIndex, hand, phase, hasFlash = false) {
+  if (selectedIndices.includes(nextIndex)) {
+    return selectedIndices.filter(index => index !== nextIndex);
+  }
+
+  const selectedCards = selectedIndices.map(index => hand[index]).filter(Boolean);
+  if (!canAddCardToSelection(selectedCards, hand[nextIndex], phase, hasFlash)) {
+    return [nextIndex];
+  }
+  return [...selectedIndices, nextIndex].sort((a, b) => a - b);
+}
