@@ -7,14 +7,26 @@ const cards = require('../shared/baseCards.json');
 const flashSounds = require('../shared/flashSounds.json');
 const publicDir = path.join(__dirname, '..', 'frontend', 'public');
 
-test('基礎神器247種のFlash版画像がすべて存在する', () => {
+test('基礎神器247種の名前に対応した画像がすべて存在する', () => {
   assert.equal(cards.length, 247);
   assert.equal(new Set(cards.map(card => card.imageUrl)).size, cards.length);
 
   for (const card of cards) {
-    assert.match(card.imageUrl, /^\/godfield-flash\/cards\/.+\.png$/);
+    if (card.category === 'incarnation') {
+      assert.match(card.imageUrl, /^\/godfield-flash\/cards\/assistant\/.+\.png$/);
+    } else {
+      assert.match(card.imageUrl, /^\/godfield-current\/images\/items\/.+\.webp$/);
+    }
     assert.equal(fs.existsSync(path.join(publicDir, card.imageUrl)), true, `${card.name}: ${card.imageUrl}`);
+    assert.ok(fs.statSync(path.join(publicDir, card.imageUrl)).size > 0, card.imageUrl);
   }
+
+  const byName = Object.fromEntries(cards.map(card => [card.name, card.imageUrl]));
+  assert.match(byName['ムチ'], /\/whip\.webp$/);
+  assert.match(byName['パンチ'], /\/punch\.webp$/);
+  assert.match(byName['のこぶんぶん'], /\/saw-boom-boom\.webp$/);
+  assert.match(byName['革の帽子'], /\/leather-cap\.webp$/);
+  assert.match(byName['スマイルのしずく'], /\/smile-dew\.webp$/);
 });
 
 test('基礎神器の総枚数と主要な固有効果を保持する', () => {

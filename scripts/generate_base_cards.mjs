@@ -2,6 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { godfieldFlashImages } from './godfieldFlashImages.mjs';
+import { godfieldCurrentImages } from './godfieldCurrentImages.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cards = [];
@@ -64,7 +65,7 @@ const add = (category, name, data = {}) => {
     target: data.target || 'single', attack: 0, attackBonus: 0, defense: 0,
     hitRate: 100, healHp: 0, healMp: 0, costMoney: 0, costMp: 0,
     copies: 1, description: '', ...data,
-    imageUrl: data.imageUrl || godfieldFlashImages[id] || '',
+    imageUrl: data.imageUrl || godfieldCurrentImages[id] || godfieldFlashImages[id] || '',
   };
   cards.push({ ...card, ...deriveSystemFields(card) });
 };
