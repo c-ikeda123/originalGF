@@ -540,26 +540,7 @@ io.on('connection', (socket) => {
 
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
 
-    const activatedCards = getActivatedCards(cards, isSell);
-    applySelfAilments(player, activatedCards).forEach(({ card: usedCard, ailment: applied }) => {
-      addSoundEvent(room, 'harm_add');
-      addAilmentEffect(room, player, applied);
-      room.log.push(`${player.name} は ${usedCard.name} により ${applied} になった。`);
-    });
-    activatedCards.forEach(usedCard => {
-      if (usedCard.cureAilments) {
-        const cured = cureAilments(player, usedCard.cureAilments);
-        if (cured.length) addSoundEvent(room, 'harm_remove');
-        if (cured.length) addEffectEvent(room, 'harm_remove', player, 0, { label: cured.join('、') });
-        if (cured.length) room.log.push(`${player.name} の災い（${cured.join('、')}）が治った。`);
-      }
-      if (usedCard.redrawHand) {
-        const handSize = player.hand.length;
-        player.hand = [];
-        for (let i = 0; i < handSize; i++) player.hand.push(drawArtifact(room));
-        room.log.push(`${player.name} の手札が一新された。`);
-      }
-    });
+    applyImmediateCardEffects(room, player, getActivatedCards(cards, isSell));
 
     if (isSell) {
       const sellIndex = cards.findIndex(c => c.effect === 'sell');
@@ -1006,6 +987,28 @@ function withInstanceId(card) {
 function drawArtifact(room) {
   if (!room.deck.length) return null;
   return withInstanceId(room.deck[Math.floor(Math.random() * room.deck.length)]);
+}
+
+function applyImmediateCardEffects(room, player, cards) {
+  applySelfAilments(player, cards).forEach(({ card, ailment }) => {
+    addSoundEvent(room, 'harm_add');
+    addAilmentEffect(room, player, ailment);
+    room.log.push(`${player.name} は ${card.name} により ${ailment} になった。`);
+  });
+  cards.forEach(card => {
+    if (card.cureAilments) {
+      const cured = cureAilments(player, card.cureAilments);
+      if (cured.length) addSoundEvent(room, 'harm_remove');
+      if (cured.length) addEffectEvent(room, 'harm_remove', player, 0, { label: cured.join('、') });
+      if (cured.length) room.log.push(`${player.name} の災い（${cured.join('、')}）が治った。`);
+    }
+    if (card.redrawHand) {
+      const handSize = player.hand.length;
+      player.hand = [];
+      for (let i = 0; i < handSize; i++) player.hand.push(drawArtifact(room));
+      room.log.push(`${player.name} の手札が一新された。`);
+    }
+  });
 }
 
 function queueReplacementDraws(player, count) {
@@ -1539,6 +1542,7 @@ function performBotTurn(roomName) {
     if (choiceIndex >= 0) {
       const [card] = bot.hand.splice(choiceIndex, 1);
       queueReplacementDraws(bot, 1);
+      applyImmediateCardEffects(room, bot, [card]);
       const resolution = resolveDefenseCard(bot.pendingDamage, card);
       room.field.defenseCards.push(card);
       bot.pendingDamage.defensesUsed = (bot.pendingDamage.defensesUsed || 0) + 1;
