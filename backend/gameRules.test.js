@@ -150,3 +150,18 @@ test('守護神の行動率と被弾離脱率を判定する', () => {
   assert.equal(shouldAssistantLeave(assistant, () => 0.1), false);
   assert.equal(shouldAssistantLeave({ ...assistant, hp: 0 }, () => 0), false);
 });
+
+test('MP無料神器は習得済み奇跡の攻撃値や種類を上書きしない', () => {
+  const staff = { name: '杖', type: 'weapon', attack: 12, hitRate: 100, supportEffect: 'magic_free' };
+  const miracle = { name: '奇跡', type: 'miracle', attack: 5, hitRate: 75, costMp: 10 };
+  const combined = combineAttackCards([staff, miracle]);
+  assert.equal(combined.type, 'miracle');
+  assert.equal(combined.attack, 5);
+  assert.equal(combined.hitRate, 75);
+});
+
+test('防御奇跡はMP無料神器と組み合わせて使用できる', () => {
+  const free = { type: 'item', supportEffect: 'magic_free' };
+  const miracle = { type: 'miracle', defenseEffect: 'block_weapon' };
+  assert.equal(validateCardPlay([free, miracle], 'defense').valid, true);
+});

@@ -461,8 +461,14 @@ export default function GameRoom() {
                <button
                  key={`${miracle.id}-${index}`}
                  className="btn btn-secondary"
-                 disabled={!isMyTurn || (phase !== 'main' && miracle.defense <= 0) || !['main', 'defense'].includes(phase) || me.mp < (miracle.costMp || 0)}
-                 onClick={() => socket.emit('castMiracle', { roomName: id, miracleIndex: index, targetId: opponent?.id })}
+                 disabled={!isMyTurn
+                   || !['main', 'defense'].includes(phase)
+                   || (phase === 'defense' && !((miracle.defense || 0) > 0 || miracle.defenseEffect || miracle.reactiveEffect))
+                   || (me.mp < (miracle.costMp || 0) && !selectedCards.some(cardIndex => me.hand[cardIndex]?.supportEffect === 'magic_free'))}
+                 onClick={() => {
+                   socket.emit('castMiracle', { roomName: id, miracleIndex: index, cardIndices: selectedCards, targetId: opponent?.id });
+                   setSelectedCards([]);
+                 }}
                >
                  {miracle.name}（MP{miracle.costMp || 0}）
                </button>

@@ -227,17 +227,21 @@ io.on('connection', (socket) => {
   });
 
   // --- Game Actions ---
-  const handlePlayCard = ({ roomName, cardIndex, cardIndices, targetId }) => {
+  const handlePlayCard = ({ roomName, cardIndex, cardIndices, targetId, learnedMiracleIndex }) => {
     const room = rooms[roomName];
     if (!room || room.state !== 'playing') return;
     
     const player = room.players[socket.id];
     if (room.turn !== socket.id) return; // Not their turn
     
-    const requestedIndices = Array.isArray(cardIndices) && cardIndices.length
+    const requestedIndices = Array.isArray(cardIndices)
       ? [...new Set(cardIndices)].filter(Number.isInteger).sort((a, b) => a - b)
-      : [cardIndex];
+      : (Number.isInteger(cardIndex) ? [cardIndex] : []);
     const cards = requestedIndices.map(index => player.hand[index]).filter(Boolean);
+    const learnedMiracle = Number.isInteger(learnedMiracleIndex)
+      ? player.learnedMiracles[learnedMiracleIndex]
+      : null;
+    if (learnedMiracle) cards.push({ ...learnedMiracle, _learnedCast: true });
     const card = cards.find(c => c.type === 'weapon' || c.type === 'miracle') || cards[0];
     if (!card) return;
 
@@ -254,7 +258,7 @@ io.on('connection', (socket) => {
       player.pendingDamage,
       player.pendingDamage?.defensesUsed || 0,
     );
-    if (!validation.valid || cards.length !== requestedIndices.length) {
+    if (!validation.valid || cards.length !== requestedIndices.length + (learnedMiracle ? 1 : 0)) {
       socket.emit('errorMsg', validation.message || '選択したカードを使用できません。');
       return;
     }
@@ -284,7 +288,7 @@ io.on('connection', (socket) => {
 
     // Replacements are dealt after the whole action, so freshly drawn cards
     // cannot be used to defend against the attack that generated them.
-    const replacementCount = isSingleTrade && card.effect === 'buy' ? 0 : consumedIndices.length;
+    const replacementCount = isSingleTrade && card.effect === 'buy' ? 0 : consumedIndices.length + (learnedMiracle ? 1 : 0);
     queueReplacementDraws(player, replacementCount);
 
     const opponentId = targetId || Object.keys(room.players).find(id => id !== socket.id);
@@ -454,14 +458,12 @@ io.on('connection', (socket) => {
   };
   socket.on('playCard', handlePlayCard);
 
-  socket.on('castMiracle', ({ roomName, miracleIndex, targetId }) => {
+  socket.on('castMiracle', ({ roomName, miracleIndex, cardIndices = [], targetId }) => {
     const room = rooms[roomName];
     const player = room?.players[socket.id];
     const miracle = player?.learnedMiracles[miracleIndex];
     if (!miracle || room.turn !== socket.id || !['main', 'defense'].includes(room.phase)) return;
-    if (player.mp < (miracle.costMp || 0)) return socket.emit('errorMsg', 'MPが足りません。');
-    player.hand.push(withInstanceId({ ...miracle, _learnedCast: true }));
-    handlePlayCard({ roomName, cardIndex: player.hand.length - 1, targetId });
+    handlePlayCard({ roomName, cardIndices, targetId, learnedMiracleIndex: miracleIndex });
   });
 
   socket.on('completeExchange', ({ roomName, hp, mp, money }) => {

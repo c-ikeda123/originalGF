@@ -86,7 +86,9 @@ function validateCardPlay(cards, phase, ailments = [], pendingDamage = null, def
     if (ailments.includes('flash') && defensesUsed + cards.length > 1) {
       return { valid: false, message: '閃光状態では防御神器を1つしか使えません。' };
     }
-    if (!cards.every(isDefenseCard)) {
+    const hasDefenseCard = cards.some(isDefenseCard);
+    const onlyDefenseAndMagicFree = cards.every(card => isDefenseCard(card) || card.supportEffect === 'magic_free');
+    if (!hasDefenseCard || !onlyDefenseAndMagicFree) {
       return { valid: false, message: '防御中に使用できる神器を選んでください。' };
     }
     if (pendingDamage) {
@@ -115,8 +117,8 @@ function validateCardPlay(cards, phase, ailments = [], pendingDamage = null, def
   }
 
   const combinationTypes = new Set(['weapon', 'accessory', 'miracle', 'item']);
-  const baseAttacks = cards.filter(card => card.attack > 0 && !card.additive);
-  const hasAttack = cards.some(card => card.attack > 0);
+  const baseAttacks = cards.filter(card => card.attack > 0 && !card.additive && card.supportEffect !== 'magic_free');
+  const hasAttack = baseAttacks.length > 0 || cards.some(card => card.additive && card.attack > 0);
   const actionMiracles = cards.filter(card => card.type === 'miracle' && card.attack <= 0 && !card.additive);
   const modifiersOnly = cards.every(card => card.attack > 0 || card.additive || card.supportEffect === 'magic_free');
   const validItemModifiers = cards.every(card => card.type !== 'item' || ['magic_free', 'increase_attack'].includes(card.supportEffect));
@@ -136,11 +138,12 @@ function combineAttributes(cards) {
 }
 
 function combineAttackCards(cards) {
-  const base = cards.find(card => card.attack > 0 && !card.additive)
-    || cards.find(card => card.attack > 0)
-    || cards.find(card => ['weapon', 'miracle'].includes(card.type))
+  const base = cards.find(card => card.attack > 0 && !card.additive && card.supportEffect !== 'magic_free')
+    || cards.find(card => card.attack > 0 && card.supportEffect !== 'magic_free')
+    || cards.find(card => card.type === 'miracle')
+    || cards.find(card => card.type === 'weapon')
     || cards[0];
-  const attackingCards = cards.filter(card => card.attack > 0);
+  const attackingCards = cards.filter(card => card.attack > 0 && card.supportEffect !== 'magic_free');
   let attack = base.attack || 0;
   for (const card of cards) {
     if (card === base) continue;
