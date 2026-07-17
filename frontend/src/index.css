@@ -1609,19 +1609,36 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gf-game-screen .gf-card-field .details {
+  position: relative;
+  width: 210px;
   height: 88px;
+  flex: none;
+  display: block;
   box-sizing: border-box;
-  padding: 4px 6px;
+  padding: 0;
   overflow: hidden;
 }
 
 .gf-game-screen .gf-card-field .card-name {
-  font: bold 16px/22px Georgia, serif;
+  position: absolute;
+  top: 7px;
+  right: 6px;
+  left: 6px;
+  height: 30px;
+  overflow: hidden;
+  font: bold 16px/30px Georgia, 'Yu Mincho', serif;
+  white-space: nowrap;
 }
 
 .gf-game-screen .gf-card-field .card-stat-text {
-  font-size: 12px !important;
-  line-height: 18px;
+  position: absolute;
+  top: 40px;
+  right: 6px;
+  left: 6px;
+  height: 46px;
+  overflow: hidden;
+  font: 13px/22px Georgia, 'Yu Mincho', serif;
+  white-space: nowrap;
 }
 
 .hovered-card-detail {
