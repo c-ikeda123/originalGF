@@ -377,6 +377,10 @@ function getTurnTimerKey(room) {
   return `${room.turn}:${room.phase}:${damageId}`;
 }
 
+function getNextEventTimestamp(previousTimestamp = 0, now = Date.now()) {
+  return Math.max(now, previousTimestamp + 1);
+}
+
 function clearFieldIfCurrent(room, scheduledField) {
   if (!room || !scheduledField || room.field !== scheduledField) return false;
   room.field = null;
@@ -398,6 +402,7 @@ module.exports = {
   getAssistantAction,
   getEarthArtifactMode,
   getDamageResolutionDelay,
+  getNextEventTimestamp,
   getNextAlivePlayerId,
   getReplacementDrawCount,
   getTurnTimerKey,

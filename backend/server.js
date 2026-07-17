@@ -17,6 +17,7 @@ const {
   getAssistantAction,
   getDamageResolutionDelay,
   getEarthArtifactMode,
+  getNextEventTimestamp,
   getNextAlivePlayerId,
   getReplacementDrawCount,
   getTurnTimerKey,
@@ -954,7 +955,7 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      followUpDelayMs: 650,
      targetId: player.id,
      isDark: isDarkAttack,
-     timestamp: Date.now(),
+     timestamp: getNextEventTimestamp(room.lastDamage?.timestamp),
    };
    room.actionLockedUntil = Date.now() + getDamageResolutionDelay(damageSequence.darkDamage);
 

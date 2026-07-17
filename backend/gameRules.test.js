@@ -15,6 +15,7 @@ const {
   getAssistantAction,
   getEarthArtifactMode,
   getDamageResolutionDelay,
+  getNextEventTimestamp,
   getNextAlivePlayerId,
   getReplacementDrawCount,
   getTurnTimerKey,
@@ -51,6 +52,11 @@ test('連続攻撃の防御タイマーはダメージごとに識別する', ()
   assert.equal(getTurnTimerKey(room), 'player:defense:1');
   room.players.player.pendingDamage.id = 2;
   assert.equal(getTurnTimerKey(room), 'player:defense:2');
+});
+
+test('同一時刻の連続ダメージにも異なるイベント時刻を付ける', () => {
+  assert.equal(getNextEventTimestamp(1000, 1000), 1001);
+  assert.equal(getNextEventTimestamp(1000, 2000), 2000);
 });
 
 test('古い盤面の消去予約は新しい敵攻撃を消さない', () => {
