@@ -30,6 +30,12 @@ test('攻撃力などの効果変更を編集差分に残す', () => {
   }), { attack: 45 });
 });
 
+test('属性と攻撃対象の変更を編集差分に残す', () => {
+  assert.deepEqual(normalizeBaseCardEdit({ ...baseCard, attribute: 'fire', target: 'single' }, {
+    attribute: 'water', target: 'all',
+  }), { attribute: 'water', target: 'all' });
+});
+
 test('既定の効果と同じ値は編集差分に含めない', () => {
   assert.deepEqual(normalizeBaseCardEdit(baseCard, {
     attack: baseCard.attack, ailmentInflict: baseCard.ailmentInflict,
@@ -39,6 +45,12 @@ test('既定の効果と同じ値は編集差分に含めない', () => {
 test('未知の効果と型や範囲が不正な効果を除外する', () => {
   assert.deepEqual(normalizeBaseCardEdit(baseCard, {
     attack: '999', hitRate: 101, unknownEffect: true,
+  }), {});
+});
+
+test('不正な属性と不完全な瀕死時攻撃を除外する', () => {
+  assert.deepEqual(normalizeBaseCardEdit(baseCard, {
+    attribute: 'invalid', target: 'everyone', dyingAttack: { hitRate: 50 },
   }), {});
 });
 

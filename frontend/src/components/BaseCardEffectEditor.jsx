@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   getSpecialEffects,
+  enumEffectFields,
   primaryEffectFields,
   sanitizeBaseCardValue,
   specialEffectFields,
@@ -14,6 +15,13 @@ const primaryLabels = {
   healMp: 'MP回復量',
   costMoney: '￥消費・価格',
   costMp: 'MP消費',
+  attribute: '属性',
+  target: '対象',
+};
+
+const enumOptions = {
+  attribute: [['none', '無'], ['fire', '火'], ['water', '水'], ['wood', '木'], ['earth', '土'], ['light', '光'], ['dark', '闇']],
+  target: [['single', '単体'], ['all', '全体']],
 };
 
 const specialLabels = {
@@ -85,6 +93,14 @@ export default function BaseCardEffectEditor({ baseCard, card, disabled = false,
               disabled={disabled}
               onChange={event => changeNumber(key, event.target.value)}
             />
+          </label>
+        ))}
+        {enumEffectFields.map(key => (
+          <label key={key}>
+            <span>{primaryLabels[key]}</span>
+            <select className="input-field" value={card[key] ?? enumOptions[key][0][0]} disabled={disabled} onChange={event => onChange({ ...card, [key]: event.target.value })}>
+              {enumOptions[key].map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+            </select>
           </label>
         ))}
       </div>

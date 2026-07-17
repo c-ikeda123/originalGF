@@ -1,19 +1,20 @@
 import fields from '../../../shared/baseCardEditableFields.json';
 
 export const primaryEffectFields = fields.primaryNumberFields;
+export const enumEffectFields = fields.primaryEnumFields;
 export const specialEffectFields = [
   ...fields.specialNumberFields,
   ...fields.specialBooleanFields,
   ...fields.specialStringFields,
   ...fields.specialJsonFields,
 ];
-export const effectFields = [...primaryEffectFields, ...specialEffectFields];
+export const effectFields = [...primaryEffectFields, ...enumEffectFields, ...specialEffectFields];
 export const editableKeys = [...fields.textFields, ...effectFields];
 
 const valuesEqual = (left, right) => JSON.stringify(left) === JSON.stringify(right);
 const numberFields = new Set([...fields.primaryNumberFields, ...fields.specialNumberFields]);
 const booleanFields = new Set(fields.specialBooleanFields);
-const stringFields = new Set([...fields.textFields, ...fields.specialStringFields]);
+const stringFields = new Set([...fields.textFields, ...fields.primaryEnumFields, ...fields.specialStringFields]);
 const jsonFields = new Set(fields.specialJsonFields);
 
 export function sanitizeBaseCardValue(key, value) {
@@ -26,13 +27,23 @@ export function sanitizeBaseCardValue(key, value) {
   if (stringFields.has(key)) {
     if (value === null && fields.specialStringFields.includes(key)) return null;
     if (typeof value !== 'string') return undefined;
+    if (key === 'attribute' && !['none', 'fire', 'water', 'wood', 'earth', 'light', 'dark'].includes(value)) return undefined;
+    if (key === 'target' && !['single', 'all'].includes(value)) return undefined;
     const maximum = key === 'imageUrl' ? 1_500_000 : key === 'description' ? 2_000 : 100;
     return value.length <= maximum ? value : undefined;
   }
   if (jsonFields.has(key)) {
     if (value === null) return null;
     if (key === 'cureAilments' && !(typeof value === 'string' || Array.isArray(value))) return undefined;
-    if (key === 'dyingAttack' && (!value || typeof value !== 'object' || Array.isArray(value))) return undefined;
+    if (key === 'dyingAttack') {
+      if (!value || typeof value !== 'object' || Array.isArray(value)) return undefined;
+      const allowedKeys = ['attack', 'hitRate', 'attribute', 'target'];
+      if (Object.keys(value).some(nestedKey => !allowedKeys.includes(nestedKey))) return undefined;
+      if (!Number.isInteger(value.attack) || value.attack < 0 || value.attack > 999) return undefined;
+      if (value.hitRate !== undefined && (!Number.isInteger(value.hitRate) || value.hitRate < 0 || value.hitRate > 100)) return undefined;
+      if (value.attribute !== undefined && !['none', 'fire', 'water', 'wood', 'earth', 'light', 'dark'].includes(value.attribute)) return undefined;
+      if (value.target !== undefined && !['single', 'all'].includes(value.target)) return undefined;
+    }
     return JSON.stringify(value).length <= 2_000 ? value : undefined;
   }
   return undefined;

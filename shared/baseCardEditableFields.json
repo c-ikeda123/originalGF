@@ -1,6 +1,7 @@
 {
   "textFields": ["name", "description", "imageUrl"],
   "primaryNumberFields": ["attack", "defense", "hitRate", "healHp", "healMp", "costMoney", "costMp"],
+  "primaryEnumFields": ["attribute", "target"],
   "specialNumberFields": ["actionRate", "attackBonus", "leaveOnDamageRate", "moneyGain", "randomHp", "removeItems", "removeMiracles", "repeatCount", "reviveHp", "supportValue"],
   "specialBooleanFields": ["additive", "lethalOnDamage", "mortar", "mystery", "redrawHand", "setAssistant"],
   "specialStringFields": ["ailmentInflict", "ailmentTrigger", "attackEffect", "defenseEffect", "effect", "reactiveEffect", "retaliateAilment", "selfAilment", "supportEffect", "weaponKind"],
