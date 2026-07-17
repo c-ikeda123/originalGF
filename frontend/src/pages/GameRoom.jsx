@@ -3,6 +3,7 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import '../index.css';
 import RoomBaseEditor from './RoomBaseEditor';
+import { playSound } from '../soundEffects';
 
 let socket;
 const serverUrl = import.meta.env.VITE_SERVER_URL
@@ -28,44 +29,9 @@ export default function GameRoom() {
   const lastActionId = useRef(null);
   const damageTimer = useRef(null);
   const actionTimer = useRef(null);
-  const audioContext = useRef(null);
-
-  const enableAudio = () => {
-    if (!audioContext.current) {
-      const AudioContext = window.AudioContext || window.webkitAudioContext;
-      if (AudioContext) audioContext.current = new AudioContext();
-    }
-    audioContext.current?.resume();
-    return audioContext.current;
-  };
-
-  const playEffectSound = (effect) => {
-    const context = enableAudio();
-    if (!context || context.state !== 'running') return;
-    const notes = effect === 'damage' ? [110, 70]
-      : effect === 'evade' ? [520, 760]
-        : effect === 'unavoidable' ? [180, 180, 120]
-          : effect === 'hit' ? [240, 360] : [320];
-    const start = context.currentTime;
-    notes.forEach((frequency, index) => {
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      oscillator.type = effect === 'damage' ? 'sawtooth' : 'sine';
-      oscillator.frequency.setValueAtTime(frequency, start + index * 0.07);
-      gain.gain.setValueAtTime(0.0001, start + index * 0.07);
-      gain.gain.exponentialRampToValueAtTime(0.09, start + index * 0.07 + 0.015);
-      gain.gain.exponentialRampToValueAtTime(0.0001, start + index * 0.07 + 0.14);
-      oscillator.connect(gain).connect(context.destination);
-      oscillator.start(start + index * 0.07);
-      oscillator.stop(start + index * 0.07 + 0.15);
-    });
-  };
-
   useEffect(() => {
     socket = io(serverUrl);
     socket.on('connect', () => setSocketId(socket.id));
-    const unlockAudio = () => enableAudio();
-    window.addEventListener('pointerdown', unlockAudio, { once: true });
 
     const savedCards = JSON.parse(localStorage.getItem('gf_custom_cards') || '[]');
     const baseCardsEdits = JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}');
@@ -90,7 +56,7 @@ export default function GameRoom() {
         setDamageAnim(damage);
         clearTimeout(damageTimer.current);
         damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
-        playEffectSound('damage');
+        playSound(damage.isDark ? 'damage_dark' : 'damage');
       }
       const action = data.lastAction;
       if (action && action.id !== lastActionId.current) {
@@ -98,7 +64,7 @@ export default function GameRoom() {
         setActionAnim(action);
         clearTimeout(actionTimer.current);
         actionTimer.current = setTimeout(() => setActionAnim(null), 1400);
-        playEffectSound(action.outcome);
+        playSound(action.outcome === 'evade' ? 'miss' : 'hit');
       }
     });
 
@@ -121,7 +87,6 @@ export default function GameRoom() {
     return () => {
       clearTimeout(damageTimer.current);
       clearTimeout(actionTimer.current);
-      window.removeEventListener('pointerdown', unlockAudio);
       socket.disconnect();
     };
   }, [id, playerName, navigate]);
