@@ -49,6 +49,22 @@ test('Flash版の昇天画像が原寸で存在する', () => {
   assert.equal(png.readUInt32BE(20), 160);
 });
 
+test('戦闘アニメーションに使うFlash版画像がすべて存在する', () => {
+  const japaneseEffects = [
+    'block', 'cold', 'damage', 'damage_dark', 'dark_cloud', 'dead', 'fever', 'flick',
+    'fog', 'glory', 'harm_remove', 'heaven', 'hell', 'illusion', 'no_change', 'reflect', 'seizure',
+  ];
+  const numericEffects = ['damage', 'damage_dark', 'hp', 'mp', 'yen'];
+  for (const effect of japaneseEffects) {
+    assert.equal(fs.existsSync(path.join(publicDir, 'godfield-flash', 'ui', 'game-ja', 'effect', `${effect}.png`)), true, effect);
+  }
+  for (const effect of numericEffects) {
+    for (let digit = 0; digit <= 9; digit++) {
+      assert.equal(fs.existsSync(path.join(publicDir, 'godfield-flash', 'ui', 'game', 'effect', `${effect}_${digit}.png`)), true, `${effect}_${digit}`);
+    }
+  }
+});
+
 test('ホバー音を除くFlash版効果音がゲームイベントまたは画面操作に割り当てられている', () => {
   const implementation = [
     fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8'),
