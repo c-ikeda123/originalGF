@@ -1196,10 +1196,13 @@ h1, h2, h3, h4, h5, h6 {
 
 .gf-game-frame {
   position: relative;
-  overflow: hidden;
+  overflow: clip;
 }
 
 .gf-game-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 1024px;
   height: 768px;
   min-width: 0;
