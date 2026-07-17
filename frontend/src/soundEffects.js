@@ -27,26 +27,6 @@ export function playSound(name, volume = 0.7) {
 }
 
 export function installUiSounds(root = document) {
-  let lastHoveredButton = null;
-
-  const onPointerOver = event => {
-    if (event.target.closest('.lobby-players span, .player-pill')) {
-      playSound('entry_toggle_over', 0.3);
-      return;
-    }
-    const button = event.target.closest('button, [role="button"]');
-    if (button && button !== lastHoveredButton && !button.disabled) {
-      lastHoveredButton = button;
-      playSound(button.dataset.soundOver
-        || (button.closest('.learned-miracles') ? 'book_tab_over' : 'button_over'), 0.35);
-    }
-  };
-
-  const onPointerOut = event => {
-    const button = event.target.closest('button, [role="button"]');
-    if (button && !button.contains(event.relatedTarget)) lastHoveredButton = null;
-  };
-
   const onPointerDown = event => {
     const explicit = event.target.closest('[data-sound-down]');
     if (explicit?.dataset.soundDown) {
@@ -75,15 +55,11 @@ export function installUiSounds(root = document) {
     if (event.target.matches('input, select, textarea')) playSound('toggle_down', 0.45);
   };
 
-  root.addEventListener('pointerover', onPointerOver);
-  root.addEventListener('pointerout', onPointerOut);
   root.addEventListener('pointerdown', onPointerDown);
   root.addEventListener('change', onChange);
   preloadSounds();
 
   return () => {
-    root.removeEventListener('pointerover', onPointerOver);
-    root.removeEventListener('pointerout', onPointerOut);
     root.removeEventListener('pointerdown', onPointerDown);
     root.removeEventListener('change', onChange);
   };

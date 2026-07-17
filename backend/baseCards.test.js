@@ -42,12 +42,21 @@ test('Flash版の効果音46種がすべて存在する', () => {
   }
 });
 
-test('Flash版の効果音46種がゲームイベントまたは画面操作に割り当てられている', () => {
+test('ホバー音を除くFlash版効果音がゲームイベントまたは画面操作に割り当てられている', () => {
   const implementation = [
     fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8'),
     fs.readFileSync(path.join(__dirname, '..', 'frontend', 'src', 'soundEffects.js'), 'utf8'),
     fs.readFileSync(path.join(__dirname, '..', 'frontend', 'src', 'pages', 'GameRoom.jsx'), 'utf8'),
   ].join('\n');
 
-  flashSounds.forEach(sound => assert.match(implementation, new RegExp(`['\"]${sound}['\"]`), sound));
+  const disabledHoverSounds = new Set(['entry_toggle_over', 'button_over', 'book_tab_over']);
+  flashSounds
+    .filter(sound => !disabledHoverSounds.has(sound))
+    .forEach(sound => assert.match(implementation, new RegExp(`['\"]${sound}['\"]`), sound));
+});
+
+test('カーソルを重ねただけでは効果音を鳴らさない', () => {
+  const implementation = fs.readFileSync(path.join(__dirname, '..', 'frontend', 'src', 'soundEffects.js'), 'utf8');
+  assert.doesNotMatch(implementation, /addEventListener\(['\"]pointerover['\"]/);
+  assert.match(implementation, /addEventListener\(['\"]pointerdown['\"]/);
 });
