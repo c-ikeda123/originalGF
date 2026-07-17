@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { canAddCardToSelection, getNextCardSelection } from './cardSelection.js';
+import { canAddCardToSelection, getDefenseTotal, getNextCardSelection } from './cardSelection.js';
 
 const weapon = { type: 'weapon', attack: 5 };
 const otherWeapon = { type: 'weapon', attack: 8 };
@@ -36,4 +36,8 @@ test('組み合わせられない神器を押すと新しい1枚へ選択を切�
 test('選択済みの神器を押すとその神器だけを選択解除する', () => {
   const hand = [weapon, additive];
   assert.deepEqual(getNextCardSelection([0, 1], 1, hand, 'main'), [0]);
+});
+
+test('選択中を含む防具の守備力をリアルタイム合算する', () => {
+  assert.equal(getDefenseTotal([{ defense: 2 }, { defense: 3 }, { defenseEffect: 'block_magic' }]), 5);
 });

@@ -48,3 +48,7 @@ export function getNextCardSelection(selectedIndices, nextIndex, hand, phase, ha
   }
   return [...selectedIndices, nextIndex].sort((a, b) => a - b);
 }
+
+export function getDefenseTotal(cards) {
+  return cards.reduce((total, card) => total + Math.max(0, Number(card?.defense) || 0), 0);
+}

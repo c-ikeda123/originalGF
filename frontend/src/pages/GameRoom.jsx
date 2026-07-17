@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import '../index.css';
 import RoomBaseEditor from './RoomBaseEditor';
 import { playSound } from '../soundEffects';
-import { getNextCardSelection } from '../utils/cardSelection';
+import { getDefenseTotal, getNextCardSelection } from '../utils/cardSelection';
 import { getDreamDisplayedCard, isDreamAffectedCard } from '../utils/dreamCards';
 
 let socket;
@@ -393,6 +393,14 @@ export default function GameRoom() {
     );
   };
 
+  const selectedDefenseCards = phase === 'defense'
+    ? selectedCards.map(index => getDisplayedCard(me.hand[index], index)).filter(Boolean)
+    : [];
+  const displayedDefenseTotal = getDefenseTotal([
+    ...(field?.defenseCards || []),
+    ...selectedDefenseCards,
+  ]);
+
   const handlePlayCard = (cardIndex) => {
     if (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex)) return;
     const cardIndices = selectedCards.includes(cardIndex) ? selectedCards : [cardIndex];
@@ -701,7 +709,7 @@ export default function GameRoom() {
           {field?.defenderId && (
             <div className="gf-combat-totals">
               <span>攻{field.attackCard.attack || 0}</span>
-              <span>守{field.defenseCards?.reduce((sum, card) => sum + (card.defense || 0), 0) || 0}</span>
+              <span>守{displayedDefenseTotal}</span>
             </div>
           )}
         </main>
