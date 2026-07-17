@@ -31,12 +31,19 @@ export default function GameRoom() {
   const [teamChat, setTeamChat] = useState(false);
   const [now, setNow] = useState(Date.now());
   const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
+  const [battleScale, setBattleScale] = useState(() => Math.min(window.innerWidth / 1024, window.innerHeight / 768));
   const lastDamageTimestamp = useRef(null);
   const lastActionId = useRef(null);
   const lastSoundEventId = useRef(0);
   const soundTimers = useRef([]);
   const damageTimer = useRef(null);
   const actionTimer = useRef(null);
+  useEffect(() => {
+    const updateBattleScale = () => setBattleScale(Math.min(window.innerWidth / 1024, window.innerHeight / 768));
+    window.addEventListener('resize', updateBattleScale);
+    return () => window.removeEventListener('resize', updateBattleScale);
+  }, []);
+
   useEffect(() => {
     const activeSoundTimers = soundTimers.current;
     socket = io(serverUrl);
@@ -395,13 +402,15 @@ export default function GameRoom() {
       : actionAnim?.outcome === 'hit' ? '命中' : '使用';
 
   return (
-    <div className="gf-game-screen">
+    <div className="gf-game-viewport">
+      <div className="gf-game-frame" style={{ width: 1024 * battleScale, height: 768 * battleScale }}>
+        <div className="gf-game-screen" style={{ transform: `scale(${battleScale})` }}>
       {gameState.spectator && <div className="spectator-banner">観戦中（操作はできません）</div>}
 
       <div className="gf-battle-header">
         <button type="button" onClick={() => navigate('/')}>修行</button>
         <span>部屋 {id}</span>
-        <strong>{gameState.gameStateStr === 'ended' ? '決着' : 'God Field'}</strong>
+        <strong className="gf-battle-title">God Field</strong>
         {remainingSeconds !== null && <span className={remainingSeconds <= 10 ? 'timer-warning' : ''}>残り {remainingSeconds}秒</span>}
         <button type="button">教典</button>
       </div>
@@ -529,9 +538,12 @@ export default function GameRoom() {
                <button className="btn btn-secondary" onClick={() => { socket.emit('discardCards', { roomName: id, cardIndices: selectedCards }); setSelectedCards([]); }}>捨てる ({selectedCards.length})</button>
             )}
           </div>
-          <button type="button" className="gf-back-button" onClick={() => navigate('/')}>Back</button>
         </section>
       </div>
+
+      <footer className="gf-battle-footer">
+        <button type="button" className="gf-back-button" onClick={() => navigate('/')}>Back</button>
+      </footer>
 
       {isMyTurn && phase === 'exchange' && (
         <div className="shrine-overlay">
@@ -591,6 +603,8 @@ export default function GameRoom() {
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

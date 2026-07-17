@@ -1181,3 +1181,228 @@ h1, h2, h3, h4, h5, h6 {
     font-size: 9px;
   }
 }
+
+/* Flash版の実寸（1024×768）を基準にした戦闘画面 */
+.gf-game-viewport {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #004b3c;
+}
+
+.gf-game-frame {
+  position: relative;
+  overflow: hidden;
+}
+
+.gf-game-screen {
+  width: 1024px;
+  height: 768px;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 30px 708px 30px;
+  transform-origin: top left;
+  color: #335c50;
+  background: #55bca8;
+  font-family: Georgia, 'Yu Mincho', serif;
+}
+
+.gf-battle-header,
+.gf-battle-footer {
+  width: 1024px;
+  height: 30px;
+  box-sizing: border-box;
+  border: 0;
+  background: url('/godfield-flash/ui/main/bar_top.png') 0 0 / 1024px 30px no-repeat;
+}
+
+.gf-battle-header {
+  grid-template-columns: 68px 1fr 110px 1fr 68px;
+  gap: 4px;
+  padding: 0 4px;
+  color: #effff2;
+  font: 11px/30px Arial, sans-serif;
+}
+
+.gf-battle-header button,
+.gf-back-button {
+  height: 20px;
+  min-width: 60px;
+  padding: 0 7px;
+  color: #426c45;
+  border: 1px solid #40844f;
+  background: linear-gradient(#ffffd9, #ead577);
+  box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.28);
+  font: 11px/18px Georgia, serif;
+}
+
+.gf-battle-title {
+  width: 55px;
+  height: 15px;
+  justify-self: center;
+  overflow: hidden;
+  color: transparent !important;
+  background: url('/godfield-flash/ui/main/title.png') 0 0 / 55px 15px no-repeat;
+  text-shadow: none !important;
+}
+
+.gf-battle-shell {
+  width: 1024px;
+  height: 708px;
+  display: block;
+  overflow: hidden;
+  background: url('/godfield-flash/ui/game/background.jpg') 0 0 / 1024px 708px no-repeat;
+}
+
+.gf-battle-footer {
+  position: relative;
+  background-image: url('/godfield-flash/ui/main/bar_bottom.png');
+}
+
+.gf-back-button {
+  right: 4px;
+  bottom: 5px;
+  width: 60px;
+  min-height: 20px;
+}
+
+.gf-battle-stage {
+  position: absolute;
+  inset: 0;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.gf-battle-sidebar {
+  position: absolute;
+  top: 4px;
+  right: 3px;
+  bottom: 4px;
+  width: 179px;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(80px, 1fr) auto;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.battle-player-list {
+  width: 150px;
+  justify-self: end;
+  gap: 1px;
+}
+
+.battle-player {
+  width: 150px;
+  height: 20px;
+  min-height: 20px;
+  box-sizing: border-box;
+  grid-template-columns: 12px 60px 1fr;
+  column-gap: 1px;
+  padding: 0 4px 0 0;
+  border: 0;
+  background: url('/godfield-flash/ui/game/status/single_up.png') 0 0 / 150px 20px no-repeat;
+  font: 8px/10px Arial, sans-serif;
+}
+
+.battle-player.active {
+  border: 0;
+  background-image: url('/godfield-flash/ui/game/status/single_down.png');
+}
+
+.battle-player-marker {
+  color: transparent;
+}
+
+.battle-player-name {
+  color: #237a46;
+  font-size: 9px;
+}
+
+.battle-player-stats {
+  gap: 2px;
+  font-size: 7px;
+}
+
+.battle-player-ailments {
+  display: none;
+}
+
+.gf-battle-log,
+.gf-battle-sidebar .chat-panel {
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  background: rgba(234, 255, 190, 0.82);
+  font-size: 9px;
+}
+
+.gf-battle-sidebar .chat-panel {
+  width: 179px;
+  min-height: 101px;
+  padding: 3px;
+  background: url('/godfield-flash/ui/room/chat.png') 0 0 / 178.5px 101px no-repeat;
+}
+
+.gf-hand-dock {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 334px;
+  height: 152px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 4px 5px;
+  border: 0;
+  background: url('/godfield-flash/ui/game/item/list.png') 0 0 / 333.5px 152px no-repeat;
+}
+
+.gf-hand-cards {
+  width: 324px;
+  height: 82px;
+  display: grid;
+  grid-template-columns: repeat(8, 40px);
+  grid-auto-rows: 40px;
+  gap: 1px 0;
+  overflow: hidden;
+}
+
+.gf-hand-dock .gf-card-square {
+  width: 40px;
+  height: 40px;
+  box-sizing: border-box;
+  border-width: 1px;
+  box-shadow: none;
+}
+
+.gf-hand-dock .gf-card-square .stat-bar {
+  height: 9px;
+  font-size: 7px;
+  line-height: 9px;
+}
+
+.gf-hand-dock .gf-card-square:hover,
+.gf-hand-dock .gf-card-square.selected {
+  transform: translateY(-1px);
+}
+
+.gf-hand-actions {
+  top: 87px;
+  right: 4px;
+  bottom: auto;
+  width: 125px;
+  gap: 1px;
+}
+
+.gf-hand-actions .btn {
+  min-height: 19px;
+  padding: 0 4px;
+  background: url('/godfield-flash/ui/game/command/ok_button_up.png') 0 0 / 125px 19px no-repeat;
+  border: 0;
+  box-shadow: none;
+  font-size: 9px;
+}
