@@ -1329,7 +1329,7 @@ h1, h2, h3, h4, h5, h6 {
   background: url('/godfield-flash/ui/game/status/single_up.png') 0 0 / 300px 40px no-repeat;
 }
 
-.battle-player.opponent::before {
+.battle-player.team-single.opponent::before {
   filter: sepia(0.65) saturate(4) hue-rotate(292deg) brightness(1.04);
 }
 
@@ -1337,8 +1337,18 @@ h1, h2, h3, h4, h5, h6 {
   filter: saturate(1.45) brightness(0.96);
 }
 
-.battle-player.opponent.active::before {
+.battle-player.team-single.opponent.active::before {
   filter: sepia(0.75) saturate(5) hue-rotate(292deg) brightness(0.94);
+}
+
+.battle-player.team-red::before {
+  background-image: url('/godfield-flash/ui/game/status/team2_up.png');
+  filter: none;
+}
+
+.battle-player.team-blue::before {
+  background-image: url('/godfield-flash/ui/game/status/team1_up.png');
+  filter: none;
 }
 
 .battle-player-marker {
