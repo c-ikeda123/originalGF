@@ -370,9 +370,9 @@ io.on('connection', (socket) => {
            room.log.push(`${card.name} が ${opponent.name} の奇跡を ${removed.length} 個忘れさせた。`);
          }
          if (card.setAssistant) setRandomAssistant(player, room);
-         if (card.mystery) resolveMystery(room, player);
+         const mysteryQueuedAttack = card.mystery && resolveMystery(room, player, opponentId, roomName);
          room.log.push(`${player.name} は ${card.name} の効果を受けた。`);
-         endTurnInternal(room, opponentId);
+         if (!mysteryQueuedAttack) endTurnInternal(room, opponentId);
        } else if (combinedCard.type === 'miracle') {
          if (combinedCard.attack > 0) {
            queueAttackSequence(room, player, opponentId, combinedCard, cards, roomName);
@@ -799,17 +799,28 @@ function runAssistantAction(room, player, roomName) {
   }
 }
 
-function resolveMystery(room, actor) {
+function resolveMystery(room, actor, nextTurnId, roomName) {
   const type = ASSISTANT_TYPES[Math.floor(Math.random() * ASSISTANT_TYPES.length)];
   const players = Object.values(room.players).filter(player => !player.ascended && player.hp > 0);
   if (type === 'mars') players.forEach(player => applyAilment(player, 'fever'));
   if (type === 'mercury') players.forEach(player => applyAilment(player, 'fog'));
   if (type === 'jupiter') players.forEach(player => applyAilment(player, 'dream'));
   if (type === 'saturn') players.forEach(player => { player.hp = 1; });
-  if (type === 'uranus' && players.length) players[Math.floor(Math.random() * players.length)].hp -= 60;
-  if (type === 'pluto') players.filter(player => player.id !== actor.id).forEach(player => {
-    if (Math.random() < 0.75) player.hp = 0;
-  });
+  if (type === 'uranus' && players.length) {
+    const target = players[Math.floor(Math.random() * players.length)];
+    const card = {
+      id: 'mystery_uranus', name: 'URANUS', type: 'item', sourceType: 'item',
+      attack: 60, hitRate: 100, attribute: 'light', target: 'single', forcedTargetId: target.id,
+    };
+    queueAttackSequence(room, actor, nextTurnId, card, [card], roomName);
+  }
+  if (type === 'pluto') {
+    const card = {
+      id: 'mystery_pluto', name: 'PLUTO', type: 'item', sourceType: 'item',
+      attack: 30, hitRate: 75, attribute: 'dark', target: 'all',
+    };
+    queueAttackSequence(room, actor, nextTurnId, card, [card], roomName);
+  }
   if (type === 'neptune') actor.hp = Math.min(99, actor.hp + 60);
   if (type === 'venus') players.forEach(player => { player.money = 99; });
   if (type === 'earth') {
@@ -823,6 +834,7 @@ function resolveMystery(room, actor) {
   }
   if (type === 'moon') players.forEach(player => setRandomAssistant(player, room));
   room.log.push(`超常現象「${type}」が起こった。`);
+  return type === 'uranus' || type === 'pluto';
 }
 
 function forceSale(room, seller, buyer, card) {
