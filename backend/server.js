@@ -281,12 +281,8 @@ io.on('connection', (socket) => {
   socket.on('updateRoomBaseCard', ({ roomName, cardId, patch }) => {
     const room = rooms[roomName];
     if (!room || !room.players[socket.id] || room.state !== 'waiting' || room.editLocks[cardId] !== socket.id) return;
-    const allowed = {};
-    for (const key of ['name', 'description', 'imageUrl']) {
-      if (typeof patch?.[key] === 'string') allowed[key] = patch[key];
-    }
     const baseCard = GF_BASE_CARDS.find(card => card.id === cardId);
-    const normalized = normalizeBaseCardEdit(baseCard, { ...(room.baseCardsEdits[cardId] || {}), ...allowed });
+    const normalized = normalizeBaseCardEdit(baseCard, patch);
     if (Object.keys(normalized).length > 0) room.baseCardsEdits[cardId] = normalized;
     else delete room.baseCardsEdits[cardId];
     emitBaseEditorState(roomName);
@@ -298,12 +294,8 @@ io.on('connection', (socket) => {
     for (const [cardId, patch] of Object.entries(edits)) {
       if (room.editLocks[cardId] && room.editLocks[cardId] !== socket.id) continue;
       if (!GF_BASE_CARDS.some(card => card.id === cardId)) continue;
-      const allowed = {};
-      for (const key of ['name', 'description', 'imageUrl']) {
-        if (typeof patch?.[key] === 'string') allowed[key] = patch[key];
-      }
       const baseCard = GF_BASE_CARDS.find(card => card.id === cardId);
-      const normalized = normalizeBaseCardEdit(baseCard, { ...(room.baseCardsEdits[cardId] || {}), ...allowed });
+      const normalized = normalizeBaseCardEdit(baseCard, patch);
       if (Object.keys(normalized).length > 0) room.baseCardsEdits[cardId] = normalized;
       else delete room.baseCardsEdits[cardId];
     }
