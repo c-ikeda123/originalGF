@@ -389,7 +389,7 @@ export default function GameRoom() {
   );
 
   const renderPlayerStatus = (player, isSelf = false) => player && (
-    <div className={`battle-player ${turn === player.id ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}>
+    <div className={`battle-player ${isSelf ? 'self' : 'opponent'} ${turn === player.id ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}>
       <span className="battle-player-marker">●</span>
       <span className="battle-player-name">{player.name}{isSelf ? ' (You)' : ''}</span>
       {hasFog && !isSelf ? (
