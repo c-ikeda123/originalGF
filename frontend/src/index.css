@@ -1862,6 +1862,49 @@ h1, h2, h3, h4, h5, h6 {
   100% { opacity: 0; transform: translate(-50%, -40px) scale(0.96); }
 }
 
+.status-effect-overlay {
+  position: absolute;
+  top: 27%;
+  left: 50%;
+  z-index: 126;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: statusEffectStamp 1.25s ease-out forwards;
+}
+
+.status-effect-overlay.target-me {
+  top: 63%;
+}
+
+.status-effect-overlay img {
+  width: auto;
+  max-width: 360px;
+  height: 145px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.7));
+}
+
+.status-effect-overlay span {
+  min-width: 170px;
+  padding: 2px 14px;
+  border-radius: 999px;
+  background: rgba(0, 45, 43, 0.76);
+  color: #fffde7;
+  font: bold 15px/24px Georgia, 'Yu Mincho', serif;
+  text-align: center;
+  text-shadow: 0 2px 2px #000;
+}
+
+@keyframes statusEffectStamp {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(0.9); }
+  28%, 72% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -68%) scale(1.03); }
+}
+
 .ascension-overlay {
   position: absolute;
   inset: 0;

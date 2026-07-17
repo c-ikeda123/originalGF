@@ -8,6 +8,12 @@ import { playSound } from '../soundEffects';
 let socket;
 const serverUrl = import.meta.env.VITE_SERVER_URL
   || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
+const RESOURCE_EFFECT_TYPES = new Set(['hp_increase', 'mp_increase', 'yen_increase']);
+const EFFECT_LABELS = {
+  cold: '風邪', fever: '熱病', hell: '地獄病', heaven: '天国病', fog: '霧',
+  glory: '閃光', illusion: '夢', dark_cloud: '暗雲', harm_remove: '災い解除',
+  reflect: '反射', flick: '弾き', block: '防御', seizure: '奇跡消去', no_change: '効果なし',
+};
 
 export default function GameRoom() {
   const { id } = useParams();
@@ -537,15 +543,27 @@ export default function GameRoom() {
           </div>
         )}
         {effectAnim && (
-          <div
-            key={effectAnim.id}
-            className={`resource-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
-            role="status"
-            aria-label={`${effectAnim.playerName}の${effectAnim.type}が${effectAnim.amount}増加`}
-          >
-            <img className="resource-effect-label" src={`/godfield-flash/ui/game/effect/${effectAnim.type}.png`} alt="" />
-            <div className="resource-effect-number">{renderEffectNumber(effectAnim.type, effectAnim.amount)}</div>
-          </div>
+          RESOURCE_EFFECT_TYPES.has(effectAnim.type) ? (
+            <div
+              key={effectAnim.id}
+              className={`resource-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              role="status"
+              aria-label={`${effectAnim.playerName}の${effectAnim.type}が${effectAnim.amount}増加`}
+            >
+              <img className="resource-effect-label" src={`/godfield-flash/ui/game/effect/${effectAnim.type}.png`} alt="" />
+              <div className="resource-effect-number">{renderEffectNumber(effectAnim.type, effectAnim.amount)}</div>
+            </div>
+          ) : (
+            <div
+              key={effectAnim.id}
+              className={`status-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              role="status"
+              aria-label={`${effectAnim.playerName}に${EFFECT_LABELS[effectAnim.type] || effectAnim.type}`}
+            >
+              <img src={`/godfield-flash/ui/game-ja/effect/${effectAnim.type}.png`} alt={EFFECT_LABELS[effectAnim.type] || effectAnim.type} />
+              {effectAnim.playerName && <span>{effectAnim.playerName}</span>}
+            </div>
+          )
         )}
         {damageAnim && (
           <div
