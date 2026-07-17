@@ -17,6 +17,7 @@ const {
   getDamageResolutionDelay,
   getNextAlivePlayerId,
   getReplacementDrawCount,
+  getTurnTimerKey,
   getWinningSide,
   isActionLocked,
   isDefenseCard,
@@ -40,6 +41,16 @@ test('習得済み奇跡は手札を消費していないので補充しない',
   assert.equal(getReplacementDrawCount(0), 0);
   assert.equal(getReplacementDrawCount(1), 1);
   assert.equal(getReplacementDrawCount(1, true), 0);
+});
+
+test('連続攻撃の防御タイマーはダメージごとに識別する', () => {
+  const room = {
+    state: 'playing', turn: 'player', phase: 'defense',
+    players: { player: { pendingDamage: { id: 1 } } },
+  };
+  assert.equal(getTurnTimerKey(room), 'player:defense:1');
+  room.players.player.pendingDamage.id = 2;
+  assert.equal(getTurnTimerKey(room), 'player:defense:2');
 });
 
 test('古い盤面の消去予約は新しい敵攻撃を消さない', () => {

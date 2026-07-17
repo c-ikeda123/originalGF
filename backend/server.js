@@ -19,6 +19,7 @@ const {
   getEarthArtifactMode,
   getNextAlivePlayerId,
   getReplacementDrawCount,
+  getTurnTimerKey,
   getWinningSide,
   isActionLocked,
   isDefenseCard,
@@ -174,6 +175,7 @@ io.on('connection', (socket) => {
         field: null,
         lastDamage: null,
         lastAction: null,
+        damageSeq: 0,
         soundEvents: [],
         soundSeq: 0,
         ascensionEvents: [],
@@ -364,6 +366,7 @@ io.on('connection', (socket) => {
     room.lastDamage = null;
     room.lastAction = null;
     room.actionLockedUntil = 0;
+    room.damageSeq = 0;
     room.soundEvents = [];
     room.soundSeq = 0;
     room.effectEvents = [];
@@ -683,6 +686,7 @@ io.on('connection', (socket) => {
            } else {
              target.pendingDamage = {
                ...pDamage,
+               id: ++room.damageSeq,
                amount: resolution.amount,
                attackerId: player.id,
                source: player.name,
@@ -1049,6 +1053,7 @@ function startNextQueuedAttack(room, roomName) {
     }
     addSoundEvent(room, 'hit');
     target.pendingDamage = {
+      id: ++room.damageSeq,
       amount: context.card.attack,
       attribute: context.card.attribute,
       source: attacker.name,
@@ -1406,6 +1411,7 @@ function startGame(roomName) {
   room.lastDamage = null;
   room.lastAction = null;
   room.actionLockedUntil = 0;
+  room.damageSeq = 0;
   room.soundEvents = [];
   room.soundSeq = 0;
   room.ascensionEvents = [];
@@ -1456,7 +1462,7 @@ function armTurnTimer(roomName) {
   const room = rooms[roomName];
   if (!room) return;
   const limit = room.timeLimitSeconds || 0;
-  const timerKey = room.state === 'playing' && room.turn ? `${room.turn}:${room.phase}` : null;
+  const timerKey = getTurnTimerKey(room);
   if (!limit || !timerKey) {
     clearTimeout(room.turnTimer);
     room.turnTimer = null;

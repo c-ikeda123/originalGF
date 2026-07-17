@@ -369,6 +369,14 @@ function getReplacementDrawCount(consumedCardCount, isDeferredBuy = false) {
   return isDeferredBuy ? 0 : Math.max(0, consumedCardCount);
 }
 
+function getTurnTimerKey(room) {
+  if (room?.state !== 'playing' || !room.turn) return null;
+  const damageId = room.phase === 'defense'
+    ? room.players?.[room.turn]?.pendingDamage?.id || 'none'
+    : '';
+  return `${room.turn}:${room.phase}:${damageId}`;
+}
+
 function clearFieldIfCurrent(room, scheduledField) {
   if (!room || !scheduledField || room.field !== scheduledField) return false;
   room.field = null;
@@ -392,6 +400,7 @@ module.exports = {
   getDamageResolutionDelay,
   getNextAlivePlayerId,
   getReplacementDrawCount,
+  getTurnTimerKey,
   getWinningSide,
   isActionLocked,
   isDefenseCard,
