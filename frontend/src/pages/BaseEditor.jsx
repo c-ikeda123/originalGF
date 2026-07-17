@@ -20,6 +20,8 @@ const decodeSettingCode = (code) => {
   return JSON.parse(new TextDecoder().decode(bytes));
 };
 
+const getSavedEdits = () => JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}');
+
 export default function BaseEditor() {
   const navigate = useNavigate();
   const [cards, setCards] = useState([]);
@@ -28,6 +30,7 @@ export default function BaseEditor() {
   const [dirty, setDirty] = useState(false);
   const [settingCode, setSettingCode] = useState('');
   const [codeMessage, setCodeMessage] = useState('');
+  const [editedIds, setEditedIds] = useState(() => new Set(Object.keys(getSavedEdits())));
 
   useEffect(() => {
     setCards(getBaseCardsWithEdits());
@@ -69,19 +72,20 @@ export default function BaseEditor() {
 
   useEffect(() => {
     if (!dirty || !currentCard) return;
-    const edits = JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}');
+    const edits = getSavedEdits();
     edits[currentCard.id] = {
       name: currentCard.name,
       imageUrl: currentCard.imageUrl,
       description: currentCard.description
     };
     localStorage.setItem('gf_base_cards_edits', JSON.stringify(edits));
+    setEditedIds(new Set(Object.keys(edits)));
     setCards(getBaseCardsWithEdits());
     setDirty(false);
   }, [currentCard, dirty]);
 
   const createSettingCode = async () => {
-    const edits = JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}');
+    const edits = getSavedEdits();
     const code = encodeSettingCode(edits);
     setSettingCode(code);
     try {
@@ -97,6 +101,7 @@ export default function BaseEditor() {
       const edits = decodeSettingCode(settingCode);
       if (!edits || Array.isArray(edits) || typeof edits !== 'object') throw new Error('invalid');
       localStorage.setItem('gf_base_cards_edits', JSON.stringify(edits));
+      setEditedIds(new Set(Object.keys(edits)));
       const nextCards = getBaseCardsWithEdits();
       setCards(nextCards);
       setCurrentCard(current => current ? nextCards.find(card => card.id === current.id) || null : null);
@@ -118,6 +123,7 @@ export default function BaseEditor() {
       <div className="editor-layout">
         <div className="glass-panel sidebar">
           <h3 style={{padding: '1rem 1rem 0.5rem'}}>基礎カード ({cards.length})</h3>
+          <div className="edited-card-summary">編集済み {editedIds.size}件</div>
           <select className="input-field" value={category} onChange={event => setCategory(event.target.value)} style={{margin: '0 1rem 0.75rem', width: 'calc(100% - 2rem)'}}>
             {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -127,10 +133,13 @@ export default function BaseEditor() {
             {cards.filter(card => category === 'all' || card.category === category).map(card => (
               <div 
                 key={card.id} 
-                className={`card-list-item ${currentCard?.id === card.id ? 'active' : ''}`}
+                className={`card-list-item ${currentCard?.id === card.id ? 'active' : ''} ${editedIds.has(card.id) ? 'edited' : ''}`}
                 onClick={() => { setCurrentCard(card); setDirty(false); }}
               >
-                <span>{card.name}</span>
+                <span className="card-list-name">
+                  {card.name}
+                  {editedIds.has(card.id) && <span className="edited-card-badge">編集済み</span>}
+                </span>
                 <span style={{fontSize: '0.7rem', color: '#94a3b8'}}>
                   {CATEGORY_LABELS[card.category] || card.type}{card.copies > 0 ? ` ×${card.copies}` : ''}
                 </span>

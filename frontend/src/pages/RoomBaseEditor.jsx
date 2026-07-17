@@ -99,7 +99,7 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
   return (
     <div className="room-base-editor glass-panel">
       <div className="room-editor-toolbar">
-        <h3>共有 基礎カード設定</h3>
+        <h3>共有 基礎カード設定 <span className="edited-card-count">編集済み {Object.keys(edits).length}件</span></h3>
         <select className="input-field" value={category} onChange={event => setCategory(event.target.value)}>
           {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
         </select>
@@ -109,8 +109,11 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
           {cards.map(card => {
             const lock = locks[card.id];
             return (
-              <button key={card.id} className={`room-card-row ${selectedId === card.id ? 'active' : ''}`} onClick={() => selectCard(card)} disabled={lock && lock.ownerId !== myId}>
-                <span>{edits[card.id]?.name || card.name}</span>
+              <button key={card.id} className={`room-card-row ${selectedId === card.id ? 'active' : ''} ${edits[card.id] ? 'edited' : ''}`} onClick={() => selectCard(card)} disabled={lock && lock.ownerId !== myId}>
+                <span className="card-list-name">
+                  {edits[card.id]?.name || card.name}
+                  {edits[card.id] && <span className="edited-card-badge">編集済み</span>}
+                </span>
                 <small>{lock ? `${lock.ownerName} が編集中` : labels[card.category]}</small>
               </button>
             );
