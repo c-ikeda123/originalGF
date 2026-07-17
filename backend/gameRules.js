@@ -201,6 +201,35 @@ function createAttackQueue(targetIds, repeatCount = 1) {
   return queue;
 }
 
+function createCounterAttackCard(reactiveEffect, damage, defenseCard = {}) {
+  if (reactiveEffect === 'counter_damage_all') {
+    return {
+      id: `${defenseCard.id || 'ring'}_counter`, name: defenseCard.name || 'Counter',
+      type: 'ring', sourceType: 'ring', imageUrl: defenseCard.imageUrl || '',
+      attack: damage, hitRate: 75, attribute: 'fire', target: 'all',
+    };
+  }
+  if (reactiveEffect === 'counter_double_damage') {
+    return {
+      id: `${defenseCard.id || 'ring'}_counter`, name: defenseCard.name || 'Counter',
+      type: 'ring', sourceType: 'ring', imageUrl: defenseCard.imageUrl || '',
+      attack: damage * 2, hitRate: 100, attribute: 'earth', target: 'single',
+    };
+  }
+  return null;
+}
+
+function createDyingAttackCard(card) {
+  if (!card?.dyingAttack) return null;
+  return {
+    id: `${card.id || 'dying'}_dying_attack`, name: card.name,
+    type: card.type || 'weapon', sourceType: card.type || 'weapon', imageUrl: card.imageUrl || '',
+    attack: card.dyingAttack.attack, hitRate: card.dyingAttack.hitRate,
+    attribute: card.dyingAttack.attribute || card.attribute || 'light',
+    target: card.dyingAttack.target || 'all',
+  };
+}
+
 function resolveDefenseCard(pendingDamage, card) {
   const effects = new Set([card.defenseEffect, ...(card.defenseEffects || [])].filter(Boolean));
   const sourceType = pendingDamage.sourceType;
@@ -280,6 +309,8 @@ module.exports = {
   combineAttackCards,
   canDefendAttribute,
   createAttackQueue,
+  createCounterAttackCard,
+  createDyingAttackCard,
   cureAilments,
   getAssistantAction,
   getNextAlivePlayerId,

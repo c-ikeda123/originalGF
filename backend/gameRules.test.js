@@ -5,6 +5,8 @@ const {
   combineAttackCards,
   canDefendAttribute,
   createAttackQueue,
+  createCounterAttackCard,
+  createDyingAttackCard,
   cureAilments,
   getAssistantAction,
   getNextAlivePlayerId,
@@ -16,6 +18,27 @@ const {
   shouldAssistantLeave,
   validateCardPlay,
 } = require('./gameRules');
+
+test('火星と土星の指輪は通常の防御可能な反撃を生成する', () => {
+  const fire = createCounterAttackCard('counter_damage_all', 8, { id: 'fire-ring', name: '火星の指輪' });
+  assert.deepEqual({ attack: fire.attack, hitRate: fire.hitRate, target: fire.target, sourceType: fire.sourceType }, {
+    attack: 8, hitRate: 75, target: 'all', sourceType: 'ring',
+  });
+  const earth = createCounterAttackCard('counter_double_damage', 8, { id: 'earth-ring', name: '土星の指輪' });
+  assert.deepEqual({ attack: earth.attack, hitRate: earth.hitRate, target: earth.target }, {
+    attack: 16, hitRate: 100, target: 'single',
+  });
+});
+
+test('昇天弓は元の神器情報を保った防御可能な全体攻撃を生成する', () => {
+  const attack = createDyingAttackCard({
+    id: 'bow', name: '昇天弓', type: 'weapon', attribute: 'light', imageUrl: '/bow.png',
+    dyingAttack: { attack: 30, hitRate: 75, target: 'all' },
+  });
+  assert.deepEqual({ attack: attack.attack, hitRate: attack.hitRate, target: attack.target, sourceType: attack.sourceType }, {
+    attack: 30, hitRate: 75, target: 'all', sourceType: 'weapon',
+  });
+});
 
 test('防具はメインフェーズで使用できず、防御フェーズで使用できる', () => {
   const armor = { type: 'armor', defense: 5 };

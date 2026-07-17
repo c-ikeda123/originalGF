@@ -8,6 +8,8 @@ const {
   combineAttackCards,
   cureAilments,
   createAttackQueue,
+  createCounterAttackCard,
+  createDyingAttackCard,
   getAssistantAction,
   getNextAlivePlayerId,
   isDefenseCard,
@@ -108,6 +110,7 @@ io.on('connection', (socket) => {
         soundEvents: [],
         soundSeq: 0,
         winnerId: null,
+        followUpAttacks: [],
         deck: [] // The shared deck
       };
       rooms[password] = room;
@@ -249,6 +252,7 @@ io.on('connection', (socket) => {
               const fallbackId = room.turnOrder[fallbackIndex] || room.turnOrder[0];
               room.attackQueue = [];
               room.attackContext = null;
+              room.followUpAttacks = [];
               room.field = null;
               room.phase = 'main';
               room.turn = fallbackId;
@@ -704,11 +708,14 @@ function applyDamageAndClearField(room, player, amount, roomName) {
        for (const reactiveEffect of new Set([defenseCard.reactiveEffect, ...(defenseCard.reactiveEffects || [])].filter(Boolean))) {
          if (!attacker) continue;
          if (reactiveEffect === 'counter_damage_all') {
-           attacker.hp -= resolvedDamage;
+           const counterCard = createCounterAttackCard(reactiveEffect, resolvedDamage, defenseCard);
+           queueFollowUpAttack(room, player.id, pendingDamage.nextTurnId, counterCard);
            addSoundEvent(room, 'counter');
          }
          if (reactiveEffect === 'counter_double_damage') {
-           attacker.hp -= resolvedDamage * 2;
+           const counterCard = createCounterAttackCard(reactiveEffect, resolvedDamage, defenseCard);
+           counterCard.forcedTargetId = attacker.id;
+           queueFollowUpAttack(room, player.id, pendingDamage.nextTurnId, counterCard);
            addSoundEvent(room, 'counter');
          }
          if (reactiveEffect === 'recover_double_mp') {
@@ -792,6 +799,19 @@ function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, 
   startNextQueuedAttack(room, roomName);
 }
 
+function queueFollowUpAttack(room, attackerId, nextTurnId, card) {
+  room.followUpAttacks = [...(room.followUpAttacks || []), { attackerId, nextTurnId, card }];
+}
+
+function startNextFollowUpAttack(room, roomName) {
+  const followUp = room.followUpAttacks?.shift();
+  if (!followUp) return false;
+  const attacker = room.players[followUp.attackerId];
+  if (!attacker) return startNextFollowUpAttack(room, roomName);
+  queueAttackSequence(room, attacker, followUp.nextTurnId, followUp.card, [followUp.card], roomName);
+  return true;
+}
+
 function startNextQueuedAttack(room, roomName) {
   const context = room.attackContext;
   while (context && room.attackQueue.length) {
@@ -833,6 +853,9 @@ function startNextQueuedAttack(room, roomName) {
     const assistantAction = context.assistantAction;
     room.attackQueue = [];
     room.attackContext = null;
+    if (startNextFollowUpAttack(room, roomName)) return true;
+    checkDeath(room);
+    if (room.state === 'ended' || room.attackContext) return false;
     clearFieldLater(roomName);
     if (assistantAction) {
       room.turn = nextTurnId;
@@ -1035,7 +1058,8 @@ function createActionEvent(attacker, defender, card, outcome) {
   };
 }
 
-function checkDeath(room) {
+/* Previous direct-damage death resolution kept temporarily for source comparison.
+function checkDeathLegacy(room) {
    const players = Object.values(room.players);
    players.forEach(player => {
       if (player.hp <= 0 && !player.ascended) {
@@ -1079,6 +1103,56 @@ function checkDeath(room) {
    }
 }
 
+*/
+function checkDeath(room) {
+  const players = Object.values(room.players);
+  players.forEach(player => {
+    if (player.hp > 0 || player.ascended) return;
+    const reviveIndex = player.hand.findIndex(card => card.reviveHp > 0);
+    if (reviveIndex >= 0) {
+      const [reviver] = player.hand.splice(reviveIndex, 1);
+      player.hp = reviver.reviveHp;
+      addSoundEvent(room, 'revive');
+      room.log.push(`${reviver.name}により${player.name}はHP ${player.hp}で復活した。`);
+      return;
+    }
+
+    const dyingAttackIndex = player.hand.findIndex(card => card.dyingAttack);
+    if (dyingAttackIndex >= 0) {
+      const [dyingCard] = player.hand.splice(dyingAttackIndex, 1);
+      const dyingAttack = createDyingAttackCard(dyingCard);
+      const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, player.id);
+      queueFollowUpAttack(room, player.id, nextTurnId, dyingAttack);
+      addSoundEvent(room, 'dying_attack');
+      room.log.push(`${player.name}の${dyingCard.name}が昇天攻撃を開始した。`);
+    }
+    player.ascended = true;
+    addSoundEvent(room, 'dead');
+    room.log.push(`${player.name}は昇天した。`);
+  });
+
+  if (room.followUpAttacks?.length && !room.attackContext) {
+    startNextFollowUpAttack(room, room.name);
+    return;
+  }
+  if (room.followUpAttacks?.length || room.attackContext) return;
+
+  const survivors = players.filter(player => !player.ascended && player.hp > 0);
+  if (room.state === 'playing' && players.length > 1 && survivors.length <= 1) {
+    room.state = 'ended';
+    room.phase = 'ended';
+    room.turn = null;
+    room.winnerId = survivors[0]?.id || null;
+    if (room.winnerId) {
+      addSoundEvent(room, 'game_win', { targetId: room.winnerId });
+      addSoundEvent(room, 'winner', { targetId: room.winnerId, delayMs: 500 });
+    } else {
+      addSoundEvent(room, 'game_draw');
+    }
+    room.log.push(survivors[0] ? `${survivors[0].name}の勝利！` : '引き分けになった。');
+  }
+}
+
 function startGame(roomName) {
   const room = rooms[roomName];
   room.state = 'playing';
@@ -1090,6 +1164,7 @@ function startGame(roomName) {
   room.field = null;
   room.attackQueue = [];
   room.attackContext = null;
+  room.followUpAttacks = [];
   
   const playerIds = Object.keys(room.players);
   room.turnOrder = [...playerIds].sort(() => Math.random() - 0.5);
