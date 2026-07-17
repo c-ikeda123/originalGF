@@ -395,11 +395,14 @@ export default function GameRoom() {
     </div>
   );
 
-  const actionTargetName = playerNameById(actionAnim?.defenderId);
-  const damageTargetName = playerNameById(damageAnim?.targetId);
-  const actionLabel = actionAnim?.outcome === 'evade' ? '回避'
-    : actionAnim?.outcome === 'unavoidable' ? '不可避'
-      : actionAnim?.outcome === 'hit' ? '命中' : '使用';
+  const actionEffect = actionAnim?.outcome === 'evade' ? 'miss' : 'hit';
+  const renderDamageNumber = amount => String(Math.max(0, amount)).split('').map((digit, index) => (
+    <img
+      key={`${digit}-${index}`}
+      src={`/godfield-flash/ui/game/effect/damage_${digit}.png`}
+      alt={digit}
+    />
+  ));
 
   return (
     <div className="gf-game-viewport">
@@ -417,18 +420,18 @@ export default function GameRoom() {
 
       <div className="gf-battle-shell">
         {damageAnim && (
-          <div className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'}`}>
-            <small>{damageTargetName}</small>
-            <div>{damageAnim.amount} <span>damage</span></div>
+          <div
+            className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'}`}
+            aria-label={`${playerNameById(damageAnim.targetId)}に${damageAnim.amount}ダメージ`}
+          >
+            <div className="gf-damage-number">{renderDamageNumber(damageAnim.amount)}</div>
+            <img className="gf-damage-label" src="/godfield-flash/ui/game-ja/effect/damage.png" alt="ダメージ" />
           </div>
         )}
 
         {actionAnim && (
           <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`}>
-            <div className="combat-action-card">
-              {actionAnim.card.imageUrl ? <img src={actionAnim.card.imageUrl} alt="" /> : <span>{actionAnim.card.name.charAt(0)}</span>}
-            </div>
-            <div><strong>{actionAnim.card.name}</strong><span>{actionTargetName}：{actionLabel}</span></div>
+            <img src={`/godfield-flash/ui/game-ja/effect/${actionEffect}.png`} alt={actionEffect === 'miss' ? '回避' : '命中'} />
           </div>
         )}
 

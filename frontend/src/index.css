@@ -1463,3 +1463,57 @@ h1, h2, h3, h4, h5, h6 {
 .hovered-card-detail {
   top: -47px;
 }
+
+.gf-game-screen .damage-overlay,
+.gf-game-screen .damage-overlay.target-me,
+.gf-game-screen .damage-overlay.target-opponent {
+  top: 46%;
+  left: 50%;
+  width: auto;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.gf-damage-number {
+  height: 58px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.gf-damage-number img {
+  width: auto;
+  height: 57.5px;
+  object-fit: contain;
+}
+
+.gf-damage-label {
+  width: 100px;
+  height: 35px;
+  object-fit: contain;
+}
+
+.gf-game-screen .combat-action-overlay,
+.gf-game-screen .combat-action-overlay.target-me,
+.gf-game-screen .combat-action-overlay.target-opponent {
+  top: 40%;
+  left: 50%;
+  min-width: 0;
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gf-game-screen .combat-action-overlay > img {
+  width: auto;
+  height: 35px;
+  object-fit: contain;
+}
