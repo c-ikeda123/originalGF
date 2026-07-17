@@ -100,9 +100,20 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
     <div className="room-base-editor glass-panel">
       <div className="room-editor-toolbar">
         <h3>共有 基礎カード設定 <span className="edited-card-count">編集済み {Object.keys(edits).length}件</span></h3>
-        <select className="input-field" value={category} onChange={event => setCategory(event.target.value)}>
-          {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-        </select>
+        <div className="room-category-tabs" role="tablist" aria-label="神器の分類">
+          {Object.entries(labels).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={category === value}
+              className={category === value ? 'active' : ''}
+              onClick={() => setCategory(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="room-editor-body">
         <div className="room-card-list">
