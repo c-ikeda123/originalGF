@@ -232,14 +232,18 @@ export default function GameRoom() {
   }, [gameState?.phase, gameState?.me]);
 
   useEffect(() => {
-    if (!gameState?.turnDeadline) return undefined;
-    const timer = setInterval(() => setNow(Date.now()), 250);
+    if (!gameState?.turnDeadline && !gameState?.actionLockedUntil) return undefined;
+    const timer = setInterval(() => {
+      const currentTime = Date.now();
+      setNow(currentTime);
+      if (!gameState?.turnDeadline && (gameState?.actionLockedUntil || 0) <= currentTime) clearInterval(timer);
+    }, 250);
     return () => clearInterval(timer);
-  }, [gameState?.turnDeadline]);
+  }, [gameState?.turnDeadline, gameState?.actionLockedUntil]);
 
   useEffect(() => {
     setSelectedCards([]);
-  }, [gameState?.turn, gameState?.phase]);
+  }, [gameState?.turn, gameState?.phase, gameState?.actionLockedUntil]);
 
   const myTeam = gameState?.me?.team
     || roomState?.players?.find(player => player.id === socketId)?.team;
@@ -352,7 +356,8 @@ export default function GameRoom() {
   const playerNameById = playerId => playerId === me.id
     ? me.name
     : opponents.find(player => player.id === playerId)?.name;
-  const isMyTurn = turn === me.id;
+  const isResolvingDamage = (gameState.actionLockedUntil || 0) > now;
+  const isMyTurn = turn === me.id && !isResolvingDamage;
   const remainingSeconds = gameState.turnDeadline
     ? Math.max(0, Math.ceil((gameState.turnDeadline - now) / 1000))
     : null;
@@ -535,6 +540,7 @@ export default function GameRoom() {
         <button type="button" onClick={() => navigate('/')}>修行</button>
         <span>部屋 {id}</span>
         <strong className="gf-battle-title">God Field</strong>
+        {isResolvingDamage && <span>ダメージ処理中</span>}
         {remainingSeconds !== null && <span className={remainingSeconds <= 10 ? 'timer-warning' : ''}>残り {remainingSeconds}秒</span>}
         <button type="button">教典</button>
       </div>
