@@ -170,6 +170,12 @@ export default function GameRoom() {
     return value % 2 === 0;
   };
 
+  const getDisplayedCard = (card, index) => {
+    if (!isHiddenByDream(card) || me.hand.length < 2) return card;
+    const decoy = me.hand[(index + 1) % me.hand.length];
+    return { ...decoy, instanceId: card.instanceId };
+  };
+
   const handlePlayCard = (cardIndex) => {
     if (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex)) return;
     const cardIndices = selectedCards.includes(cardIndex) ? selectedCards : [cardIndex];
@@ -191,11 +197,8 @@ export default function GameRoom() {
 
   // Render a small square card for the hand
   const renderSquareCard = (realCard, index) => {
-    const hiddenByDream = isHiddenByDream(realCard);
     const usable = isCardUsable(realCard) || selectedCards.includes(index);
-    const card = hiddenByDream ? {
-       ...realCard, name: '?', type: '?', attack: '?', defense: '?', costMp: '?', costMoney: '?'
-    } : realCard;
+    const card = getDisplayedCard(realCard, index);
 
     let statText = '';
     if (card.attack > 0) statText = `攻${card.attack}`;
@@ -217,7 +220,7 @@ export default function GameRoom() {
          onMouseEnter={() => setHoveredCardIndex(index)}
          onMouseLeave={() => setHoveredCardIndex(null)}
       >
-         {card.imageUrl && !hiddenByDream ? (
+         {card.imageUrl ? (
             <div className="image-area" style={{backgroundImage: `url(${card.imageUrl})`}} />
          ) : (
             <div className="image-area" style={{backgroundColor: '#e2e8f0'}}>{card.type.charAt(0).toUpperCase()}</div>
@@ -437,7 +440,7 @@ export default function GameRoom() {
          {/* Hovered Card Detail */}
          {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
             <div style={{ position: 'absolute', top: '-85px', left: `${Math.min(hoveredCardIndex * 70, window.innerWidth - 240)}px`, zIndex: 100 }}>
-               {renderFieldCard(isHiddenByDream(me.hand[hoveredCardIndex]) ? { ...me.hand[hoveredCardIndex], name: '???', type: '???', attack: '?', defense: '?', costMp: '?', costMoney: '?' } : me.hand[hoveredCardIndex])}
+               {renderFieldCard(getDisplayedCard(me.hand[hoveredCardIndex], hoveredCardIndex))}
             </div>
          )}
 
