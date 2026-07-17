@@ -117,6 +117,14 @@ export default function GameRoom() {
         <div className="glass-panel lobby-header">
           <div><h2>Room: {id}</h2><p>{roomState?.players?.length || 0}人参加中</p></div>
           <div className="lobby-players">{roomState?.players?.map(player => <span key={player.id}>{player.name}{player.id === roomState.hostId ? '（部屋主）' : ''}</span>)}</div>
+          <button className="btn btn-secondary" onClick={() => socket.emit('toggleReady', { roomName: id })}>
+            {roomState?.players?.find(player => player.id === socketId)?.ready ? '準備を取り消す' : '準備完了'}
+          </button>
+          <div className="ready-status-list">
+            {roomState?.players?.map(player => (
+              <span key={player.id}>{player.name}: {player.ready ? '準備完了' : '準備中'}</span>
+            ))}
+          </div>
           {socketId === roomState?.hostId && (
             <button className="btn" disabled={(roomState?.players?.length || 0) < 2} onClick={() => socket.emit('startGame', { roomName: id })}>対戦を開始</button>
           )}

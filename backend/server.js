@@ -70,7 +70,9 @@ function emitRoomUpdate(roomName) {
   io.to(roomName).emit('roomUpdate', {
     hostId: room.hostId,
     state: room.state,
-    players: Object.values(room.players).map(player => ({ id: player.id, name: player.name, ready: player.ready })),
+    players: Object.values(room.players).map(player => ({
+      id: player.id, name: player.name, ready: player.ready, team: player.team || null, isBot: Boolean(player.isBot),
+    })),
   });
 }
 
@@ -122,7 +124,7 @@ io.on('connection', (socket) => {
       id: socket.id,
       name: playerName,
       deck: [], // This will be ignored in favor of shared room deck
-      ready: true,
+      ready: false,
       // Game stats
       hp: 40,
       mp: 0,
@@ -144,6 +146,9 @@ io.on('connection', (socket) => {
   socket.on('startGame', ({ roomName }) => {
     const room = rooms[roomName];
     if (!room || room.state !== 'waiting' || room.hostId !== socket.id) return;
+    if (Object.values(room.players).some(player => !player.ready)) {
+      return socket.emit('errorMsg', '全員が準備完了になるまで開始できません。');
+    }
     if (Object.keys(room.players).length < 2) return socket.emit('errorMsg', '対戦開始には2人以上必要です。');
     const baseCards = GF_BASE_CARDS.map(card => ({ ...card, ...(room.baseCardsEdits[card.id] || {}) }));
     const mergedCards = baseCards.concat(room.customCards.map(card => ({ ...card, copies: card.copies ?? 3 })));
@@ -154,6 +159,14 @@ io.on('connection', (socket) => {
     room.deck.sort(() => Math.random() - 0.5);
     room.editLocks = {};
     startGame(roomName);
+    emitRoomUpdate(roomName);
+  });
+
+  socket.on('toggleReady', ({ roomName }) => {
+    const room = rooms[roomName];
+    const player = room?.players[socket.id];
+    if (!player || room.state !== 'waiting') return;
+    player.ready = !player.ready;
     emitRoomUpdate(roomName);
   });
 
@@ -224,6 +237,7 @@ io.on('connection', (socket) => {
       player.pendingDamage = null;
       player.pendingDraws = 0;
       player.ascended = false;
+      player.ready = false;
     });
     io.to(roomName).emit('gameStateCleared');
     emitRoomUpdate(roomName);
