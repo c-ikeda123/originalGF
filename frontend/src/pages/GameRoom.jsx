@@ -507,7 +507,7 @@ export default function GameRoom() {
         <section className="gf-hand-dock">
           {error && <div className="battle-error-toast">{error}</div>}
           {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
-            <div className="hovered-card-detail" style={{ left: `${Math.min(hoveredCardIndex * 58, window.innerWidth - 240)}px` }}>
+            <div className="hovered-card-detail" style={{ left: `${(hoveredCardIndex % 8) * 83}px` }}>
               {renderFieldCard(getDisplayedCard(me.hand[hoveredCardIndex], hoveredCardIndex))}
             </div>
           )}

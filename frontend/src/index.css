@@ -1480,18 +1480,22 @@ h1, h2, h3, h4, h5, h6 {
   height: 304px;
   min-width: 0;
   box-sizing: border-box;
-  padding: 8px 10px;
+  padding: 0;
   border: 0;
   background: url('/godfield-flash/ui/game/item/list.png') 0 0 / 667px 304px no-repeat;
 }
 
 .gf-hand-cards {
-  width: 647px;
-  height: 164px;
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 661px;
+  height: 181px;
   display: grid;
   grid-template-columns: repeat(8, 80px);
   grid-auto-rows: 80px;
-  gap: 2px 0;
+  column-gap: 3px;
+  row-gap: 21px;
   overflow: hidden;
 }
 
@@ -1499,19 +1503,35 @@ h1, h2, h3, h4, h5, h6 {
   width: 80px;
   height: 80px;
   box-sizing: border-box;
-  border-width: 1px;
+  border: 0;
   box-shadow: none;
 }
 
 .gf-hand-dock .gf-card-square .stat-bar {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
   height: 18px;
   font-size: 12px;
   line-height: 18px;
 }
 
+.gf-hand-dock .gf-card-square .image-area {
+  position: absolute;
+  inset: 0;
+}
+
 .gf-hand-dock .gf-card-square:hover,
 .gf-hand-dock .gf-card-square.selected {
-  transform: translateY(-1px);
+  transform: none;
+}
+
+.gf-hand-dock .gf-card-square.selected {
+  outline: 2px solid #f5df38;
+  outline-offset: -2px;
+  box-shadow: none;
 }
 
 .gf-hand-actions {
@@ -1537,7 +1557,7 @@ h1, h2, h3, h4, h5, h6 {
 
 .gf-hand-actions .gf-fixed-action {
   position: absolute;
-  top: 82px;
+  top: 104px;
   width: 80px;
   height: 80px;
   min-height: 0;
