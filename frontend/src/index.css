@@ -282,6 +282,21 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.2);
 }
 
+.target-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+}
+
+.target-selector .selected {
+  outline: 2px solid var(--gf-green);
+}
+
 .room-card-row.edited {
   border-left: 4px solid #f59e0b;
 }

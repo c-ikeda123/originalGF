@@ -24,6 +24,7 @@ export default function GameRoom() {
   const [actionAnim, setActionAnim] = useState(null);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
+  const [selectedTargetId, setSelectedTargetId] = useState(null);
   const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
   const lastDamageTimestamp = useRef(null);
   const lastActionId = useRef(null);
@@ -125,7 +126,14 @@ export default function GameRoom() {
     );
   }
 
-  const { me, opponent, turn, phase, field } = gameState;
+  const { me, opponent: firstOpponent, turn, phase, field } = gameState;
+  const opponents = gameState.opponents?.length ? gameState.opponents : [firstOpponent].filter(Boolean);
+  const opponent = opponents.find(player => player.id === selectedTargetId && !player.ascended && player.hp > 0)
+    || opponents.find(player => !player.ascended && player.hp > 0)
+    || firstOpponent;
+  const playerNameById = playerId => playerId === me.id
+    ? me.name
+    : opponents.find(player => player.id === playerId)?.name;
   const isMyTurn = turn === me.id;
   const hasFog = me.ailments.includes('fog');
   const hasDream = me.ailments.includes('dream');
@@ -254,8 +262,8 @@ export default function GameRoom() {
     </div>
   );
 
-  const actionTargetName = actionAnim?.defenderId === me.id ? me.name : opponent?.name;
-  const damageTargetName = damageAnim?.targetId === me.id ? me.name : opponent?.name;
+  const actionTargetName = playerNameById(actionAnim?.defenderId);
+  const damageTargetName = playerNameById(damageAnim?.targetId);
   const actionLabel = actionAnim?.outcome === 'evade' ? '回避'
     : actionAnim?.outcome === 'unavoidable' ? '不可避'
       : actionAnim?.outcome === 'hit' ? '命中' : '使用';
@@ -304,7 +312,7 @@ export default function GameRoom() {
             {/* Attacker Box */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                <div className="player-pill" style={{ marginBottom: '10px', width: '150px', justifyContent: 'center', background: '#f1f5f9' }}>
-                 {field ? (field.attackerId === me.id ? me.name : opponent?.name) : '---'}
+                 {field ? (playerNameById(field.attackerId) || '---') : '---'}
                </div>
                
                {field && renderFieldCard(field.attackCard)}
@@ -331,7 +339,7 @@ export default function GameRoom() {
             {/* Defender Box */}
             <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,255,255,0.3)', borderRadius: '12px', padding: '10px' }}>
                <div className="player-pill" style={{ marginBottom: '10px', width: '150px', justifyContent: 'center', background: '#f1f5f9' }}>
-                 {field && field.defenderId ? (field.defenderId === me.id ? me.name : opponent?.name) : '---'}
+                 {field && field.defenderId ? (playerNameById(field.defenderId) || '---') : '---'}
                </div>
                
                {field && field.defenseCards && field.defenseCards.map((c, i) => (
@@ -352,6 +360,23 @@ export default function GameRoom() {
 
          {/* Right: Player List & Log */}
          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {opponents.length > 1 && (
+              <div className="target-selector">
+                <span>対象</span>
+                {opponents.map(player => (
+                  <button
+                    key={player.id}
+                    type="button"
+                    className={`btn btn-secondary ${opponent?.id === player.id ? 'selected' : ''}`}
+                    data-target={player.id}
+                    disabled={player.ascended || player.hp <= 0}
+                    onClick={() => setSelectedTargetId(player.id)}
+                  >
+                    {player.name}（HP {player.hp}）
+                  </button>
+                ))}
+              </div>
+            )}
             
             {/* Opponent */}
             {opponent && (
