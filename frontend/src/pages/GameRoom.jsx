@@ -702,7 +702,12 @@ export default function GameRoom() {
                <button className="btn gf-command-button" aria-label="防御せずダメージを受ける" onClick={() => socket.emit('finishDefense', { roomName: id })}>防御しない</button>
             )}
             {isMyTurn && phase === 'main' && (
-               <button className="btn gf-fixed-action pray-action" onClick={() => socket.emit('pray', { roomName: id })} title="手札に武器がない場合のみ可能">祈る (ドロー)</button>
+               <button
+                 className="btn gf-fixed-action pray-action"
+                 disabled={!gameState.canPray}
+                 onClick={() => socket.emit('pray', { roomName: id })}
+                 title={gameState.canPray ? '祈って神器を1枚引く' : '攻撃可能な武器があるため祈れません'}
+               >祈る (ドロー)</button>
             )}
             {isMyTurn && phase === 'main' && selectedCards.length > 0 && (
                <button className="btn btn-secondary gf-fixed-action discard-action" onClick={() => { socket.emit('discardCards', { roomName: id, cardIndices: selectedCards }); setSelectedCards([]); }}>捨てる ({selectedCards.length})</button>

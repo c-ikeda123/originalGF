@@ -6,6 +6,7 @@ const path = require('path');
 const {
   applyAilment,
   areEnemies,
+  canPlayerPray,
   combineAttackCards,
   cureAilments,
   clearFieldIfCurrent,
@@ -851,9 +852,7 @@ io.on('connection', (socket) => {
     
     const player = room.players[socket.id];
     
-    // Check if player has any attack weapon
-    const hasWeapon = player.hand.some(c => c.type === 'weapon');
-    if (hasWeapon) {
+    if (!canPlayerPray(player)) {
        socket.emit('errorMsg', '攻撃可能な武器がある場合は「祈る」ことはできません');
        return;
     }
@@ -1576,7 +1575,7 @@ function performBotTurn(roomName) {
     return;
   }
 
-  if (!bot.hand.some(card => card.type === 'weapon') && bot.hand.length < 18) bot.hand.push(drawArtifact(room));
+  if (canPlayerPray(bot) && bot.hand.length < 18) bot.hand.push(drawArtifact(room));
   const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, bot.id);
   endTurnInternal(room, nextTurnId);
   emitGameState(roomName);
@@ -1620,6 +1619,7 @@ function emitGameState(roomName) {
       usableDefenseInstanceIds,
       usableDefenseMiracleIndices,
       selectableDefenseSupportInstanceIds,
+      canPray: canPlayerPray(viewer),
       chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly || message.team === room.players[id].team),
       me: room.players[id],
       opponent: room.players[playerIds.find(p => p !== id)],

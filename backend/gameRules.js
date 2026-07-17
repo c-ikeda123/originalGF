@@ -107,6 +107,13 @@ function isDefenseCard(card) {
   ));
 }
 
+function canPlayerPray(player) {
+  return !player?.hand?.some(card => card.type === 'weapon' && (
+    (card.attack || 0) > 0
+    || (card.attackEffect === 'magical' && (player.mp || 0) > 0)
+  ));
+}
+
 function validateCardPlay(cards, phase, ailments = [], pendingDamage = null, defensesUsed = 0) {
   if (!cards.length) return { valid: false, message: 'カードを選択してください。' };
 
@@ -412,6 +419,7 @@ module.exports = {
   FIELD_CLEAR_DELAY_MS,
   applyAilment,
   areEnemies,
+  canPlayerPray,
   combineAttackCards,
   canDefendAttribute,
   clearFieldIfCurrent,

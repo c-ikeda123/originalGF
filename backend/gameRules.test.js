@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {
   applyAilment,
   areEnemies,
+  canPlayerPray,
   combineAttackCards,
   canDefendAttribute,
   clearFieldIfCurrent,
@@ -169,6 +170,13 @@ test('防具はメインフェーズで使用できず、防御フェーズで�
   const armor = { type: 'armor', defense: 5 };
   assert.equal(validateCardPlay([armor], 'main').valid, false);
   assert.equal(validateCardPlay([armor], 'defense').valid, true);
+});
+
+test('実際に攻撃できる武器がない場合だけ祈れる', () => {
+  assert.equal(canPlayerPray({ mp: 10, hand: [{ type: 'weapon', attack: 4 }] }), false);
+  assert.equal(canPlayerPray({ mp: 0, hand: [{ type: 'weapon', attack: 0, attackEffect: 'magical' }] }), true);
+  assert.equal(canPlayerPray({ mp: 1, hand: [{ type: 'weapon', attack: 0, attackEffect: 'magical' }] }), false);
+  assert.equal(canPlayerPray({ mp: 10, hand: [{ type: 'weapon', attack: 0 }, { type: 'miracle', attack: 10 }] }), true);
 });
 
 test('閃光状態では防御神器を複数使用できない', () => {
