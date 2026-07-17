@@ -16,6 +16,7 @@ const {
   createMoonAssistantAttack,
   FIELD_CLEAR_DELAY_MS,
   getAssistantAction,
+  getDamageAfterDefense,
   getDamageResolutionDelay,
   getEarthArtifactMode,
   getNextEventTimestamp,
@@ -673,7 +674,6 @@ io.on('connection', (socket) => {
          const pDamage = player.pendingDamage;
          if (!pDamage) return;
 
-         const hasFlash = player.ailments.includes('flash');
          const resolution = resolveDefenseCard(pDamage, combinedCard);
          pDamage.defensesUsed = (pDamage.defensesUsed || 0) + cards.length;
          room.field.defenseCards.push(combinedCard);
@@ -708,23 +708,21 @@ io.on('connection', (socket) => {
            addSoundEvent(room, 'block');
            addEffectEvent(room, 'block', player);
            room.log.push(`${combinedCard.name} が攻撃を完全に止めた！`);
-           applyDamageAndClearField(room, player, 0, roomName);
         } else if (resolution.action === 'remove_attribute') {
            addSoundEvent(room, 'defense_harm');
            addEffectEvent(room, 'harm_remove', player, 0, { label: '属性解除' });
            pDamage.attribute = 'none';
            room.log.push(`${combinedCard.name} が攻撃の属性を取り除いた。`);
-           if (hasFlash) applyDamageAndClearField(room, player, pDamage.amount, roomName);
         } else if (resolution.action === 'reduce') {
            addSoundEvent(room, 'block');
            addEffectEvent(room, 'block', player);
            pDamage.amount = resolution.amount;
            room.log.push(`${player.name} は ${combinedCard.name} で防御し、残りダメージは ${pDamage.amount}。`);
-           if (pDamage.amount <= 0 || hasFlash) applyDamageAndClearField(room, player, pDamage.amount, roomName);
          } else {
            room.log.push(`${combinedCard.name} (${combinedCard.attribute}) では ${pDamage.attribute} 属性を防げない。`);
-           if (hasFlash) applyDamageAndClearField(room, player, pDamage.amount, roomName);
          }
+         const damageAfterDefense = getDamageAfterDefense(resolution);
+         if (damageAfterDefense !== null) applyDamageAndClearField(room, player, damageAfterDefense, roomName);
        }
     }
     

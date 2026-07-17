@@ -287,6 +287,12 @@ function resolveDefenseCard(pendingDamage, card) {
   return { action: 'reduce', amount: Math.max(0, pendingDamage.amount - (card.defense || 0)) };
 }
 
+function getDamageAfterDefense(resolution) {
+  return ['block', 'remove_attribute', 'reduce'].includes(resolution?.action)
+    ? resolution.amount
+    : null;
+}
+
 function rollAttack(card, defenderAilments = [], random = Math.random) {
   if (card.target === 'all' && defenderAilments.includes('darkcloud')) {
     return { hit: true, outcome: 'unavoidable', roll: null };
@@ -409,6 +415,7 @@ module.exports = {
   getAssistantAction,
   getEarthArtifactMode,
   getDamageResolutionDelay,
+  getDamageAfterDefense,
   getNextEventTimestamp,
   getNextAlivePlayerId,
   getReplacementDrawCount,

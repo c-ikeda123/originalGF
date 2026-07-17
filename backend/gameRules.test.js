@@ -14,6 +14,7 @@ const {
   FIELD_CLEAR_DELAY_MS,
   cureAilments,
   getAssistantAction,
+  getDamageAfterDefense,
   getEarthArtifactMode,
   getDamageResolutionDelay,
   getNextEventTimestamp,
@@ -225,6 +226,13 @@ test('属性相性と特殊防御を解決する', () => {
   assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'block_weapon', attribute: 'water' }), { action: 'block', amount: 0 });
   assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'remove_attribute' }), { action: 'remove_attribute', amount: 10, attribute: 'none' });
   assert.deepEqual(resolveDefenseCard(attack, { defense: 4, attribute: 'earth' }), { action: 'invalid_attribute', amount: 10 });
+});
+
+test('防御力が足りなくても1回の防御で残りダメージを確定する', () => {
+  assert.equal(getDamageAfterDefense({ action: 'reduce', amount: 7 }), 7);
+  assert.equal(getDamageAfterDefense({ action: 'remove_attribute', amount: 10 }), 10);
+  assert.equal(getDamageAfterDefense({ action: 'block', amount: 0 }), 0);
+  assert.equal(getDamageAfterDefense({ action: 'reflect', amount: 10 }), null);
 });
 
 test('攻撃補助雑貨とMP無料化雑貨を攻撃に組み合わせられる', () => {
