@@ -869,6 +869,7 @@ function applyDamageAndClearField(room, player, amount, roomName) {
    room.lastDamage = {
      amount: damageSequence.primaryDamage,
      followUpAmount: damageSequence.darkDamage,
+     followUpDelayMs: 650,
      targetId: player.id,
      isDark: isDarkAttack,
      timestamp: Date.now(),

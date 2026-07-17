@@ -75,7 +75,14 @@ export default function GameRoom() {
         lastDamageTimestamp.current = damage.timestamp;
         setDamageAnim(damage);
         clearTimeout(damageTimer.current);
-        damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
+        if (damage.followUpAmount > 0) {
+          damageTimer.current = setTimeout(() => {
+            setDamageAnim({ ...damage, amount: damage.followUpAmount, followUpAmount: 0, isDarkFollowUp: true });
+            damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
+          }, damage.followUpDelayMs || 650);
+        } else {
+          damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
+        }
       }
       const action = data.lastAction;
       if (action && action.id !== lastActionId.current) {
@@ -440,7 +447,8 @@ export default function GameRoom() {
       <div className="gf-battle-shell">
         {damageAnim && (
           <div
-            className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'}`}
+            key={`${damageAnim.timestamp}-${damageAnim.isDarkFollowUp ? 'dark' : 'normal'}`}
+            className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'} ${damageAnim.isDarkFollowUp ? 'dark-follow-up' : ''}`}
             aria-label={`${playerNameById(damageAnim.targetId)}に${damageAnim.amount}ダメージ`}
           >
             <div className="gf-damage-number">{renderDamageNumber(damageAnim.amount)}</div>

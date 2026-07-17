@@ -1814,6 +1814,10 @@ h1, h2, h3, h4, h5, h6 {
   object-fit: contain;
 }
 
+.damage-overlay.dark-follow-up .gf-damage-number {
+  filter: drop-shadow(0 0 12px #581c87) drop-shadow(0 0 5px #0f172a);
+}
+
 .gf-damage-label {
   width: 200px;
   height: 70px;
