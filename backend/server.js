@@ -67,6 +67,7 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3001;
 const GF_BASE_CARDS = require('../shared/baseCards.json');
 const FLASH_SOUNDS = new Set(require('../shared/flashSounds.json'));
+const { resolveDreamCard } = require('../shared/dreamRules.cjs');
 const { normalizeBaseCardEdit, normalizeBaseCardEdits } = require('./baseCardEdits');
 
 // Stores active rooms
@@ -114,6 +115,33 @@ const AILMENT_EFFECT_TYPES = {
 function addAilmentEffect(room, player, ailment) {
   const type = AILMENT_EFFECT_TYPES[ailment];
   if (type) addEffectEvent(room, type, player, 0, { label: ailment });
+}
+
+function resolveDreamCardsForUse(room, player, cards, phase, isSell = false) {
+  if (!player.ailments.includes('dream')) {
+    return cards.map(card => ({ card, originalCard: card, affected: false, changed: false }));
+  }
+  return cards.map(card => {
+    if (isSell && card.effect !== 'sell') {
+      return { card, originalCard: card, affected: false, changed: false };
+    }
+    return resolveDreamCard(card, room.deck, phase);
+  });
+}
+
+function announceDreamResolution(room, player, resolutions) {
+  const affected = resolutions.filter(result => result.affected);
+  if (!affected.length) return;
+  addSoundEvent(room, 'illusion_item');
+  addEffectEvent(room, 'illusion', player, 0, {
+    dreamReveal: true,
+    changed: affected.some(result => result.changed),
+    fromCards: affected.map(result => ({ name: result.originalCard.name, imageUrl: result.originalCard.imageUrl || '' })),
+    toCards: affected.map(result => ({ name: result.card.name, imageUrl: result.card.imageUrl || '' })),
+  });
+  room.log.push(affected.map(result => result.changed
+    ? `${result.originalCard.name} は ${result.card.name} に変化した。`
+    : `${result.originalCard.name} はそのままだった。`).join(' '));
 }
 
 function increasePlayerStat(room, player, stat, amount, { sound = true } = {}) {
@@ -473,12 +501,12 @@ io.on('connection', (socket) => {
     const requestedIndices = Array.isArray(cardIndices)
       ? [...new Set(cardIndices)].filter(Number.isInteger).sort((a, b) => a - b)
       : (Number.isInteger(cardIndex) ? [cardIndex] : []);
-    const cards = requestedIndices.map(index => player.hand[index]).filter(Boolean);
+    let cards = requestedIndices.map(index => player.hand[index]).filter(Boolean);
     const learnedMiracle = Number.isInteger(learnedMiracleIndex)
       ? player.learnedMiracles[learnedMiracleIndex]
       : null;
     if (learnedMiracle) cards.push({ ...learnedMiracle, _learnedCast: true });
-    const card = cards.find(c => c.type === 'weapon' || c.type === 'miracle') || cards[0];
+    let card = cards.find(c => c.type === 'weapon' || c.type === 'miracle') || cards[0];
     if (!card) return;
     const defaultOpponent = room.phase === 'defense'
       ? room.players[player.pendingDamage?.attackerId]
@@ -507,6 +535,20 @@ io.on('connection', (socket) => {
       return;
     }
 
+    let dreamResolutions = resolveDreamCardsForUse(room, player, cards, room.phase, isSell);
+    const transformedValidation = validateCardPlay(
+      dreamResolutions.map(result => result.card),
+      room.phase,
+      player.ailments,
+      player.pendingDamage,
+      player.pendingDamage?.defensesUsed || 0,
+    );
+    if (!transformedValidation.valid) {
+      dreamResolutions = dreamResolutions.map(result => ({ ...result, card: result.originalCard, changed: false }));
+    }
+    cards = dreamResolutions.map(result => result.card);
+    card = cards.find(candidate => candidate.type === 'weapon' || candidate.type === 'miracle') || cards[0];
+
     // Check costs
     const hasMagicFree = cards.some(c => c.supportEffect === 'magic_free');
     const totalMp = isSell || hasMagicFree ? 0 : cards.reduce((sum, c) => sum + (c.costMp || 0), 0);
@@ -517,6 +559,7 @@ io.on('connection', (socket) => {
 
     // Pay costs
     player.mp -= totalMp;
+    announceDreamResolution(room, player, dreamResolutions);
 
     // A miracle leaves the hand on first use and becomes reusable as a learned miracle.
     cards.filter(c => !isSell && c.type === 'miracle' && !c._learnedCast).forEach(miracle => {
@@ -1540,8 +1583,14 @@ function performBotTurn(roomName) {
       return ['reduce', 'block', 'remove_attribute'].includes(resolveDefenseCard(bot.pendingDamage, card).action);
     });
     if (choiceIndex >= 0) {
-      const [card] = bot.hand.splice(choiceIndex, 1);
+      const [heldCard] = bot.hand.splice(choiceIndex, 1);
+      let [dreamResolution] = resolveDreamCardsForUse(room, bot, [heldCard], 'defense');
+      if (!validateCardPlay([dreamResolution.card], 'defense', bot.ailments, bot.pendingDamage, bot.pendingDamage?.defensesUsed || 0).valid) {
+        dreamResolution = { ...dreamResolution, card: heldCard, changed: false };
+      }
+      const card = dreamResolution.card;
       queueReplacementDraws(bot, 1);
+      announceDreamResolution(room, bot, [dreamResolution]);
       applyImmediateCardEffects(room, bot, [card]);
       const resolution = resolveDefenseCard(bot.pendingDamage, card);
       room.field.defenseCards.push(card);
@@ -1560,8 +1609,14 @@ function performBotTurn(roomName) {
     && ['weapon', 'miracle'].includes(card.type)
     && bot.mp >= (card.costMp || 0));
   if (target && cardIndex >= 0) {
-    const [card] = bot.hand.splice(cardIndex, 1);
+    const [heldCard] = bot.hand.splice(cardIndex, 1);
+    let [dreamResolution] = resolveDreamCardsForUse(room, bot, [heldCard], 'main');
+    if (!validateCardPlay([dreamResolution.card], 'main', bot.ailments).valid) {
+      dreamResolution = { ...dreamResolution, card: heldCard, changed: false };
+    }
+    const card = dreamResolution.card;
     bot.mp -= card.costMp || 0;
+    announceDreamResolution(room, bot, [dreamResolution]);
     if (card.type === 'miracle' && !bot.learnedMiracles.some(miracle => miracle.id === card.id)) {
       const learned = { ...card };
       delete learned.instanceId;

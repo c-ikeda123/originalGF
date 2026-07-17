@@ -57,7 +57,12 @@ function resolveDreamCard(card, pool, phase = 'main', random = Math.random) {
   }
   const candidate = candidates[Math.floor(random() * candidates.length)];
   return {
-    card: { ...candidate, instanceId: card.instanceId },
+    card: {
+      ...candidate,
+      instanceId: card.instanceId,
+      costMp: card.costMp || 0,
+      costMoney: card.costMoney || 0,
+    },
     affected: true,
     changed: true,
     originalCard: card,

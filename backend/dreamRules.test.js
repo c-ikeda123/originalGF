@@ -21,12 +21,14 @@ test('夢の変化先を攻撃・防御・回復など同じ役割に限定す�
 });
 
 test('夢の対象神器は同系統のままか別神器に確定する', () => {
-  const original = { id: 'sword', instanceId: 'b', name: '剣', type: 'weapon', attack: 5 };
+  const original = { id: 'sword', instanceId: 'b', name: '剣', type: 'weapon', attack: 5, costMp: 3, costMoney: 4 };
   const axe = { id: 'axe', name: '斧', type: 'weapon', attack: 8 };
   const armor = { id: 'armor', name: '鎧', type: 'armor', defense: 8 };
   assert.equal(resolveDreamCard(original, [axe, armor], 'main', () => 0.25).card.name, '剣');
   const changed = resolveDreamCard(original, [axe, armor], 'main', () => 0.75);
   assert.equal(changed.card.name, '斧');
   assert.equal(changed.card.instanceId, 'b');
+  assert.equal(changed.card.costMp, 3);
+  assert.equal(changed.card.costMoney, 4);
   assert.equal(changed.changed, true);
 });
