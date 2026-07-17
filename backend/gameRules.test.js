@@ -218,6 +218,11 @@ test('暗雲状態の対象への全体攻撃は不可避になる', () => {
   assert.equal(rollAttack(attack, [], () => 0.99).outcome, 'evade');
 });
 
+test('命中率100%の攻撃は乱数の境界値でも必ず命中する', () => {
+  assert.deepEqual(rollAttack({ hitRate: 100 }, [], () => 1), { hit: true, outcome: 'hit', roll: null });
+  assert.deepEqual(rollAttack({ hitRate: 0 }, [], () => 0), { hit: false, outcome: 'evade', roll: null });
+});
+
 test('病気の重複付与は一段階悪化する', () => {
   const player = { ailments: ['cold'] };
   assert.equal(applyAilment(player, 'cold'), 'fever');

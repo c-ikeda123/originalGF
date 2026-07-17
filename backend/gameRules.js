@@ -332,8 +332,11 @@ function rollAttack(card, defenderAilments = [], random = Math.random) {
   if (card.target === 'all' && defenderAilments.includes('darkcloud')) {
     return { hit: true, outcome: 'unavoidable', roll: null };
   }
+  const hitRate = Math.max(0, Math.min(100, Number(card.hitRate ?? 100)));
+  if (hitRate >= 100) return { hit: true, outcome: 'hit', roll: null };
+  if (hitRate <= 0) return { hit: false, outcome: 'evade', roll: null };
   const roll = random() * 100;
-  return { hit: roll < (card.hitRate ?? 100), outcome: roll < (card.hitRate ?? 100) ? 'hit' : 'evade', roll };
+  return { hit: roll < hitRate, outcome: roll < hitRate ? 'hit' : 'evade', roll };
 }
 
 function applyAilment(player, ailment) {
