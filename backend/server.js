@@ -9,6 +9,7 @@ const {
   cureAilments,
   createAttackQueue,
   getAssistantAction,
+  getNextAlivePlayerId,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDefenseCard,
@@ -73,6 +74,10 @@ io.on('connection', (socket) => {
 
   socket.on('joinRoom', ({ password, playerName, customCards = [], baseCardsEdits = {} }) => {
     let room = rooms[password];
+    if (room && room.state !== 'waiting') {
+      socket.emit('errorMsg', '対戦中の部屋にはプレイヤーとして参加できません。');
+      return;
+    }
     if (!room) {
       room = {
         name: password,
@@ -210,14 +215,32 @@ io.on('connection', (socket) => {
     for (const roomName in rooms) {
       const room = rooms[roomName];
       if (room.players[socket.id]) {
+        const disconnectedTurnIndex = room.turnOrder?.indexOf(socket.id) ?? -1;
+        const wasActivePlayer = room.turn === socket.id || room.mainTurnOwner === socket.id;
         for (const [cardId, ownerId] of Object.entries(room.editLocks || {})) {
           if (ownerId === socket.id) delete room.editLocks[cardId];
         }
         delete room.players[socket.id];
+        room.turnOrder = (room.turnOrder || []).filter(id => id !== socket.id);
         if (Object.keys(room.players).length === 0) {
           delete rooms[roomName]; // Clean up empty room
         } else {
           if (room.hostId === socket.id) room.hostId = Object.keys(room.players)[0];
+          if (room.state === 'playing') {
+            checkDeath(room);
+            if (wasActivePlayer && room.state === 'playing') {
+              const fallbackIndex = Math.max(0, disconnectedTurnIndex) % room.turnOrder.length;
+              const fallbackId = room.turnOrder[fallbackIndex] || room.turnOrder[0];
+              room.attackQueue = [];
+              room.attackContext = null;
+              room.field = null;
+              room.phase = 'main';
+              room.turn = fallbackId;
+              room.mainTurnOwner = fallbackId;
+              room.log.push(`切断されたプレイヤーの手番を ${room.players[fallbackId].name} へ移しました。`);
+              emitGameState(roomName);
+            }
+          }
           emitRoomUpdate(roomName);
           emitBaseEditorState(roomName);
           io.to(roomName).emit('playerDisconnected', socket.id);
@@ -291,8 +314,9 @@ io.on('connection', (socket) => {
     const replacementCount = isSingleTrade && card.effect === 'buy' ? 0 : consumedIndices.length + (learnedMiracle ? 1 : 0);
     queueReplacementDraws(player, replacementCount);
 
-    const opponentId = targetId || Object.keys(room.players).find(id => id !== socket.id);
+    const opponentId = targetId || getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
     const opponent = room.players[opponentId];
+    const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
 
     cards.forEach(usedCard => {
       if (usedCard.selfAilment) {
@@ -315,7 +339,7 @@ io.on('connection', (socket) => {
       const sellIndex = cards.findIndex(c => c.effect === 'sell');
       const soldCard = cards[sellIndex === 0 ? 1 : 0];
       forceSale(room, player, opponent, soldCard);
-      endTurnInternal(room, opponentId);
+      endTurnInternal(room, nextTurnId);
       checkDeath(room);
       emitGameState(roomName);
       return;
@@ -328,7 +352,7 @@ io.on('connection', (socket) => {
       } else if (card.effect === 'buy') {
         const offered = opponent.hand[Math.floor(Math.random() * opponent.hand.length)];
         if (!offered) {
-          endTurnInternal(room, opponentId);
+          endTurnInternal(room, nextTurnId);
         } else {
           room.phase = 'buy_offer';
           room.pendingBuy = { buyerId: player.id, sellerId: opponent.id, instanceId: offered.instanceId, drawAfter: 1 };
@@ -353,6 +377,7 @@ io.on('connection', (socket) => {
       combinedCard.forcedTargetId = target?.id;
       if (mortarOwner) combinedCard.attack = 99;
     }
+    if (combinedCard.target !== 'all' && !combinedCard.forcedTargetId) combinedCard.forcedTargetId = opponentId;
 
     room.log.push(`${player.name} played ${combinedCard.name}!`);
     room.lastAction = createActionEvent(player, opponent, combinedCard, 'use');
@@ -363,7 +388,7 @@ io.on('connection', (socket) => {
        // We can just handle this visually on frontend, backend doesn't need to change play logic.
        
        if (combinedCard.type === 'weapon') {
-         queueAttackSequence(room, player, opponentId, combinedCard, cards, roomName);
+         queueAttackSequence(room, player, nextTurnId, combinedCard, cards, roomName);
        } else if (card.type === 'item') {
          if (card.healHp) player.hp = Math.min(99, player.hp + card.healHp);
          if (card.healMp) player.mp = Math.min(99, player.mp + card.healMp);
@@ -382,12 +407,12 @@ io.on('connection', (socket) => {
            room.log.push(`${card.name} が ${opponent.name} の奇跡を ${removed.length} 個忘れさせた。`);
          }
          if (card.setAssistant) setRandomAssistant(player, room);
-         const mysteryQueuedAttack = card.mystery && resolveMystery(room, player, opponentId, roomName);
+         const mysteryQueuedAttack = card.mystery && resolveMystery(room, player, nextTurnId, roomName);
          room.log.push(`${player.name} は ${card.name} の効果を受けた。`);
-         if (!mysteryQueuedAttack) endTurnInternal(room, opponentId);
+         if (!mysteryQueuedAttack) endTurnInternal(room, nextTurnId);
        } else if (combinedCard.type === 'miracle') {
          if (combinedCard.attack > 0) {
-           queueAttackSequence(room, player, opponentId, combinedCard, cards, roomName);
+           queueAttackSequence(room, player, nextTurnId, combinedCard, cards, roomName);
          } else {
             if (card.ailmentInflict && card.ailmentTrigger === 'use') {
               const applied = applyAilment(opponent, card.ailmentInflict);
@@ -398,7 +423,7 @@ io.on('connection', (socket) => {
             if (card.setAssistant) setRandomAssistant(player, room);
             room.field = { attackerId: player.id, attackCard: card };
             clearFieldLater(roomName);
-            endTurnInternal(room, opponentId);
+            endTurnInternal(room, nextTurnId);
          }
        }
     } else if (room.phase === 'defense') {
@@ -476,7 +501,7 @@ io.on('connection', (socket) => {
     }
     [player.hp, player.mp, player.money] = values;
     room.log.push(`${player.name} redistributed HP / MP / money.`);
-    const next = Object.keys(room.players).find(id => id !== socket.id);
+    const next = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
     endTurnInternal(room, next);
     checkDeath(room);
     emitGameState(roomName);
@@ -504,7 +529,7 @@ io.on('connection', (socket) => {
     }
     room.pendingBuy = null;
     queueReplacementDraws(buyer, offer.drawAfter || 0);
-    const next = Object.keys(room.players).find(id => id !== socket.id);
+    const next = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
     endTurnInternal(room, next);
     emitGameState(roomName);
   });
@@ -544,7 +569,7 @@ io.on('connection', (socket) => {
     });
     queueReplacementDraws(player, discarded.length);
     if (discarded.length) room.log.push(`${player.name} は ${discarded.map(discardedCard => discardedCard.name).join('、')} を捨てた。`);
-    const next = Object.keys(room.players).find(id => id !== socket.id);
+    const next = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
     checkDeath(room);
     if (room.state === 'ended') return emitGameState(roomName);
     endTurnInternal(room, next);
@@ -573,8 +598,8 @@ io.on('connection', (socket) => {
        room.log.push(`${player.name} は祈った... (しかし何も起きなかった)`);
     }
 
-    const opponentId = Object.keys(room.players).find(id => id !== socket.id);
-    endTurnInternal(room, opponentId);
+    const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
+    endTurnInternal(room, nextTurnId);
     emitGameState(roomName);
   });
 });
@@ -889,6 +914,10 @@ function processAilments(player, room) {
 }
 
 function endTurnInternal(room, nextTurnId) {
+   if (!nextTurnId || !room.players[nextTurnId] || room.players[nextTurnId].ascended || room.players[nextTurnId].hp <= 0) {
+     nextTurnId = getNextAlivePlayerId(room.turnOrder || Object.keys(room.players), room.players, room.mainTurnOwner);
+   }
+   if (!nextTurnId) return checkDeath(room);
    const endingPlayer = room.players[room.mainTurnOwner];
    if (endingPlayer && endingPlayer.id !== nextTurnId) processAilments(endingPlayer, room);
    checkDeath(room);
@@ -960,6 +989,7 @@ function startGame(roomName) {
   room.attackContext = null;
   
   const playerIds = Object.keys(room.players);
+  room.turnOrder = [...playerIds].sort(() => Math.random() - 0.5);
   
   // Basic initialization
   playerIds.forEach(id => {
@@ -984,7 +1014,7 @@ function startGame(roomName) {
   });
   
   // Decide starting player randomly
-  const startingPlayer = playerIds[Math.floor(Math.random() * playerIds.length)];
+  const startingPlayer = room.turnOrder[0];
   room.turn = startingPlayer;
   room.mainTurnOwner = startingPlayer;
   room.phase = 'main'; // main or defense
@@ -1013,6 +1043,10 @@ function emitGameState(roomName) {
       lastAction: room.lastAction,
       me: room.players[id],
       opponent: room.players[playerIds.find(p => p !== id)],
+      opponents: playerIds.filter(playerId => playerId !== id).map(playerId => ({
+        ...room.players[playerId],
+        hand: room.players[playerId].hand.map(() => ({ hidden: true })),
+      })),
       gameStateStr: room.state,
       winner: room.winnerId ? { id: room.winnerId, name: room.players[room.winnerId]?.name } : null,
       buyOffer: null

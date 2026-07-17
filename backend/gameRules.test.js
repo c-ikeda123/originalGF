@@ -7,6 +7,7 @@ const {
   createAttackQueue,
   cureAilments,
   getAssistantAction,
+  getNextAlivePlayerId,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDefenseCard,
@@ -164,4 +165,14 @@ test('防御奇跡はMP無料神器と組み合わせて使用できる', () => 
   const free = { type: 'item', supportEffect: 'magic_free' };
   const miracle = { type: 'miracle', defenseEffect: 'block_weapon' };
   assert.equal(validateCardPlay([free, miracle], 'defense').valid, true);
+});
+
+test('複数人の手番は昇天者を飛ばして循環する', () => {
+  const players = {
+    A: { hp: 40, ascended: false },
+    B: { hp: 0, ascended: true },
+    C: { hp: 20, ascended: false },
+  };
+  assert.equal(getNextAlivePlayerId(['A', 'B', 'C'], players, 'A'), 'C');
+  assert.equal(getNextAlivePlayerId(['A', 'B', 'C'], players, 'C'), 'A');
 });

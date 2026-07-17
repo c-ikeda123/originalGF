@@ -70,6 +70,17 @@ function shouldAssistantLeave(assistant, random = Math.random) {
   return Boolean(assistant) && assistant.hp > 0 && random() * 100 < (assistant.leaveOnDamageRate ?? 10);
 }
 
+function getNextAlivePlayerId(turnOrder, players, currentId) {
+  if (!turnOrder.length) return null;
+  const currentIndex = Math.max(0, turnOrder.indexOf(currentId));
+  for (let offset = 1; offset <= turnOrder.length; offset++) {
+    const id = turnOrder[(currentIndex + offset) % turnOrder.length];
+    const player = players[id];
+    if (player && !player.ascended && player.hp > 0) return id;
+  }
+  return null;
+}
+
 function isDefenseCard(card) {
   return Boolean(card && (
     (card.defense || 0) > 0
@@ -271,6 +282,7 @@ module.exports = {
   createAttackQueue,
   cureAilments,
   getAssistantAction,
+  getNextAlivePlayerId,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDefenseCard,
