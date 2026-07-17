@@ -1680,7 +1680,64 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .battle-player-marker {
+  width: 20px;
+  height: 20px;
+  justify-self: center;
   color: transparent;
+  background-position: center;
+  background-size: 20px 20px;
+  background-repeat: no-repeat;
+}
+
+.battle-player.active .battle-player-marker {
+  background-image: url('/godfield-flash/ui/game/status/single_ready.png');
+  animation: gf-turn-marker-pulse 700ms ease-in-out infinite alternate;
+}
+
+.battle-player.active.team-red .battle-player-marker {
+  background-image: url('/godfield-flash/ui/game/status/team2_ready.png');
+}
+
+.battle-player.active.team-blue .battle-player-marker {
+  background-image: url('/godfield-flash/ui/game/status/team1_ready.png');
+}
+
+.battle-turn-label {
+  position: absolute;
+  top: 8px;
+  left: -112px;
+  width: 102px;
+  height: 24px;
+  z-index: 3;
+  box-sizing: border-box;
+  color: #285a48;
+  background: url('/godfield-flash/ui/game/command/value.png') 0 0 / 102px 24px no-repeat;
+  filter: drop-shadow(0 1px 1px rgba(17, 78, 57, 0.55));
+  font: bold 14px/24px Georgia, 'Yu Mincho', serif;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: gf-turn-label-pulse 700ms ease-in-out infinite alternate;
+}
+
+.battle-turn-label::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  right: -8px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid #78ad86;
+}
+
+@keyframes gf-turn-marker-pulse {
+  from { filter: brightness(0.92); }
+  to { filter: brightness(1.35) drop-shadow(0 0 4px #fff89b); }
+}
+
+@keyframes gf-turn-label-pulse {
+  from { transform: translateX(0); }
+  to { transform: translateX(3px); }
 }
 
 .battle-player-name {
