@@ -65,6 +65,7 @@ test('準備・チームチャット・観戦・途中参加拒否を実サー�
   host.emit('startGame', { roomName });
   const watched = await spectatorGame;
   assert.equal(watched.opponents.length, 2);
+  assert.deepEqual(watched.effectEvents, []);
   assert.equal(watched.opponents.every(player => player.hand.every(card => card.hidden)), true);
 
   const late = io(url, { transports: ['websocket'] });

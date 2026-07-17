@@ -79,6 +79,29 @@ function addAscensionEvent(room, player) {
   }].slice(-20);
 }
 
+function addEffectEvent(room, type, player, amount = 0, details = {}) {
+  room.effectSeq = (room.effectSeq || 0) + 1;
+  room.effectEvents = [...(room.effectEvents || []), {
+    id: room.effectSeq,
+    type,
+    playerId: player?.id || null,
+    playerName: player?.name || '',
+    amount,
+    ...details,
+  }].slice(-60);
+}
+
+function increasePlayerStat(room, player, stat, amount, { sound = true } = {}) {
+  const before = player[stat] || 0;
+  player[stat] = Math.min(99, before + Math.max(0, amount));
+  const increased = player[stat] - before;
+  if (increased <= 0) return 0;
+  const effectTypes = { hp: 'hp_increase', mp: 'mp_increase', money: 'yen_increase' };
+  addEffectEvent(room, effectTypes[stat], player, increased);
+  if (sound) addSoundEvent(room, effectTypes[stat]);
+  return increased;
+}
+
 function emitRoomUpdate(roomName) {
   const room = rooms[roomName];
   if (!room) return;
@@ -141,6 +164,8 @@ io.on('connection', (socket) => {
         soundSeq: 0,
         ascensionEvents: [],
         ascensionSeq: 0,
+        effectEvents: [],
+        effectSeq: 0,
         winnerId: null,
         winnerTeam: null,
         followUpAttacks: [],
@@ -326,6 +351,8 @@ io.on('connection', (socket) => {
     room.lastAction = null;
     room.soundEvents = [];
     room.soundSeq = 0;
+    room.effectEvents = [];
+    room.effectSeq = 0;
     room.winnerId = null;
     room.winnerTeam = null;
     room.pendingBuy = null;
@@ -555,20 +582,22 @@ io.on('connection', (socket) => {
          queueAttackSequence(room, player, nextTurnId, combinedCard, cards, roomName);
        } else if (card.type === 'item') {
          if (card.healHp) {
-           player.hp = Math.min(99, player.hp + card.healHp);
-           addSoundEvent(room, 'hp_increase');
+           increasePlayerStat(room, player, 'hp', card.healHp);
          }
          if (card.healMp) {
-           player.mp = Math.min(99, player.mp + card.healMp);
-           addSoundEvent(room, 'mp_increase');
+           increasePlayerStat(room, player, 'mp', card.healMp);
          }
          if (card.moneyGain) {
-           player.money = Math.min(99, player.money + card.moneyGain);
-           addSoundEvent(room, 'yen_increase');
+           increasePlayerStat(room, player, 'money', card.moneyGain);
          }
          if (card.randomHp) {
+           const beforeHp = player.hp;
            const change = Math.random() < 0.5 ? card.randomHp : -card.randomHp;
            player.hp = Math.min(99, player.hp + change);
+           if (player.hp > beforeHp) {
+             addEffectEvent(room, 'hp_increase', player, player.hp - beforeHp);
+             addSoundEvent(room, 'hp_increase');
+           }
            room.log.push(`${card.name}: HP ${change > 0 ? '+' : ''}${change}`);
          }
          if (card.removeItems) {
@@ -596,12 +625,10 @@ io.on('connection', (socket) => {
               room.log.push(`${opponent.name} は ${applied} になった。`);
             }
             if (card.healHp) {
-              player.hp = Math.min(99, player.hp + card.healHp);
-              addSoundEvent(room, 'hp_increase');
+              increasePlayerStat(room, player, 'hp', card.healHp);
             }
             if (card.moneyGain) {
-              player.money = Math.min(99, player.money + card.moneyGain);
-              addSoundEvent(room, 'yen_increase');
+              increasePlayerStat(room, player, 'money', card.moneyGain);
             }
             if (card.setAssistant) setRandomAssistant(player, room);
             room.field = { attackerId: player.id, attackCard: card };
@@ -686,7 +713,11 @@ io.on('connection', (socket) => {
     if (!player || room.phase !== 'exchange' || room.turn !== socket.id || values.some(v => !Number.isInteger(v) || v < 0 || v > 99) || values.reduce((a, b) => a + b, 0) !== total) {
       return socket.emit('errorMsg', 'Keep the same total and set each value from 0 to 99.');
     }
+    const before = { hp: player.hp, mp: player.mp, money: player.money };
     [player.hp, player.mp, player.money] = values;
+    for (const [stat, type] of [['hp', 'hp_increase'], ['mp', 'mp_increase'], ['money', 'yen_increase']]) {
+      if (player[stat] > before[stat]) addEffectEvent(room, type, player, player[stat] - before[stat]);
+    }
     addSoundEvent(room, 'exchange');
     room.log.push(`${player.name} redistributed HP / MP / money.`);
     const next = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
@@ -706,7 +737,7 @@ io.on('connection', (socket) => {
     const price = offered?.type === 'miracle' ? 0 : Math.max(0, offered?.costMoney || 0);
     if (accept && offered && buyer.money >= price && buyer.hand.length < 18) {
       buyer.money -= price;
-      seller.money += price;
+      increasePlayerStat(room, seller, 'money', price, { sound: false });
       buyer.hand.push(seller.hand.splice(index, 1)[0]);
       addSoundEvent(room, 'seizure');
       room.log.push(`${buyer.name} bought ${offered.name} for money ${price}.`);
@@ -835,8 +866,7 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      }
      const attacker = room.players[pendingDamage?.attackerId];
      if (attacker && pendingDamage?.absorbHp) {
-       attacker.hp = Math.min(99, attacker.hp + resolvedDamage);
-       addSoundEvent(room, 'hp_increase');
+       increasePlayerStat(room, attacker, 'hp', resolvedDamage);
        room.log.push(`${attacker.name} はHPを ${resolvedDamage} 吸収した。`);
      }
      if (attacker && pendingDamage?.selfDamage) {
@@ -863,8 +893,7 @@ function applyDamageAndClearField(room, player, amount, roomName) {
            addSoundEvent(room, 'counter');
          }
          if (reactiveEffect === 'recover_double_mp') {
-           player.mp = Math.min(99, player.mp + resolvedDamage * 2);
-           addSoundEvent(room, 'mp_increase');
+           increasePlayerStat(room, player, 'mp', resolvedDamage * 2);
          }
          if (reactiveEffect === 'absorb_money') {
            const amountToSteal = Math.min(resolvedDamage, attacker.money);
@@ -1086,27 +1115,24 @@ function runAssistantAction(room, player, roomName, { nextTurnId = player.id, de
     addSoundEvent(room, 'harm_remove');
   }
   if (action.kind === 'recover_hp') {
-    player.hp = Math.min(99, player.hp + action.value);
-    addSoundEvent(room, 'hp_increase');
+    increasePlayerStat(room, player, 'hp', action.value);
   }
   if (action.kind === 'recover_mp') {
-    player.mp = Math.min(99, player.mp + action.value);
-    addSoundEvent(room, 'mp_increase');
+    increasePlayerStat(room, player, 'mp', action.value);
   }
   if (action.kind === 'scatter_money') {
-    Object.values(room.players).forEach(target => { target.money = Math.min(99, target.money + action.value); });
+    Object.values(room.players).forEach(target => increasePlayerStat(room, target, 'money', action.value, { sound: false }));
     addSoundEvent(room, 'yen_increase');
   }
-  if (action.kind === 'give_enemy_money' && enemy) enemy.money = Math.min(99, enemy.money + action.value);
+  if (action.kind === 'give_enemy_money' && enemy) increasePlayerStat(room, enemy, 'money', action.value);
   if (action.kind === 'absorb_money' && enemy) {
     const amount = Math.min(action.value, enemy.money);
     enemy.money -= amount;
-    player.money = Math.min(99, player.money + amount);
+    increasePlayerStat(room, player, 'money', amount, { sound: false });
     addSoundEvent(room, 'yen_absorb');
   }
   if (action.kind === 'recover_money') {
-    player.money = Math.min(99, player.money + action.value);
-    addSoundEvent(room, 'yen_increase');
+    increasePlayerStat(room, player, 'money', action.value);
   }
   if (action.kind === 'add_item') {
     const artifact = drawArtifact(room);
@@ -1128,9 +1154,9 @@ function runAssistantAction(room, player, roomName, { nextTurnId = player.id, de
       }
     } else {
       if (player.hand.length < 18) player.hand.push(drawArtifact(room));
-      if (artifact?.healHp) player.hp = Math.min(99, player.hp + artifact.healHp);
-      if (artifact?.healMp) player.mp = Math.min(99, player.mp + artifact.healMp);
-      if (artifact?.moneyGain) player.money = Math.min(99, player.money + artifact.moneyGain);
+      if (artifact?.healHp) increasePlayerStat(room, player, 'hp', artifact.healHp);
+      if (artifact?.healMp) increasePlayerStat(room, player, 'mp', artifact.healMp);
+      if (artifact?.moneyGain) increasePlayerStat(room, player, 'money', artifact.moneyGain);
       if (artifact?.cureAilments) cureAilments(player, artifact.cureAilments);
       if (artifact?.ailmentInflict && enemy) applyAilment(enemy, artifact.ailmentInflict);
       if (artifact?.setAssistant) setRandomAssistant(player, room);
@@ -1150,8 +1176,8 @@ function runAssistantAction(room, player, roomName, { nextTurnId = player.id, de
     } else {
       if (miracle.ailmentInflict && enemy) applyAilment(enemy, miracle.ailmentInflict);
       if (miracle.cureAilments) cureAilments(player, miracle.cureAilments);
-      if (miracle.healHp) player.hp = Math.min(99, player.hp + miracle.healHp);
-      if (miracle.moneyGain) player.money = Math.min(99, player.money + miracle.moneyGain);
+      if (miracle.healHp) increasePlayerStat(room, player, 'hp', miracle.healHp);
+      if (miracle.moneyGain) increasePlayerStat(room, player, 'money', miracle.moneyGain);
     }
   }
 }
@@ -1205,7 +1231,7 @@ function forceSale(room, seller, buyer, card) {
   buyer.mp -= paidMp;
   remaining -= paidMp;
   buyer.hp = Math.max(0, buyer.hp - remaining);
-  seller.money = Math.min(99, seller.money + price);
+  increasePlayerStat(room, seller, 'money', price, { sound: false });
   if (buyer.hand.length < 18) buyer.hand.push(withInstanceId(card));
   room.log.push(`${seller.name} forced ${buyer.name} to buy ${card.name} for money ${price}.`);
 }
@@ -1213,6 +1239,7 @@ function forceSale(room, seller, buyer, card) {
 function processAilments(player, room) {
   const result = processEndOfTurnAilments(player);
   if (result.hpChange) addSoundEvent(room, 'disease');
+  if (result.hpChange > 0) addEffectEvent(room, 'hp_increase', player, result.hpChange);
   if (result.progressedTo) addSoundEvent(room, 'worse');
   if (result.hpChange) room.log.push(`${player.name} の病気効果: HP ${result.hpChange > 0 ? '+' : ''}${result.hpChange}`);
   if (result.progressedTo) room.log.push(`${player.name} の病気が ${result.progressedTo} に悪化した。`);
@@ -1266,6 +1293,7 @@ function checkDeath(room) {
       const [reviver] = player.hand.splice(reviveIndex, 1);
       player.hp = reviver.reviveHp;
       addSoundEvent(room, 'revive');
+      addEffectEvent(room, 'hp_increase', player, player.hp, { revived: true });
       room.log.push(`${reviver.name}により${player.name}はHP ${player.hp}で復活した。`);
       return;
     }
@@ -1323,6 +1351,8 @@ function startGame(roomName) {
   room.soundSeq = 0;
   room.ascensionEvents = [];
   room.ascensionSeq = 0;
+  room.effectEvents = [];
+  room.effectSeq = 0;
   room.field = null;
   room.attackQueue = [];
   room.attackContext = null;
@@ -1481,6 +1511,7 @@ function emitGameState(roomName) {
       lastAction: room.lastAction,
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId || event.targetId === id),
       ascensionEvents: room.ascensionEvents || [],
+      effectEvents: room.effectEvents || [],
       chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly || message.team === room.players[id].team),
       me: room.players[id],
       opponent: room.players[playerIds.find(p => p !== id)],
@@ -1527,6 +1558,7 @@ function emitGameState(roomName) {
       lastAction: room.lastAction,
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId),
       ascensionEvents: room.ascensionEvents || [],
+      effectEvents: room.effectEvents || [],
       chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly),
       me: { id: spectator.id, name: spectator.name, hp: 0, mp: 0, money: 0, hand: [], learnedMiracles: [], ailments: [], ascended: true },
       opponent: visiblePlayers[0] || null,
