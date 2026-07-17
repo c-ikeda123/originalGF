@@ -4,6 +4,7 @@ import io from 'socket.io-client';
 import '../index.css';
 import RoomBaseEditor from './RoomBaseEditor';
 import { playSound } from '../soundEffects';
+import { canAddCardToSelection } from '../utils/cardSelection';
 import { getDreamDisplayedCard } from '../utils/dreamCards';
 
 let socket;
@@ -401,6 +402,10 @@ export default function GameRoom() {
   const toggleCard = (index) => {
     const canSelectForDiscard = isMyTurn && phase === 'main';
     if (!selectedCards.includes(index) && !isCardUsable(me.hand[index]) && !canSelectForDiscard) return;
+    if (!selectedCards.includes(index)) {
+      const selectedHandCards = selectedCards.map(cardIndex => me.hand[cardIndex]).filter(Boolean);
+      if (!canAddCardToSelection(selectedHandCards, me.hand[index], phase, me.ailments.includes('flash'))) return;
+    }
     setSelectedCards(current => current.includes(index)
       ? current.filter(i => i !== index)
       : [...current, index].sort((a, b) => a - b));
