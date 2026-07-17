@@ -1071,8 +1071,6 @@ function startNextQueuedAttack(room, roomName) {
       room.phase = 'main';
       room.log.push(`${room.players[nextTurnId].name} の行動へ戻る。`);
     } else {
-      addSoundEvent(room, 'no_change');
-      addEffectEvent(room, 'no_change', room.players[nextTurnId]);
       endTurnInternal(room, nextTurnId, { skipAssistantOpportunity });
     }
   }
