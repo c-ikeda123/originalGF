@@ -1759,6 +1759,7 @@ h1, h2, h3, h4, h5, h6 {
   left: 3px;
   width: 661px;
   height: 181px;
+  max-height: none;
   display: grid;
   grid-template-columns: repeat(8, 80px);
   grid-auto-rows: 80px;
