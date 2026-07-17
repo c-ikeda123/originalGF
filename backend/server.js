@@ -378,7 +378,9 @@ io.on('connection', (socket) => {
     room.editLocks = {};
     room.log = [];
     clearTimeout(room.turnTimer);
+    clearTimeout(room.botTimer);
     room.turnTimer = null;
+    room.botTimer = null;
     room.turnTimerKey = null;
     room.turnDeadline = null;
     Object.values(room.players).forEach(player => {
@@ -1406,6 +1408,12 @@ function checkDeath(room) {
 
 function startGame(roomName) {
   const room = rooms[roomName];
+  clearTimeout(room.turnTimer);
+  clearTimeout(room.botTimer);
+  room.turnTimer = null;
+  room.botTimer = null;
+  room.turnTimerKey = null;
+  room.turnDeadline = null;
   room.state = 'playing';
   room.winnerId = null;
   room.winnerTeam = null;
