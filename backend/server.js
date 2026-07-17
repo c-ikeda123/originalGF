@@ -8,6 +8,7 @@ const {
   combineAttackCards,
   cureAilments,
   createAttackQueue,
+  getAssistantAction,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDefenseCard,
@@ -72,6 +73,7 @@ io.on('connection', (socket) => {
     let room = rooms[password];
     if (!room) {
       room = {
+        name: password,
         players: {},
         hostId: socket.id,
         baseCardsEdits: { ...baseCardsEdits },
@@ -661,7 +663,7 @@ function drawArtifact(room) {
   return withInstanceId(room.deck[Math.floor(Math.random() * room.deck.length)]);
 }
 
-function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName) {
+function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, options = {}) {
   const targets = card.target === 'all'
     ? Object.values(room.players).filter(player => player.id !== attacker.id && !player.ascended && player.hp > 0)
     : [room.players[card.forcedTargetId || nextTurnId]].filter(Boolean);
@@ -670,6 +672,7 @@ function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName) 
     attackerId: attacker.id,
     nextTurnId,
     card,
+    assistantAction: options.assistantAction || false,
     ailments: cards.filter(usedCard => usedCard.ailmentTrigger === 'damage').map(usedCard => usedCard.ailmentInflict).filter(Boolean),
   };
   startNextQueuedAttack(room, roomName);
@@ -710,10 +713,18 @@ function startNextQueuedAttack(room, roomName) {
   }
   if (context) {
     const nextTurnId = context.nextTurnId;
+    const assistantAction = context.assistantAction;
     room.attackQueue = [];
     room.attackContext = null;
     clearFieldLater(roomName);
-    endTurnInternal(room, nextTurnId);
+    if (assistantAction) {
+      room.turn = nextTurnId;
+      room.mainTurnOwner = nextTurnId;
+      room.phase = 'main';
+      room.log.push(`${room.players[nextTurnId].name} の行動へ戻る。`);
+    } else {
+      endTurnInternal(room, nextTurnId);
+    }
   }
   return false;
 }
@@ -732,6 +743,60 @@ function setRandomAssistant(player, room) {
   const type = ASSISTANT_TYPES[Math.floor(Math.random() * ASSISTANT_TYPES.length)];
   player.assistant = { type, hp: 20 };
   room.log.push(`${player.name} に ${type} の守護神が宿った。`);
+}
+
+function runAssistantAction(room, player, roomName) {
+  if (!player.assistant) return;
+  const action = getAssistantAction(player.assistant.type);
+  const enemies = Object.values(room.players).filter(candidate => candidate.id !== player.id && !candidate.ascended && candidate.hp > 0);
+  const enemy = enemies[Math.floor(Math.random() * enemies.length)];
+  if (!action) return;
+  room.log.push(`${player.name} の守護神 ${player.assistant.type} が行動した。`);
+  if (action.kind === 'attack' && enemy) {
+    const card = {
+      id: `assistant_${player.assistant.type}`,
+      name: `${player.assistant.type}の守護神`,
+      type: 'incarnation',
+      sourceType: 'incarnation',
+      imageUrl: `/godfield-flash/cards/assistant/${player.assistant.type}.png`,
+      attack: action.attack,
+      hitRate: action.hitRate,
+      attribute: action.attribute,
+      target: 'single',
+      forcedTargetId: enemy.id,
+      attackEffect: action.attackEffect,
+      ailmentInflict: action.ailment,
+      ailmentTrigger: action.ailment ? 'damage' : null,
+    };
+    queueAttackSequence(room, player, player.id, card, [card], roomName, { assistantAction: true });
+    return;
+  }
+  if (action.kind === 'ailment' && enemy) applyAilment(enemy, action.ailment);
+  if (action.kind === 'cure') cureAilments(player, 'all');
+  if (action.kind === 'recover_hp') player.hp = Math.min(99, player.hp + action.value);
+  if (action.kind === 'recover_mp') player.mp = Math.min(99, player.mp + action.value);
+  if (action.kind === 'scatter_money') Object.values(room.players).forEach(target => { target.money = Math.min(99, target.money + action.value); });
+  if (action.kind === 'give_enemy_money' && enemy) enemy.money = Math.min(99, enemy.money + action.value);
+  if (action.kind === 'absorb_money' && enemy) {
+    const amount = Math.min(action.value, enemy.money);
+    enemy.money -= amount;
+    player.money = Math.min(99, player.money + amount);
+  }
+  if (action.kind === 'recover_money') player.money = Math.min(99, player.money + action.value);
+  if (action.kind === 'add_item' && player.hand.length < 18) player.hand.push(drawArtifact(room));
+  if (action.kind === 'random_miracle') {
+    const miracles = GF_BASE_CARDS.filter(card => card.type === 'miracle');
+    const miracle = { ...miracles[Math.floor(Math.random() * miracles.length)] };
+    if (miracle.attack > 0 && enemy) {
+      miracle.forcedTargetId = enemy.id;
+      queueAttackSequence(room, player, player.id, miracle, [miracle], roomName, { assistantAction: true });
+    } else {
+      if (miracle.ailmentInflict && enemy) applyAilment(enemy, miracle.ailmentInflict);
+      if (miracle.cureAilments) cureAilments(player, miracle.cureAilments);
+      if (miracle.healHp) player.hp = Math.min(99, player.hp + miracle.healHp);
+      if (miracle.moneyGain) player.money = Math.min(99, player.money + miracle.moneyGain);
+    }
+  }
 }
 
 function resolveMystery(room, actor) {
@@ -792,6 +857,7 @@ function endTurnInternal(room, nextTurnId) {
    room.phase = 'main';
    const player = room.players[nextTurnId];
    room.log.push(`--- ${player.name}'s Turn ---`);
+   runAssistantAction(room, player, room.name);
 }
 
 function createActionEvent(attacker, defender, card, outcome) {

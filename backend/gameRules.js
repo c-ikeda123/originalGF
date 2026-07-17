@@ -1,4 +1,66 @@
 const DISEASES = ['cold', 'fever', 'hell', 'heaven'];
+const ASSISTANT_ACTIONS = {
+  mars: [
+    { kind: 'attack', attack: 2, hitRate: 75, attribute: 'fire', weight: 6 },
+    { kind: 'attack', attack: 3, hitRate: 75, attribute: 'fire', weight: 5 },
+    { kind: 'attack', attack: 4, hitRate: 75, attribute: 'fire', weight: 4 },
+    { kind: 'attack', attack: 5, hitRate: 75, attribute: 'fire', weight: 3 },
+    { kind: 'attack', attack: 6, hitRate: 75, attribute: 'fire', weight: 2 },
+  ],
+  mercury: [
+    { kind: 'attack', attack: 1, hitRate: 50, attribute: 'water', ailment: 'fog', weight: 6 },
+    { kind: 'attack', attack: 2, hitRate: 100, attribute: 'water', ailment: 'fog', weight: 5 },
+    { kind: 'attack', attack: 2, hitRate: 50, attribute: 'water', weight: 4 },
+    { kind: 'attack', attack: 3, hitRate: 100, attribute: 'water', weight: 3 },
+    { kind: 'attack', attack: 6, hitRate: 50, attribute: 'water', weight: 2 },
+  ],
+  jupiter: [
+    { kind: 'attack', attack: 1, hitRate: 100, attribute: 'wood', weight: 6 },
+    { kind: 'attack', attack: 2, hitRate: 100, attribute: 'wood', weight: 5 },
+    { kind: 'attack', attack: 1, hitRate: 75, attribute: 'wood', attackEffect: 'absorb_hp', weight: 4 },
+    { kind: 'ailment', ailment: 'dream', weight: 3 },
+    { kind: 'attack', attack: 2, hitRate: 75, attribute: 'wood', ailment: 'dream', weight: 2 },
+  ],
+  saturn: [3, 5, 7, 10, 16].map((attack, index) => ({ kind: 'attack', attack, hitRate: 100, attribute: 'earth', weight: 6 - index })),
+  uranus: [
+    { kind: 'attack', attack: 2, hitRate: 100, attribute: 'light', weight: 6 },
+    { kind: 'attack', attack: 4, hitRate: 25, attribute: 'light', weight: 5 },
+    { kind: 'ailment', ailment: 'flash', weight: 4 },
+    { kind: 'attack', attack: 5, hitRate: 100, attribute: 'light', attackEffect: 'absorb_hp', weight: 3 },
+    { kind: 'attack', attack: 10, hitRate: 75, attribute: 'light', weight: 2 },
+  ],
+  pluto: [
+    { kind: 'attack', attack: 1, hitRate: 25, attribute: 'dark', ailment: 'darkcloud', weight: 6 },
+    { kind: 'attack', attack: 1, hitRate: 100, attribute: 'dark', weight: 5 },
+    { kind: 'attack', attack: 2, hitRate: 100, attribute: 'dark', weight: 4 },
+    { kind: 'attack', attack: 4, hitRate: 100, attribute: 'dark', weight: 3 },
+    { kind: 'attack', attack: 8, hitRate: 100, attribute: 'dark', weight: 2 },
+  ],
+  neptune: [
+    { kind: 'cure', weight: 6 }, { kind: 'recover_mp', value: 5, weight: 5 },
+    { kind: 'recover_hp', value: 5, weight: 4 }, { kind: 'recover_mp', value: 10, weight: 3 },
+    { kind: 'recover_hp', value: 10, weight: 2 },
+  ],
+  venus: [
+    { kind: 'scatter_money', value: 1, weight: 6 }, { kind: 'give_enemy_money', value: 5, weight: 5 },
+    { kind: 'absorb_money', value: 3, weight: 4 }, { kind: 'recover_money', value: 8, weight: 3 },
+    { kind: 'recover_money', value: 20, weight: 2 },
+  ],
+  earth: [{ kind: 'add_item', weight: 1 }],
+  moon: [{ kind: 'random_miracle', weight: 1 }],
+};
+
+function getAssistantAction(type, random = Math.random) {
+  const actions = ASSISTANT_ACTIONS[type] || [];
+  const total = actions.reduce((sum, action) => sum + action.weight, 0);
+  if (!total) return null;
+  let roll = random() * total;
+  for (const action of actions) {
+    roll -= action.weight;
+    if (roll < 0) return { ...action };
+  }
+  return { ...actions.at(-1) };
+}
 
 function isDefenseCard(card) {
   return Boolean(card && (
@@ -180,6 +242,7 @@ module.exports = {
   canDefendAttribute,
   createAttackQueue,
   cureAilments,
+  getAssistantAction,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDefenseCard,

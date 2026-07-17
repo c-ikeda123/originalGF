@@ -6,6 +6,7 @@ const {
   canDefendAttribute,
   createAttackQueue,
   cureAilments,
+  getAssistantAction,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDefenseCard,
@@ -102,4 +103,14 @@ test('全体・複数回攻撃は各対象を回数分だけ順番に処理す�
   ]);
   const repeated = combineAttackCards([{ name: '連撃', type: 'weapon', attack: 3, repeatCount: 2 }]);
   assert.equal(repeated.repeatCount, 2);
+});
+
+test('守護神の行動をFlash版の重みで抽選する', () => {
+  assert.deepEqual(getAssistantAction('mars', () => 0), {
+    kind: 'attack', attack: 2, hitRate: 75, attribute: 'fire', weight: 6,
+  });
+  assert.deepEqual(getAssistantAction('mars', () => 0.999), {
+    kind: 'attack', attack: 6, hitRate: 75, attribute: 'fire', weight: 2,
+  });
+  assert.equal(getAssistantAction('unknown', () => 0), null);
 });
