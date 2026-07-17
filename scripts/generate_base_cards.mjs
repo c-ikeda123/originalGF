@@ -16,7 +16,19 @@ const deriveSystemFields = card => {
   if (description.includes('自分にも同じダメージ')) fields.attackEffect = 'damage_to_self';
   if (description.includes('単体攻撃武器の攻撃力を倍にする')) fields.supportEffect = 'double_attack';
   if (description.includes('単体攻撃武器を100%攻にする')) fields.supportEffect = 'wide_attack';
-  if (description.includes('MP消費なしで奇跡') || description.includes('MPなしで奇跡')) fields.supportEffect = 'magic_free';
+  if (description.includes('MP消費なしで奇跡') || description.includes('MP消費0で奇跡') || description.includes('MPなしで奇跡')) fields.supportEffect = 'magic_free';
+  if (card.name === 'ちからの粉') {
+    fields.supportEffect = 'increase_attack';
+    fields.supportValue = 10;
+    fields.additive = true;
+  }
+  if (description.includes('+￥10')) fields.moneyGain = 10;
+  if (description.includes('+HP10または10ダメージ')) fields.randomHp = 10;
+  if (description.includes('神器を3つ掃き飛ばす')) fields.removeItems = 3;
+  if (description.includes('習得奇跡を2つ忘れさせる')) fields.removeMiracles = 2;
+  if (description.includes('守護神が宿る') || description.includes('守護神が現れる')) fields.setAssistant = true;
+  if (description.includes('超常現象が起こる')) fields.mystery = true;
+  if (description.includes('HP0時に+HP10')) fields.reviveHp = 10;
   if (description.includes('何でもはね返す')) fields.defenseEffect = 'reflect_any';
   else if (description.includes('無属性攻撃をはね返す')) fields.defenseEffect = 'reflect_weapon';
   else if (description.includes('奇跡をはね返す')) fields.defenseEffect = 'reflect_magic';

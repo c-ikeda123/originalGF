@@ -186,7 +186,8 @@ export default function GameRoom() {
   };
 
   const toggleCard = (index) => {
-    if (!selectedCards.includes(index) && !isCardUsable(me.hand[index])) return;
+    const canSelectForDiscard = isMyTurn && phase === 'main';
+    if (!selectedCards.includes(index) && !isCardUsable(me.hand[index]) && !canSelectForDiscard) return;
     setSelectedCards(current => current.includes(index)
       ? current.filter(i => i !== index)
       : [...current, index].sort((a, b) => a - b));
@@ -199,7 +200,7 @@ export default function GameRoom() {
 
   // Render a small square card for the hand
   const renderSquareCard = (realCard, index) => {
-    const usable = isCardUsable(realCard) || selectedCards.includes(index);
+    const usable = isCardUsable(realCard) || (isMyTurn && phase === 'main') || selectedCards.includes(index);
     const card = getDisplayedCard(realCard, index);
 
     let statText = '';
@@ -273,6 +274,13 @@ export default function GameRoom() {
       return <span key={a} className="ailment-icon" title={names[a] || a}>{icon}</span>;
     });
   };
+
+  const renderAssistant = (assistant) => assistant && (
+    <div className="assistant-status">
+      <img src={`/godfield-flash/cards/assistant/${assistant.type}.png`} alt="" />
+      <span>守護神 {assistant.type}（HP {assistant.hp}）</span>
+    </div>
+  );
 
   const actionTargetName = actionAnim?.defenderId === me.id ? me.name : opponent?.name;
   const damageTargetName = damageAnim?.targetId === me.id ? me.name : opponent?.name;
@@ -396,6 +404,7 @@ export default function GameRoom() {
             {opponent && opponent.ailments.length > 0 && (
                <div style={{ paddingLeft: '20px' }}>{renderAilments(opponent)}</div>
             )}
+            {opponent && renderAssistant(opponent.assistant)}
 
             {/* Empty Slots to look like GF */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity: 0.5 }}>
@@ -420,6 +429,7 @@ export default function GameRoom() {
             {me.ailments.length > 0 && (
                <div style={{ paddingLeft: '20px' }}>{renderAilments(me)}</div>
             )}
+            {renderAssistant(me.assistant)}
 
             {/* Log / Actions Box */}
             <div className="glass-panel" style={{ flex: 1, marginTop: '20px', padding: '10px', fontSize: '0.8rem', overflowY: 'auto', background: 'white' }}>
@@ -476,6 +486,9 @@ export default function GameRoom() {
             )}
             {isMyTurn && phase === 'main' && (
                <button className="btn" onClick={() => socket.emit('pray', { roomName: id })} title="手札に武器がない場合のみ可能">祈る (ドロー)</button>
+            )}
+            {isMyTurn && phase === 'main' && selectedCards.length > 0 && (
+               <button className="btn btn-secondary" onClick={() => { socket.emit('discardCards', { roomName: id, cardIndices: selectedCards }); setSelectedCards([]); }}>捨てる ({selectedCards.length})</button>
             )}
             {isMyTurn && phase === 'main' && (
                <button className="btn" onClick={handleEndTurn}>ターン終了</button>

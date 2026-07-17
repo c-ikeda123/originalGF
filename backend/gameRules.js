@@ -31,11 +31,15 @@ function validateCardPlay(cards, phase, ailments = []) {
   }
   if (cards.length === 1) return { valid: true };
 
-  const combinationTypes = new Set(['weapon', 'accessory', 'miracle']);
+  const combinationTypes = new Set(['weapon', 'accessory', 'miracle', 'item']);
   const baseAttacks = cards.filter(card => card.attack > 0 && !card.additive);
   const hasAttack = cards.some(card => card.attack > 0);
+  const actionMiracles = cards.filter(card => card.type === 'miracle' && card.attack <= 0 && !card.additive);
   const modifiersOnly = cards.every(card => card.attack > 0 || card.additive || card.supportEffect === 'magic_free');
-  return hasAttack && baseAttacks.length <= 1 && modifiersOnly && cards.every(card => combinationTypes.has(card.type))
+  const validItemModifiers = cards.every(card => card.type !== 'item' || ['magic_free', 'increase_attack'].includes(card.supportEffect));
+  const magicFreeAction = actionMiracles.length === 1 && cards.every(card => card === actionMiracles[0] || card.supportEffect === 'magic_free');
+  return ((hasAttack && baseAttacks.length <= 1 && modifiersOnly) || magicFreeAction)
+    && validItemModifiers && cards.every(card => combinationTypes.has(card.type))
     ? { valid: true }
     : { valid: false, message: 'この組み合わせでは使用できません。' };
 }
@@ -49,12 +53,15 @@ function combineAttributes(cards) {
 }
 
 function combineAttackCards(cards) {
-  const base = cards.find(card => card.attack > 0 && !card.additive) || cards.find(card => card.attack > 0) || cards[0];
+  const base = cards.find(card => card.attack > 0 && !card.additive)
+    || cards.find(card => card.attack > 0)
+    || cards.find(card => ['weapon', 'miracle'].includes(card.type))
+    || cards[0];
   const attackingCards = cards.filter(card => card.attack > 0);
   let attack = base.attack || 0;
   for (const card of cards) {
-    if (card === base || !card.additive) continue;
-    attack += card.attackBonus || card.attack || 0;
+    if (card === base) continue;
+    if (card.additive) attack += card.attackBonus || card.attack || card.supportValue || 0;
   }
   if (cards.some(card => card.supportEffect === 'double_attack')) attack *= 2;
   const wide = cards.some(card => card.supportEffect === 'wide_attack');

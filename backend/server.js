@@ -248,7 +248,8 @@ io.on('connection', (socket) => {
     }
 
     // Check costs
-    const totalMp = isSell ? 0 : cards.reduce((sum, c) => sum + (c.costMp || 0), 0);
+    const hasMagicFree = cards.some(c => c.supportEffect === 'magic_free');
+    const totalMp = isSell || hasMagicFree ? 0 : cards.reduce((sum, c) => sum + (c.costMp || 0), 0);
     if (player.mp < totalMp) {
        socket.emit('errorMsg', 'Not enough MP');
        return;
@@ -363,10 +364,25 @@ io.on('connection', (socket) => {
            endTurnInternal(room, opponentId);
          }
        } else if (card.type === 'item') {
-         // Item logic (heal)
-         if (card.healHp) player.hp += card.healHp;
-         if (card.healMp) player.mp += card.healMp;
-         room.log.push(`${player.name} recovered stats.`);
+         if (card.healHp) player.hp = Math.min(99, player.hp + card.healHp);
+         if (card.healMp) player.mp = Math.min(99, player.mp + card.healMp);
+         if (card.moneyGain) player.money = Math.min(99, player.money + card.moneyGain);
+         if (card.randomHp) {
+           const change = Math.random() < 0.5 ? card.randomHp : -card.randomHp;
+           player.hp = Math.min(99, player.hp + change);
+           room.log.push(`${card.name}: HP ${change > 0 ? '+' : ''}${change}`);
+         }
+         if (card.removeItems) {
+           const removed = removeRandomEntries(opponent.hand, card.removeItems);
+           room.log.push(`${card.name} が ${opponent.name} の神器を ${removed.length} 個掃き飛ばした。`);
+         }
+         if (card.removeMiracles) {
+           const removed = removeRandomEntries(opponent.learnedMiracles, card.removeMiracles);
+           room.log.push(`${card.name} が ${opponent.name} の奇跡を ${removed.length} 個忘れさせた。`);
+         }
+         if (card.setAssistant) setRandomAssistant(player, room);
+         if (card.mystery) resolveMystery(room, player);
+         room.log.push(`${player.name} は ${card.name} の効果を受けた。`);
          endTurnInternal(room, opponentId);
        } else if (combinedCard.type === 'miracle') {
          if (combinedCard.attack > 0) {
@@ -399,7 +415,9 @@ io.on('connection', (socket) => {
               const applied = applyAilment(opponent, card.ailmentInflict);
               room.log.push(`${opponent.name} は ${applied} になった。`);
             }
-            if (card.healHp) player.hp += card.healHp;
+            if (card.healHp) player.hp = Math.min(99, player.hp + card.healHp);
+            if (card.moneyGain) player.money = Math.min(99, player.money + card.moneyGain);
+            if (card.setAssistant) setRandomAssistant(player, room);
             room.field = { attackerId: player.id, attackCard: card };
             clearFieldLater(roomName);
             endTurnInternal(room, opponentId);
@@ -530,6 +548,23 @@ io.on('connection', (socket) => {
     emitGameState(roomName);
   });
 
+  socket.on('discardCards', ({ roomName, cardIndices }) => {
+    const room = rooms[roomName];
+    const player = room?.players[socket.id];
+    if (!player || room.state !== 'playing' || room.turn !== socket.id || room.phase !== 'main') return;
+    const indices = [...new Set(Array.isArray(cardIndices) ? cardIndices : [])]
+      .filter(index => Number.isInteger(index) && index >= 0 && index < player.hand.length)
+      .sort((a, b) => b - a);
+    if (!indices.length) return socket.emit('errorMsg', '捨てる神器を選択してください。');
+    const discarded = indices.map(index => player.hand[index]);
+    indices.forEach(index => player.hand.splice(index, 1));
+    for (let i = 0; i < discarded.length && player.hand.length < 18; i++) player.hand.push(drawArtifact(room));
+    room.log.push(`${player.name} は ${discarded.map(discardedCard => discardedCard.name).join('、')} を捨てた。`);
+    const next = Object.keys(room.players).find(id => id !== socket.id);
+    endTurnInternal(room, next);
+    emitGameState(roomName);
+  });
+
   socket.on('pray', ({ roomName }) => {
     const room = rooms[roomName];
     if (!room || room.state !== 'playing') return;
@@ -559,11 +594,21 @@ io.on('connection', (socket) => {
 });
 
 function applyDamageAndClearField(room, player, amount, roomName) {
-   const actualDamage = Math.max(0, amount);
    const pendingDamage = player.pendingDamage;
-   const isDarkLethal = pendingDamage?.attribute === 'dark' && actualDamage > 0;
-   player.hp = isDarkLethal ? 0 : player.hp - actualDamage;
-   room.log.push(isDarkLethal
+   const isDarkAttack = pendingDamage?.attribute === 'dark' && amount > 0;
+   let actualDamage = isDarkAttack ? 999 : Math.max(0, amount);
+   if (actualDamage > 0 && player.assistant?.hp > 0) {
+     const absorbed = Math.min(actualDamage, player.assistant.hp);
+     player.assistant.hp -= absorbed;
+     actualDamage -= absorbed;
+     room.log.push(`${player.name} の守護神が ${absorbed} ダメージを引き受けた。`);
+     if (player.assistant.hp <= 0) {
+       room.log.push(`${player.name} の守護神は去った。`);
+       player.assistant = null;
+     }
+   }
+   player.hp = Math.max(0, player.hp - actualDamage);
+   room.log.push(isDarkAttack && actualDamage > 0
      ? `${player.name} took dark damage and ascended!`
      : `${player.name} took ${actualDamage} damage!`);
    if (actualDamage > 0) {
@@ -628,6 +673,48 @@ function drawArtifact(room) {
   return withInstanceId(room.deck[Math.floor(Math.random() * room.deck.length)]);
 }
 
+const ASSISTANT_TYPES = ['mars', 'mercury', 'jupiter', 'saturn', 'uranus', 'pluto', 'neptune', 'venus', 'earth', 'moon'];
+
+function removeRandomEntries(entries, count) {
+  const removed = [];
+  while (entries.length && removed.length < count) {
+    removed.push(...entries.splice(Math.floor(Math.random() * entries.length), 1));
+  }
+  return removed;
+}
+
+function setRandomAssistant(player, room) {
+  const type = ASSISTANT_TYPES[Math.floor(Math.random() * ASSISTANT_TYPES.length)];
+  player.assistant = { type, hp: 20 };
+  room.log.push(`${player.name} に ${type} の守護神が宿った。`);
+}
+
+function resolveMystery(room, actor) {
+  const type = ASSISTANT_TYPES[Math.floor(Math.random() * ASSISTANT_TYPES.length)];
+  const players = Object.values(room.players).filter(player => !player.ascended && player.hp > 0);
+  if (type === 'mars') players.forEach(player => applyAilment(player, 'fever'));
+  if (type === 'mercury') players.forEach(player => applyAilment(player, 'fog'));
+  if (type === 'jupiter') players.forEach(player => applyAilment(player, 'dream'));
+  if (type === 'saturn') players.forEach(player => { player.hp = 1; });
+  if (type === 'uranus' && players.length) players[Math.floor(Math.random() * players.length)].hp -= 60;
+  if (type === 'pluto') players.filter(player => player.id !== actor.id).forEach(player => {
+    if (Math.random() < 0.75) player.hp = 0;
+  });
+  if (type === 'neptune') actor.hp = Math.min(99, actor.hp + 60);
+  if (type === 'venus') players.forEach(player => { player.money = 99; });
+  if (type === 'earth') {
+    const counts = players.map(player => player.hand.length);
+    const artifacts = players.flatMap(player => player.hand.splice(0));
+    for (let i = artifacts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [artifacts[i], artifacts[j]] = [artifacts[j], artifacts[i]];
+    }
+    players.forEach((player, index) => player.hand.push(...artifacts.splice(0, counts[index])));
+  }
+  if (type === 'moon') players.forEach(player => setRandomAssistant(player, room));
+  room.log.push(`超常現象「${type}」が起こった。`);
+}
+
 function forceSale(room, seller, buyer, card) {
   const price = card.type === 'miracle' ? 0 : Math.max(0, card.costMoney || 0);
   let remaining = price;
@@ -678,6 +765,14 @@ function checkDeath(room) {
    const players = Object.values(room.players);
    players.forEach(player => {
       if (player.hp <= 0 && !player.ascended) {
+         const reviveIndex = player.hand.findIndex(card => card.reviveHp > 0);
+         if (reviveIndex >= 0) {
+           const [reviver] = player.hand.splice(reviveIndex, 1);
+           player.hp = reviver.reviveHp;
+           if (player.hand.length < 18) player.hand.push(drawArtifact(room));
+           room.log.push(`${reviver.name} により ${player.name} はHP${player.hp}で復活した。`);
+           return;
+         }
          player.ascended = true;
          room.log.push(`${player.name} has ascended (died)!`);
       }
@@ -711,6 +806,7 @@ function startGame(roomName) {
     player.ascended = false;
     player.learnedMiracles = [];
     player.ailments = [];
+    player.assistant = null;
     player.pendingDamage = null;
     
     // Draw initial 9 cards from the shared room deck

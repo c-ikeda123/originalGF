@@ -4309,7 +4309,8 @@
     "copies": 1,
     "description": "+￥10",
     "additive": false,
-    "imageUrl": "/godfield-flash/cards/magic/zaihou.png"
+    "imageUrl": "/godfield-flash/cards/magic/zaihou.png",
+    "moneyGain": 10
   },
   {
     "id": "gf_miracle_215",
@@ -4329,7 +4330,8 @@
     "copies": 1,
     "description": "守護神が現れる",
     "additive": false,
-    "imageUrl": "/godfield-flash/cards/magic/kaihou.png"
+    "imageUrl": "/godfield-flash/cards/magic/kaihou.png",
+    "setAssistant": true
   },
   {
     "id": "gf_item_216",
@@ -4546,7 +4548,8 @@
     "costMp": 0,
     "copies": 3,
     "description": "守護神が宿る",
-    "imageUrl": "/godfield-flash/cards/sundry/shugofuuin_no_tsubo.png"
+    "imageUrl": "/godfield-flash/cards/sundry/shugofuuin_no_tsubo.png",
+    "setAssistant": true
   },
   {
     "id": "gf_item_227",
@@ -4565,7 +4568,8 @@
     "costMp": 0,
     "copies": 2,
     "description": "+HP10または10ダメージ",
-    "imageUrl": "/godfield-flash/cards/sundry/dokidoki_namida.png"
+    "imageUrl": "/godfield-flash/cards/sundry/dokidoki_namida.png",
+    "randomHp": 10
   },
   {
     "id": "gf_item_228",
@@ -4584,7 +4588,10 @@
     "costMp": 0,
     "copies": 2,
     "description": "+攻10",
-    "imageUrl": "/godfield-flash/cards/sundry/weapon_ko.png"
+    "imageUrl": "/godfield-flash/cards/sundry/weapon_ko.png",
+    "supportEffect": "increase_attack",
+    "supportValue": 10,
+    "additive": true
   },
   {
     "id": "gf_item_229",
@@ -4603,7 +4610,8 @@
     "costMp": 0,
     "copies": 2,
     "description": "MP消費0で奇跡を使える",
-    "imageUrl": "/godfield-flash/cards/sundry/seirei_no_nuigurumi.png"
+    "imageUrl": "/godfield-flash/cards/sundry/seirei_no_nuigurumi.png",
+    "supportEffect": "magic_free"
   },
   {
     "id": "gf_item_230",
@@ -4622,7 +4630,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "無作為に神器を3つ掃き飛ばす",
-    "imageUrl": "/godfield-flash/cards/sundry/yozora_no_houki.png"
+    "imageUrl": "/godfield-flash/cards/sundry/yozora_no_houki.png",
+    "removeItems": 3
   },
   {
     "id": "gf_item_231",
@@ -4641,7 +4650,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "無作為に習得奇跡を2つ忘れさせる",
-    "imageUrl": "/godfield-flash/cards/sundry/megami_no_sekken.png"
+    "imageUrl": "/godfield-flash/cards/sundry/megami_no_sekken.png",
+    "removeMiracles": 2
   },
   {
     "id": "gf_item_232",
@@ -4660,7 +4670,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "超常現象が起こる",
-    "imageUrl": "/godfield-flash/cards/sundry/ummei_no_himo.png"
+    "imageUrl": "/godfield-flash/cards/sundry/ummei_no_himo.png",
+    "mystery": true
   },
   {
     "id": "gf_item_233",
@@ -4679,7 +4690,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "HP0時に+HP10",
-    "imageUrl": "/godfield-flash/cards/sundry/taiyou_no_omamori.png"
+    "imageUrl": "/godfield-flash/cards/sundry/taiyou_no_omamori.png",
+    "reviveHp": 10
   },
   {
     "id": "gf_item_234",

@@ -82,3 +82,12 @@ test('属性相性と特殊防御を解決する', () => {
   assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'remove_attribute' }), { action: 'remove_attribute', amount: 10, attribute: 'none' });
   assert.deepEqual(resolveDefenseCard(attack, { defense: 4, attribute: 'earth' }), { action: 'invalid_attribute', amount: 10 });
 });
+
+test('攻撃補助雑貨とMP無料化雑貨を攻撃に組み合わせられる', () => {
+  const weapon = { name: '剣', type: 'weapon', attack: 5, hitRate: 100, attribute: 'none' };
+  const powder = { name: '粉', type: 'item', attack: 0, additive: true, supportEffect: 'increase_attack', supportValue: 10 };
+  const free = { name: '人形', type: 'item', attack: 0, supportEffect: 'magic_free' };
+  assert.equal(validateCardPlay([weapon, powder], 'main').valid, true);
+  assert.equal(validateCardPlay([weapon, free], 'main').valid, true);
+  assert.equal(combineAttackCards([weapon, powder]).attack, 15);
+});
