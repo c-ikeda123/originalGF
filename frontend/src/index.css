@@ -1580,3 +1580,73 @@ h1, h2, h3, h4, h5, h6 {
   filter: none;
   opacity: 1;
 }
+
+.gf-game-start-effect {
+  position: absolute;
+  z-index: 130;
+  top: 50%;
+  left: 50%;
+  width: 310px;
+  height: 170px;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  pointer-events: none;
+  animation: combatAction 1.4s ease-out forwards;
+}
+
+.gf-game-screen .shrine-overlay,
+.gf-game-screen .game-end-overlay {
+  position: absolute;
+  inset: 30px 0 30px;
+  padding: 0;
+  background: rgba(79, 190, 170, 0.35);
+}
+
+.gf-game-screen .shrine-panel {
+  width: 520px;
+  box-sizing: border-box;
+  padding: 18px;
+  gap: 10px;
+  color: #335c50;
+  border: 2px solid #28785d;
+  border-radius: 0;
+  background: rgba(228, 255, 192, 0.94);
+  box-shadow: 3px 3px 0 rgba(20, 91, 67, 0.35);
+}
+
+.gf-game-screen .buy-actions .btn {
+  width: 240px;
+  height: 60px;
+  overflow: hidden;
+  color: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: url('/godfield-flash/ui/game-ja/buy/do_button_up.png') 0 0 / 240px 60px no-repeat;
+}
+
+.gf-game-screen .buy-actions .btn-secondary {
+  background-image: url('/godfield-flash/ui/game-ja/buy/do_not_button_up.png');
+}
+
+.gf-game-screen .game-end-panel {
+  width: 640px;
+  min-height: 380px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  padding: 30px;
+  color: #335c50;
+  border: 0;
+  border-radius: 0;
+  background: url('/godfield-flash/ui/game/winner/list.png') 0 0 / 640px 380px no-repeat;
+  box-shadow: none;
+}
+
+.gf-result-effect {
+  max-width: 645px;
+  max-height: 225px;
+  object-fit: contain;
+}

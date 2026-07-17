@@ -23,6 +23,7 @@ export default function GameRoom() {
   const [error, setError] = useState('');
   const [damageAnim, setDamageAnim] = useState(null);
   const [actionAnim, setActionAnim] = useState(null);
+  const [startAnim, setStartAnim] = useState(false);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
   const [selectedTargetId, setSelectedTargetId] = useState(null);
@@ -89,6 +90,14 @@ export default function GameRoom() {
         newSoundEvents.forEach(event => {
           const timer = setTimeout(() => playSound(event.name), event.delayMs || 0);
           activeSoundTimers.push(timer);
+          if (event.name === 'game_start') {
+            const showTimer = setTimeout(() => {
+              setStartAnim(true);
+              const hideTimer = setTimeout(() => setStartAnim(false), 1400);
+              activeSoundTimers.push(hideTimer);
+            }, event.delayMs || 0);
+            activeSoundTimers.push(showTimer);
+          }
         });
       }
     });
@@ -105,6 +114,7 @@ export default function GameRoom() {
       setSelectedCards([]);
       setDamageAnim(null);
       setActionAnim(null);
+      setStartAnim(false);
       lastDamageTimestamp.current = null;
       lastActionId.current = null;
       lastSoundEventId.current = 0;
@@ -429,7 +439,9 @@ export default function GameRoom() {
           </div>
         )}
 
-        {actionAnim && !damageAnim && (
+        {startAnim && <img className="gf-game-start-effect" src="/godfield-flash/ui/game-ja/effect/game_start.png" alt="ゲーム開始" />}
+
+        {actionAnim && !damageAnim && actionAnim.outcome !== 'use' && (
           <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`}>
             <img src={`/godfield-flash/ui/game-ja/effect/${actionEffect}.png`} alt={actionEffect === 'miss' ? '回避' : '命中'} />
           </div>
@@ -593,7 +605,11 @@ export default function GameRoom() {
       {gameState.gameStateStr === 'ended' && (
         <div className="game-end-overlay">
           <div className="glass-panel game-end-panel">
-            <h2>{gameState.winner ? '決着' : '引き分け'}</h2>
+            <img
+              className="gf-result-effect"
+              src={`/godfield-flash/ui/game-ja/effect/${gameState.winner ? 'game_win' : 'game_draw'}.png`}
+              alt={gameState.winner ? '決着' : '引き分け'}
+            />
             <p>
               {gameState.winner
                 ? (gameState.winner.id === me.id || (gameState.winner.team && gameState.winner.team === me.team)
