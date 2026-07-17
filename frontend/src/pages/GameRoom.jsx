@@ -715,8 +715,8 @@ export default function GameRoom() {
                  title={gameState.canPray ? '祈って神器を1枚引く' : '攻撃可能な武器があるため祈れません'}
                >祈る (ドロー)</button>
             )}
-            {isMyTurn && phase === 'main' && selectedCards.length > 0 && (
-               <button className="btn btn-secondary gf-fixed-action discard-action" onClick={() => { socket.emit('discardCards', { roomName: id, cardIndices: selectedCards }); setSelectedCards([]); }}>捨てる ({selectedCards.length})</button>
+            {isMyTurn && phase === 'main' && selectedCards.length === 1 && (
+               <button className="btn btn-secondary gf-fixed-action discard-action" onClick={() => { socket.emit('discardCards', { roomName: id, cardIndices: selectedCards }); setSelectedCards([]); }}>捨てる</button>
             )}
           </div>
         </section>

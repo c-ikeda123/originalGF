@@ -114,6 +114,10 @@ function canPlayerPray(player) {
   ));
 }
 
+function canDiscardCardCount(count) {
+  return count === 1;
+}
+
 function validateCardPlay(cards, phase, ailments = [], pendingDamage = null, defensesUsed = 0) {
   if (!cards.length) return { valid: false, message: 'カードを選択してください。' };
 
@@ -419,6 +423,7 @@ module.exports = {
   FIELD_CLEAR_DELAY_MS,
   applyAilment,
   areEnemies,
+  canDiscardCardCount,
   canPlayerPray,
   combineAttackCards,
   canDefendAttribute,

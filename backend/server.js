@@ -6,6 +6,7 @@ const path = require('path');
 const {
   applyAilment,
   areEnemies,
+  canDiscardCardCount,
   canPlayerPray,
   combineAttackCards,
   cureAilments,
@@ -823,7 +824,7 @@ io.on('connection', (socket) => {
     const indices = [...new Set(Array.isArray(cardIndices) ? cardIndices : [])]
       .filter(index => Number.isInteger(index) && index >= 0 && index < player.hand.length)
       .sort((a, b) => b - a);
-    if (!indices.length) return socket.emit('errorMsg', '捨てる神器を選択してください。');
+    if (!canDiscardCardCount(indices.length)) return socket.emit('errorMsg', '捨てる神器は1枚だけ選択してください。');
     const discarded = [];
     indices.forEach(index => {
       const selectedCard = player.hand[index];

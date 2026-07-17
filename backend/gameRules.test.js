@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {
   applyAilment,
   areEnemies,
+  canDiscardCardCount,
   canPlayerPray,
   combineAttackCards,
   canDefendAttribute,
@@ -177,6 +178,12 @@ test('実際に攻撃できる武器がない場合だけ祈れる', () => {
   assert.equal(canPlayerPray({ mp: 0, hand: [{ type: 'weapon', attack: 0, attackEffect: 'magical' }] }), true);
   assert.equal(canPlayerPray({ mp: 1, hand: [{ type: 'weapon', attack: 0, attackEffect: 'magical' }] }), false);
   assert.equal(canPlayerPray({ mp: 10, hand: [{ type: 'weapon', attack: 0 }, { type: 'miracle', attack: 10 }] }), true);
+});
+
+test('捨てる操作は1ターンに1枚だけ許可する', () => {
+  assert.equal(canDiscardCardCount(1), true);
+  assert.equal(canDiscardCardCount(0), false);
+  assert.equal(canDiscardCardCount(2), false);
 });
 
 test('閃光状態では防御神器を複数使用できない', () => {
