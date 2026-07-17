@@ -1184,6 +1184,8 @@ h1, h2, h3, h4, h5, h6 {
 
 /* Flash版の実寸（1024×768）を基準にした戦闘画面 */
 .gf-game-viewport {
+  position: fixed;
+  inset: 0;
   width: 100vw;
   height: 100vh;
   display: grid;
@@ -1271,7 +1273,7 @@ h1, h2, h3, h4, h5, h6 {
 .gf-battle-stage {
   position: absolute;
   inset: 0;
-  padding: 8px;
+  padding: 0;
   overflow: hidden;
 }
 
@@ -1532,4 +1534,10 @@ h1, h2, h3, h4, h5, h6 {
   width: auto;
   height: 70px;
   object-fit: contain;
+}
+
+.gf-game-screen .gf-card-square.disabled {
+  cursor: default;
+  filter: none;
+  opacity: 1;
 }

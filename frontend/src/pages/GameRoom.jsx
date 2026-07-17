@@ -429,7 +429,7 @@ export default function GameRoom() {
           </div>
         )}
 
-        {actionAnim && (
+        {actionAnim && !damageAnim && (
           <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`}>
             <img src={`/godfield-flash/ui/game-ja/effect/${actionEffect}.png`} alt={actionEffect === 'miss' ? '回避' : '命中'} />
           </div>
