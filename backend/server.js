@@ -794,13 +794,14 @@ function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, 
     nextTurnId,
     card,
     assistantAction: options.assistantAction || false,
+    skipAssistantOpportunity: options.skipAssistantOpportunity || false,
     ailments: cards.filter(usedCard => usedCard.ailmentTrigger === 'damage').map(usedCard => usedCard.ailmentInflict).filter(Boolean),
   };
   startNextQueuedAttack(room, roomName);
 }
 
-function queueFollowUpAttack(room, attackerId, nextTurnId, card) {
-  room.followUpAttacks = [...(room.followUpAttacks || []), { attackerId, nextTurnId, card }];
+function queueFollowUpAttack(room, attackerId, nextTurnId, card, options = {}) {
+  room.followUpAttacks = [...(room.followUpAttacks || []), { attackerId, nextTurnId, card, options }];
 }
 
 function startNextFollowUpAttack(room, roomName) {
@@ -808,7 +809,7 @@ function startNextFollowUpAttack(room, roomName) {
   if (!followUp) return false;
   const attacker = room.players[followUp.attackerId];
   if (!attacker) return startNextFollowUpAttack(room, roomName);
-  queueAttackSequence(room, attacker, followUp.nextTurnId, followUp.card, [followUp.card], roomName);
+  queueAttackSequence(room, attacker, followUp.nextTurnId, followUp.card, [followUp.card], roomName, followUp.options);
   return true;
 }
 
@@ -851,6 +852,7 @@ function startNextQueuedAttack(room, roomName) {
   if (context) {
     const nextTurnId = context.nextTurnId;
     const assistantAction = context.assistantAction;
+    const skipAssistantOpportunity = context.skipAssistantOpportunity;
     room.attackQueue = [];
     room.attackContext = null;
     if (startNextFollowUpAttack(room, roomName)) return true;
@@ -864,7 +866,7 @@ function startNextQueuedAttack(room, roomName) {
       room.log.push(`${room.players[nextTurnId].name} の行動へ戻る。`);
     } else {
        addSoundEvent(room, 'no_change');
-      endTurnInternal(room, nextTurnId);
+      endTurnInternal(room, nextTurnId, { skipAssistantOpportunity });
     }
   }
   return false;
@@ -882,12 +884,12 @@ function removeRandomEntries(entries, count) {
 
 function setRandomAssistant(player, room) {
   const type = ASSISTANT_TYPES[Math.floor(Math.random() * ASSISTANT_TYPES.length)];
-  player.assistant = { type, hp: 20, actionRate: 25, leaveOnDamageRate: 10 };
+  player.assistant = { type, hp: 20, actionRate: 30, leaveOnDamageRate: 10 };
   addSoundEvent(room, 'assistant_add');
   room.log.push(`${player.name} に ${type} の守護神が宿った。`);
 }
 
-function runAssistantAction(room, player, roomName) {
+function runAssistantAction(room, player, roomName, { nextTurnId = player.id, deferAttack = false } = {}) {
   if (!shouldAssistantAct(player.assistant)) return;
   const action = getAssistantAction(player.assistant.type);
   const enemies = Object.values(room.players).filter(candidate => candidate.id !== player.id && !candidate.ascended && candidate.hp > 0);
@@ -911,7 +913,11 @@ function runAssistantAction(room, player, roomName) {
       ailmentInflict: action.ailment,
       ailmentTrigger: action.ailment ? 'damage' : null,
     };
-    queueAttackSequence(room, player, player.id, card, [card], roomName, { assistantAction: true });
+    if (deferAttack) {
+      queueFollowUpAttack(room, player.id, nextTurnId, card, { skipAssistantOpportunity: true });
+    } else {
+      queueAttackSequence(room, player, player.id, card, [card], roomName, { assistantAction: true });
+    }
     return;
   }
   if (action.kind === 'ailment' && enemy) {
@@ -954,7 +960,11 @@ function runAssistantAction(room, player, roomName) {
     const miracle = { ...miracles[Math.floor(Math.random() * miracles.length)] };
     if (miracle.attack > 0 && enemy) {
       miracle.forcedTargetId = enemy.id;
-      queueAttackSequence(room, player, player.id, miracle, [miracle], roomName, { assistantAction: true });
+      if (deferAttack) {
+        queueFollowUpAttack(room, player.id, nextTurnId, miracle, { skipAssistantOpportunity: true });
+      } else {
+        queueAttackSequence(room, player, player.id, miracle, [miracle], roomName, { assistantAction: true });
+      }
     } else {
       if (miracle.ailmentInflict && enemy) applyAilment(enemy, miracle.ailmentInflict);
       if (miracle.cureAilments) cureAilments(player, miracle.cureAilments);
@@ -1027,24 +1037,29 @@ function processAilments(player, room) {
   if (result.fatal) room.log.push(`${player.name} は天国病の発作でHPが0になった。`);
 }
 
-function endTurnInternal(room, nextTurnId) {
+function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false } = {}) {
    if (!nextTurnId || !room.players[nextTurnId] || room.players[nextTurnId].ascended || room.players[nextTurnId].hp <= 0) {
      nextTurnId = getNextAlivePlayerId(room.turnOrder || Object.keys(room.players), room.players, room.mainTurnOwner);
    }
    if (!nextTurnId) return checkDeath(room);
    const endingPlayer = room.players[room.mainTurnOwner];
    if (endingPlayer && endingPlayer.id !== nextTurnId) processAilments(endingPlayer, room);
-   checkDeath(room);
-   if (room.state === 'ended') return;
+    checkDeath(room);
+    if (room.state === 'ended' || room.attackContext) return;
+    if (!skipAssistantOpportunity && endingPlayer && endingPlayer.id !== nextTurnId) {
+      Object.values(room.players)
+        .filter(player => player.id !== endingPlayer.id && !player.ascended && player.hp > 0 && player.assistant)
+        .forEach(player => runAssistantAction(room, player, room.name, { nextTurnId, deferAttack: true }));
+      if (startNextFollowUpAttack(room, room.name)) return;
+    }
    flushReplacementDraws(room);
    room.turn = nextTurnId;
    room.mainTurnOwner = nextTurnId;
    room.phase = 'main';
    const player = room.players[nextTurnId];
-   room.log.push(`--- ${player.name}'s Turn ---`);
-   addSoundEvent(room, 'client_turn', { targetId: nextTurnId });
-   runAssistantAction(room, player, room.name);
-}
+    room.log.push(`--- ${player.name}'s Turn ---`);
+    addSoundEvent(room, 'client_turn', { targetId: nextTurnId });
+ }
 
 function createActionEvent(attacker, defender, card, outcome) {
   return {

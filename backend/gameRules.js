@@ -63,7 +63,7 @@ function getAssistantAction(type, random = Math.random) {
 }
 
 function shouldAssistantAct(assistant, random = Math.random) {
-  return Boolean(assistant) && random() * 100 < (assistant.actionRate ?? 25);
+  return Boolean(assistant) && random() * 100 < (assistant.actionRate ?? 30);
 }
 
 function shouldAssistantLeave(assistant, random = Math.random) {

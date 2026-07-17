@@ -167,9 +167,9 @@ test('閃光中は既に防御済みなら追加の防具を使えない', () =>
 });
 
 test('守護神の行動率と被弾離脱率を判定する', () => {
-  const assistant = { hp: 10, actionRate: 25, leaveOnDamageRate: 10 };
-  assert.equal(shouldAssistantAct(assistant, () => 0.249), true);
-  assert.equal(shouldAssistantAct(assistant, () => 0.25), false);
+  const assistant = { hp: 10, actionRate: 30, leaveOnDamageRate: 10 };
+  assert.equal(shouldAssistantAct(assistant, () => 0.299), true);
+  assert.equal(shouldAssistantAct(assistant, () => 0.3), false);
   assert.equal(shouldAssistantLeave(assistant, () => 0.099), true);
   assert.equal(shouldAssistantLeave(assistant, () => 0.1), false);
   assert.equal(shouldAssistantLeave({ ...assistant, hp: 0 }, () => 0), false);
