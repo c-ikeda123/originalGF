@@ -336,6 +336,11 @@ h1, h2, h3, h4, h5, h6 {
   flex: 1;
 }
 
+.timer-warning {
+  color: #fef08a;
+  animation: pulse 0.8s infinite alternate;
+}
+
 .room-card-row.edited {
   border-left: 4px solid #f59e0b;
 }

@@ -29,6 +29,7 @@ export default function GameRoom() {
   const [chatMessages, setChatMessages] = useState([]);
   const [chatText, setChatText] = useState('');
   const [teamChat, setTeamChat] = useState(false);
+  const [now, setNow] = useState(Date.now());
   const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
   const lastDamageTimestamp = useRef(null);
   const lastActionId = useRef(null);
@@ -122,6 +123,12 @@ export default function GameRoom() {
     }
   }, [gameState?.phase, gameState?.me]);
 
+  useEffect(() => {
+    if (!gameState?.turnDeadline) return undefined;
+    const timer = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(timer);
+  }, [gameState?.turnDeadline]);
+
   const myTeam = gameState?.me?.team
     || roomState?.players?.find(player => player.id === socketId)?.team;
   const submitChat = event => {
@@ -201,6 +208,20 @@ export default function GameRoom() {
             </button>
           )}
           {socketId === roomState?.hostId && (
+            <label>
+              制限時間
+              <select
+                value={roomState?.timeLimitSeconds || 0}
+                onChange={event => socket.emit('setTimeLimit', { roomName: id, seconds: Number(event.target.value) })}
+              >
+                <option value={0}>無制限</option>
+                <option value={30}>30秒</option>
+                <option value={60}>60秒</option>
+                <option value={120}>120秒</option>
+              </select>
+            </label>
+          )}
+          {socketId === roomState?.hostId && (
             <button className="btn" disabled={(roomState?.players?.length || 0) < 2} onClick={() => socket.emit('startGame', { roomName: id })}>対戦を開始</button>
           )}
         </div>
@@ -220,6 +241,9 @@ export default function GameRoom() {
     ? me.name
     : opponents.find(player => player.id === playerId)?.name;
   const isMyTurn = turn === me.id;
+  const remainingSeconds = gameState.turnDeadline
+    ? Math.max(0, Math.ceil((gameState.turnDeadline - now) / 1000))
+    : null;
   const hasFog = me.ailments.includes('fog');
   const hasDream = me.ailments.includes('dream');
 
@@ -363,6 +387,7 @@ export default function GameRoom() {
             <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>← 修行 (Room: {id})</span>
          </div>
          <div style={{ fontWeight: 'bold' }}>{gameState.gameStateStr === 'ended' ? '決着' : 'G.F.1'}</div>
+         {remainingSeconds !== null && <div className={remainingSeconds <= 10 ? 'timer-warning' : ''}>残り {remainingSeconds}秒</div>}
          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
             <button className="btn" style={{ padding: '2px 8px', fontSize: '0.8rem' }}>教典</button>
          </div>

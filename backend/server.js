@@ -77,6 +77,7 @@ function emitRoomUpdate(roomName) {
     })),
     spectators: Object.values(room.spectators || {}).map(spectator => ({ id: spectator.id, name: spectator.name })),
     chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly),
+    timeLimitSeconds: room.timeLimitSeconds || 0,
   });
 }
 
@@ -118,6 +119,8 @@ io.on('connection', (socket) => {
         phase: 'main', // main, defense
         log: [],
         chatMessages: [],
+        timeLimitSeconds: 0,
+        turnDeadline: null,
         field: null,
         lastDamage: null,
         lastAction: null,
@@ -249,6 +252,14 @@ io.on('connection', (socket) => {
     }
   });
 
+  socket.on('setTimeLimit', ({ roomName, seconds }) => {
+    const room = rooms[roomName];
+    const value = Number(seconds);
+    if (!room || room.state !== 'waiting' || room.hostId !== socket.id || ![0, 30, 60, 120].includes(value)) return;
+    room.timeLimitSeconds = value;
+    emitRoomUpdate(roomName);
+  });
+
   socket.on('lockBaseCard', ({ roomName, cardId }) => {
     const room = rooms[roomName];
     if (!room || room.state !== 'waiting' || !GF_BASE_CARDS.some(card => card.id === cardId)) return;
@@ -307,6 +318,10 @@ io.on('connection', (socket) => {
     room.pendingBuy = null;
     room.editLocks = {};
     room.log = [];
+    clearTimeout(room.turnTimer);
+    room.turnTimer = null;
+    room.turnTimerKey = null;
+    room.turnDeadline = null;
     Object.values(room.players).forEach(player => {
       player.hp = 40;
       player.mp = 0;
@@ -1366,6 +1381,43 @@ function startGame(roomName) {
   emitGameState(roomName);
 }
 
+function armTurnTimer(roomName) {
+  const room = rooms[roomName];
+  if (!room) return;
+  const limit = room.timeLimitSeconds || 0;
+  const timerKey = room.state === 'playing' && room.turn ? `${room.turn}:${room.phase}` : null;
+  if (!limit || !timerKey) {
+    clearTimeout(room.turnTimer);
+    room.turnTimer = null;
+    room.turnTimerKey = null;
+    room.turnDeadline = null;
+    return;
+  }
+  if (room.turnTimerKey === timerKey && room.turnDeadline) return;
+  clearTimeout(room.turnTimer);
+  room.turnTimerKey = timerKey;
+  room.turnDeadline = Date.now() + limit * 1000;
+  room.turnTimer = setTimeout(() => {
+    const current = rooms[roomName];
+    if (!current || current.turnTimerKey !== timerKey || current.state !== 'playing') return;
+    current.turnTimer = null;
+    current.turnTimerKey = null;
+    current.turnDeadline = null;
+    const player = current.players[current.turn];
+    if (!player) return;
+    current.log.push(`${player.name}は時間切れになった。`);
+    addSoundEvent(current, 'alert');
+    if (current.phase === 'defense') {
+      applyDamageAndClearField(current, player, player.pendingDamage?.amount || 0, roomName);
+      return;
+    }
+    if (current.phase === 'buy_offer') current.pendingBuy = null;
+    const nextTurnId = getNextAlivePlayerId(current.turnOrder, current.players, current.mainTurnOwner);
+    endTurnInternal(current, nextTurnId);
+    emitGameState(roomName);
+  }, limit * 1000);
+}
+
 function scheduleBotTurn(roomName) {
   const room = rooms[roomName];
   if (!room) return;
@@ -1431,6 +1483,7 @@ function performBotTurn(roomName) {
 function emitGameState(roomName) {
   const room = rooms[roomName];
   if (!room) return;
+  armTurnTimer(roomName);
   
   const playerIds = Object.keys(room.players);
   
@@ -1438,6 +1491,7 @@ function emitGameState(roomName) {
     // Construct player-specific view
     const stateView = {
       turn: room.turn,
+      turnDeadline: room.turnDeadline,
       phase: room.phase,
       log: room.log,
       field: room.field,
@@ -1482,6 +1536,7 @@ function emitGameState(roomName) {
     io.to(spectator.id).emit('gameState', {
       spectator: true,
       turn: room.turn,
+      turnDeadline: room.turnDeadline,
       phase: room.phase,
       log: room.log,
       field: room.field,
