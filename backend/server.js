@@ -611,6 +611,9 @@ io.on('connection', (socket) => {
        if (combinedCard.type === 'weapon') {
          queueAttackSequence(room, player, nextTurnId, combinedCard, cards, roomName);
        } else if (card.type === 'item') {
+         room.field = { attackerId: player.id, attackCard: combinedCard };
+         addSoundEvent(room, 'card');
+         addSoundEvent(room, 'card', { delayMs: 140 });
          if (card.healHp) {
            increasePlayerStat(room, player, 'hp', card.healHp);
          }
@@ -645,7 +648,10 @@ io.on('connection', (socket) => {
          if (cards.some(usedCard => usedCard.mortar)) addSoundEvent(room, 'mortar');
          const mysteryQueuedAttack = card.mystery && resolveMystery(room, player, nextTurnId, roomName);
          room.log.push(`${player.name} は ${card.name} の効果を受けた。`);
-         if (!mysteryQueuedAttack) endTurnInternal(room, nextTurnId);
+         if (!mysteryQueuedAttack) {
+           clearFieldLater(roomName);
+           endTurnInternal(room, nextTurnId);
+         }
        } else if (combinedCard.type === 'miracle') {
          if (combinedCard.attack > 0) {
            queueAttackSequence(room, player, nextTurnId, combinedCard, cards, roomName);

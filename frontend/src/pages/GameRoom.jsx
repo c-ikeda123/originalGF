@@ -448,7 +448,7 @@ export default function GameRoom() {
     if (card.healHp > 0) statText += `HP+${card.healHp} `;
 
     return (
-      <div className={`gf-card-field attr-border-${card.attribute}`}>
+      <div className={`gf-card-field type-${card.type} attr-border-${card.attribute}`}>
         {card.imageUrl ? (
           <div className="image-area" style={{backgroundImage: `url(${card.imageUrl})`}}></div>
         ) : (
@@ -643,7 +643,7 @@ export default function GameRoom() {
               </div>
             )}
           </div>
-          {field && (
+          {field?.defenderId && (
             <div className="gf-combat-totals">
               <span>攻{field.attackCard.attack || 0}</span>
               <span>守{field.defenseCards?.reduce((sum, card) => sum + (card.defense || 0), 0) || 0}</span>

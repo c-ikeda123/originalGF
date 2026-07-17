@@ -1941,6 +1941,20 @@ h1, h2, h3, h4, h5, h6 {
   gap: 10px;
 }
 
+.gf-field-group.attacker > .gf-card-field.type-item {
+  transform-origin: center top;
+  animation: gf-effect-item-settle 420ms ease-out both;
+}
+
+@keyframes gf-effect-item-settle {
+  0% { transform: translateY(-18px) scale(0.97); opacity: 0; }
+  22% { transform: translateY(3px) scale(1); opacity: 1; }
+  38% { transform: translateY(0); }
+  58% { transform: translateY(-5px); }
+  78% { transform: translateY(1px); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
 .gf-field-group.defender .pending-defense-card {
   margin: 0;
 }
