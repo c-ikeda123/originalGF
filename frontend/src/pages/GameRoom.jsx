@@ -27,9 +27,12 @@ export default function GameRoom() {
   const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
   const lastDamageTimestamp = useRef(null);
   const lastActionId = useRef(null);
+  const lastSoundEventId = useRef(0);
+  const soundTimers = useRef([]);
   const damageTimer = useRef(null);
   const actionTimer = useRef(null);
   useEffect(() => {
+    const activeSoundTimers = soundTimers.current;
     socket = io(serverUrl);
     socket.on('connect', () => setSocketId(socket.id));
 
@@ -56,7 +59,6 @@ export default function GameRoom() {
         setDamageAnim(damage);
         clearTimeout(damageTimer.current);
         damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
-        playSound(damage.isDark ? 'damage_dark' : 'damage');
       }
       const action = data.lastAction;
       if (action && action.id !== lastActionId.current) {
@@ -64,7 +66,14 @@ export default function GameRoom() {
         setActionAnim(action);
         clearTimeout(actionTimer.current);
         actionTimer.current = setTimeout(() => setActionAnim(null), 1400);
-        playSound(action.outcome === 'evade' ? 'miss' : 'hit');
+      }
+      const newSoundEvents = (data.soundEvents || []).filter(event => event.id > lastSoundEventId.current);
+      if (newSoundEvents.length) {
+        lastSoundEventId.current = Math.max(...newSoundEvents.map(event => event.id));
+        newSoundEvents.forEach(event => {
+          const timer = setTimeout(() => playSound(event.name), event.delayMs || 0);
+          activeSoundTimers.push(timer);
+        });
       }
     });
 
@@ -77,9 +86,11 @@ export default function GameRoom() {
       setActionAnim(null);
       lastDamageTimestamp.current = null;
       lastActionId.current = null;
+      lastSoundEventId.current = 0;
     });
 
     socket.on('errorMsg', (msg) => {
+      playSound('alert');
       setError(msg);
       setTimeout(() => setError(''), 3000);
     });
@@ -87,6 +98,7 @@ export default function GameRoom() {
     return () => {
       clearTimeout(damageTimer.current);
       clearTimeout(actionTimer.current);
+      activeSoundTimers.forEach(clearTimeout);
       socket.disconnect();
     };
   }, [id, playerName, navigate]);

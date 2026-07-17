@@ -43,10 +43,22 @@ const io = new Server(server, {
 
 const PORT = process.env.PORT || 3001;
 const GF_BASE_CARDS = require('../shared/baseCards.json');
+const FLASH_SOUNDS = new Set(require('../shared/flashSounds.json'));
 
 // Stores active rooms
 // rooms[roomName] = { players: { socketId: { name, ready, ...gameState } }, state: 'waiting' | 'playing' }
 const rooms = {};
+
+function addSoundEvent(room, name, { targetId = null, delayMs = 0 } = {}) {
+  if (!FLASH_SOUNDS.has(name)) return;
+  room.soundSeq = (room.soundSeq || 0) + 1;
+  room.soundEvents = [...(room.soundEvents || []), {
+    id: room.soundSeq,
+    name,
+    targetId,
+    delayMs,
+  }].slice(-60);
+}
 
 function emitRoomUpdate(roomName) {
   const room = rooms[roomName];
@@ -93,6 +105,8 @@ io.on('connection', (socket) => {
         field: null,
         lastDamage: null,
         lastAction: null,
+        soundEvents: [],
+        soundSeq: 0,
         winnerId: null,
         deck: [] // The shared deck
       };
@@ -189,6 +203,8 @@ io.on('connection', (socket) => {
     room.field = null;
     room.lastDamage = null;
     room.lastAction = null;
+    room.soundEvents = [];
+    room.soundSeq = 0;
     room.winnerId = null;
     room.pendingBuy = null;
     room.editLocks = {};
@@ -321,10 +337,12 @@ io.on('connection', (socket) => {
     cards.forEach(usedCard => {
       if (usedCard.selfAilment) {
         const applied = applyAilment(player, usedCard.selfAilment);
+        addSoundEvent(room, 'harm_add');
         room.log.push(`${player.name} は ${applied} になった。`);
       }
       if (usedCard.cureAilments) {
         const cured = cureAilments(player, usedCard.cureAilments);
+        if (cured.length) addSoundEvent(room, 'harm_remove');
         if (cured.length) room.log.push(`${player.name} の災い（${cured.join('、')}）が治った。`);
       }
       if (usedCard.redrawHand) {
@@ -348,6 +366,7 @@ io.on('connection', (socket) => {
     if (isSingleTrade) {
       if (card.effect === 'exchange') {
         room.phase = 'exchange';
+        addSoundEvent(room, 'exchange');
         room.log.push(`${player.name} used Exchange.`);
       } else if (card.effect === 'buy') {
         const offered = opponent.hand[Math.floor(Math.random() * opponent.hand.length)];
@@ -390,9 +409,18 @@ io.on('connection', (socket) => {
        if (combinedCard.type === 'weapon') {
          queueAttackSequence(room, player, nextTurnId, combinedCard, cards, roomName);
        } else if (card.type === 'item') {
-         if (card.healHp) player.hp = Math.min(99, player.hp + card.healHp);
-         if (card.healMp) player.mp = Math.min(99, player.mp + card.healMp);
-         if (card.moneyGain) player.money = Math.min(99, player.money + card.moneyGain);
+         if (card.healHp) {
+           player.hp = Math.min(99, player.hp + card.healHp);
+           addSoundEvent(room, 'hp_increase');
+         }
+         if (card.healMp) {
+           player.mp = Math.min(99, player.mp + card.healMp);
+           addSoundEvent(room, 'mp_increase');
+         }
+         if (card.moneyGain) {
+           player.money = Math.min(99, player.money + card.moneyGain);
+           addSoundEvent(room, 'yen_increase');
+         }
          if (card.randomHp) {
            const change = Math.random() < 0.5 ? card.randomHp : -card.randomHp;
            player.hp = Math.min(99, player.hp + change);
@@ -400,13 +428,16 @@ io.on('connection', (socket) => {
          }
          if (card.removeItems) {
            const removed = removeRandomEntries(opponent.hand, card.removeItems);
+           if (removed.length) addSoundEvent(room, 'item_remove');
            room.log.push(`${card.name} が ${opponent.name} の神器を ${removed.length} 個掃き飛ばした。`);
          }
          if (card.removeMiracles) {
            const removed = removeRandomEntries(opponent.learnedMiracles, card.removeMiracles);
+           if (removed.length) addSoundEvent(room, 'seizure');
            room.log.push(`${card.name} が ${opponent.name} の奇跡を ${removed.length} 個忘れさせた。`);
          }
          if (card.setAssistant) setRandomAssistant(player, room);
+         if (cards.some(usedCard => usedCard.mortar)) addSoundEvent(room, 'mortar');
          const mysteryQueuedAttack = card.mystery && resolveMystery(room, player, nextTurnId, roomName);
          room.log.push(`${player.name} は ${card.name} の効果を受けた。`);
          if (!mysteryQueuedAttack) endTurnInternal(room, nextTurnId);
@@ -416,10 +447,17 @@ io.on('connection', (socket) => {
          } else {
             if (card.ailmentInflict && card.ailmentTrigger === 'use') {
               const applied = applyAilment(opponent, card.ailmentInflict);
+              addSoundEvent(room, card.ailmentInflict === 'dream' ? 'illusion_item' : 'harm_add');
               room.log.push(`${opponent.name} は ${applied} になった。`);
             }
-            if (card.healHp) player.hp = Math.min(99, player.hp + card.healHp);
-            if (card.moneyGain) player.money = Math.min(99, player.money + card.moneyGain);
+            if (card.healHp) {
+              player.hp = Math.min(99, player.hp + card.healHp);
+              addSoundEvent(room, 'hp_increase');
+            }
+            if (card.moneyGain) {
+              player.money = Math.min(99, player.money + card.moneyGain);
+              addSoundEvent(room, 'yen_increase');
+            }
             if (card.setAssistant) setRandomAssistant(player, room);
             room.field = { attackerId: player.id, attackCard: card };
             clearFieldLater(roomName);
@@ -437,6 +475,7 @@ io.on('connection', (socket) => {
          pDamage.defensesUsed = (pDamage.defensesUsed || 0) + cards.length;
          room.field.defenseCards.push(combinedCard);
          if (resolution.action === 'reflect' || resolution.action === 'flick') {
+           addSoundEvent(room, resolution.action);
            const alivePlayers = Object.values(room.players).filter(candidate => !candidate.ascended && candidate.hp > 0);
            const target = resolution.action === 'reflect'
              ? room.players[pDamage.attackerId]
@@ -460,14 +499,17 @@ io.on('connection', (socket) => {
              room.log.push(`${combinedCard.name} が攻撃を${resolution.action === 'reflect' ? 'はね返した' : '弾き飛ばした'}！`);
              if (target.id === player.id) applyDamageAndClearField(room, target, resolution.amount, roomName);
            }
-         } else if (resolution.action === 'block') {
+        } else if (resolution.action === 'block') {
+           addSoundEvent(room, 'block');
            room.log.push(`${combinedCard.name} が攻撃を完全に止めた！`);
            applyDamageAndClearField(room, player, 0, roomName);
-         } else if (resolution.action === 'remove_attribute') {
+        } else if (resolution.action === 'remove_attribute') {
+           addSoundEvent(room, 'defense_harm');
            pDamage.attribute = 'none';
            room.log.push(`${combinedCard.name} が攻撃の属性を取り除いた。`);
            if (hasFlash) applyDamageAndClearField(room, player, pDamage.amount, roomName);
-         } else if (resolution.action === 'reduce') {
+        } else if (resolution.action === 'reduce') {
+           addSoundEvent(room, 'block');
            pDamage.amount = resolution.amount;
            room.log.push(`${player.name} は ${combinedCard.name} で防御し、残りダメージは ${pDamage.amount}。`);
            if (pDamage.amount <= 0 || hasFlash) applyDamageAndClearField(room, player, pDamage.amount, roomName);
@@ -500,6 +542,7 @@ io.on('connection', (socket) => {
       return socket.emit('errorMsg', 'Keep the same total and set each value from 0 to 99.');
     }
     [player.hp, player.mp, player.money] = values;
+    addSoundEvent(room, 'exchange');
     room.log.push(`${player.name} redistributed HP / MP / money.`);
     const next = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
     endTurnInternal(room, next);
@@ -520,6 +563,7 @@ io.on('connection', (socket) => {
       buyer.money -= price;
       seller.money += price;
       buyer.hand.push(seller.hand.splice(index, 1)[0]);
+      addSoundEvent(room, 'seizure');
       room.log.push(`${buyer.name} bought ${offered.name} for money ${price}.`);
     } else if (accept && offered && buyer.money < price) {
       socket.emit('errorMsg', 'Not enough money.');
@@ -568,6 +612,7 @@ io.on('connection', (socket) => {
       }
     });
     queueReplacementDraws(player, discarded.length);
+    if (discarded.length) addSoundEvent(room, 'item_remove');
     if (discarded.length) room.log.push(`${player.name} は ${discarded.map(discardedCard => discardedCard.name).join('、')} を捨てた。`);
     const next = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
     checkDeath(room);
@@ -616,9 +661,11 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      hpDamage -= absorbed;
      room.log.push(`${player.name} の守護神が ${absorbed} ダメージを引き受けた。`);
      if (assistant.hp <= 0) {
+       addSoundEvent(room, 'assistant_remove');
        room.log.push(`${player.name} の守護神は去った。`);
        player.assistant = null;
      } else if (shouldAssistantLeave(assistant)) {
+       addSoundEvent(room, 'assistant_remove');
        room.log.push(`${player.name} の守護神は被弾して立ち去った。`);
        player.assistant = null;
      }
@@ -632,13 +679,16 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      ? `${player.name} took dark damage and ascended!`
      : `${player.name} took ${hpDamage} damage!`);
    if (resolvedDamage > 0) {
+     addSoundEvent(room, isDarkAttack ? 'damage_dark' : 'damage');
      for (const ailment of pendingDamage?.ailments || []) {
        const applied = applyAilment(player, ailment);
+       addSoundEvent(room, ailment === 'dream' ? 'illusion_item' : 'disease');
        room.log.push(`${player.name} は ${applied} になった。`);
      }
      const attacker = room.players[pendingDamage?.attackerId];
      if (attacker && pendingDamage?.absorbHp) {
        attacker.hp = Math.min(99, attacker.hp + resolvedDamage);
+       addSoundEvent(room, 'hp_increase');
        room.log.push(`${attacker.name} はHPを ${resolvedDamage} 吸収した。`);
      }
      if (attacker && pendingDamage?.selfDamage) {
@@ -648,17 +698,28 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      for (const defenseCard of room.field?.defenseCards || []) {
        if (attacker && defenseCard.retaliateAilment) {
          const applied = applyAilment(attacker, defenseCard.retaliateAilment);
+         addSoundEvent(room, 'harm_add');
          room.log.push(`${attacker.name} は ${defenseCard.name} により ${applied} になった。`);
        }
        for (const reactiveEffect of new Set([defenseCard.reactiveEffect, ...(defenseCard.reactiveEffects || [])].filter(Boolean))) {
          if (!attacker) continue;
-         if (reactiveEffect === 'counter_damage_all') attacker.hp -= resolvedDamage;
-         if (reactiveEffect === 'counter_double_damage') attacker.hp -= resolvedDamage * 2;
-         if (reactiveEffect === 'recover_double_mp') player.mp = Math.min(99, player.mp + resolvedDamage * 2);
+         if (reactiveEffect === 'counter_damage_all') {
+           attacker.hp -= resolvedDamage;
+           addSoundEvent(room, 'counter');
+         }
+         if (reactiveEffect === 'counter_double_damage') {
+           attacker.hp -= resolvedDamage * 2;
+           addSoundEvent(room, 'counter');
+         }
+         if (reactiveEffect === 'recover_double_mp') {
+           player.mp = Math.min(99, player.mp + resolvedDamage * 2);
+           addSoundEvent(room, 'mp_increase');
+         }
          if (reactiveEffect === 'absorb_money') {
            const amountToSteal = Math.min(resolvedDamage, attacker.money);
            attacker.money -= amountToSteal;
            player.money = Math.min(99, player.money + amountToSteal);
+           addSoundEvent(room, 'yen_absorb');
          }
        }
      }
@@ -666,7 +727,7 @@ function applyDamageAndClearField(room, player, amount, roomName) {
    player.pendingDamage = null;
    
    // Store last damage to trigger UI animation
-   room.lastDamage = { amount: hpDamage, targetId: player.id, timestamp: Date.now() };
+   room.lastDamage = { amount: hpDamage, targetId: player.id, isDark: isDarkAttack, timestamp: Date.now() };
 
    checkDeath(room);
    if (room.state === 'ended') {
@@ -741,9 +802,11 @@ function startNextQueuedAttack(room, roomName) {
     const hitResult = rollAttack(context.card, target.ailments);
     room.lastAction = createActionEvent(attacker, target, context.card, hitResult.outcome);
     if (!hitResult.hit) {
+      addSoundEvent(room, 'miss');
       room.log.push(`${target.name} は ${context.card.name}（${queued.repeat}回目）を回避！`);
       continue;
     }
+    addSoundEvent(room, 'hit');
     target.pendingDamage = {
       amount: context.card.attack,
       attribute: context.card.attribute,
@@ -777,6 +840,7 @@ function startNextQueuedAttack(room, roomName) {
       room.phase = 'main';
       room.log.push(`${room.players[nextTurnId].name} の行動へ戻る。`);
     } else {
+       addSoundEvent(room, 'no_change');
       endTurnInternal(room, nextTurnId);
     }
   }
@@ -796,6 +860,7 @@ function removeRandomEntries(entries, count) {
 function setRandomAssistant(player, room) {
   const type = ASSISTANT_TYPES[Math.floor(Math.random() * ASSISTANT_TYPES.length)];
   player.assistant = { type, hp: 20, actionRate: 25, leaveOnDamageRate: 10 };
+  addSoundEvent(room, 'assistant_add');
   room.log.push(`${player.name} に ${type} の守護神が宿った。`);
 }
 
@@ -805,6 +870,7 @@ function runAssistantAction(room, player, roomName) {
   const enemies = Object.values(room.players).filter(candidate => candidate.id !== player.id && !candidate.ascended && candidate.hp > 0);
   const enemy = enemies[Math.floor(Math.random() * enemies.length)];
   if (!action) return;
+  addSoundEvent(room, 'assistant');
   room.log.push(`${player.name} の守護神 ${player.assistant.type} が行動した。`);
   if (action.kind === 'attack' && enemy) {
     const card = {
@@ -825,19 +891,41 @@ function runAssistantAction(room, player, roomName) {
     queueAttackSequence(room, player, player.id, card, [card], roomName, { assistantAction: true });
     return;
   }
-  if (action.kind === 'ailment' && enemy) applyAilment(enemy, action.ailment);
-  if (action.kind === 'cure') cureAilments(player, 'all');
-  if (action.kind === 'recover_hp') player.hp = Math.min(99, player.hp + action.value);
-  if (action.kind === 'recover_mp') player.mp = Math.min(99, player.mp + action.value);
-  if (action.kind === 'scatter_money') Object.values(room.players).forEach(target => { target.money = Math.min(99, target.money + action.value); });
+  if (action.kind === 'ailment' && enemy) {
+    applyAilment(enemy, action.ailment);
+    addSoundEvent(room, 'harm_add');
+  }
+  if (action.kind === 'cure') {
+    cureAilments(player, 'all');
+    addSoundEvent(room, 'harm_remove');
+  }
+  if (action.kind === 'recover_hp') {
+    player.hp = Math.min(99, player.hp + action.value);
+    addSoundEvent(room, 'hp_increase');
+  }
+  if (action.kind === 'recover_mp') {
+    player.mp = Math.min(99, player.mp + action.value);
+    addSoundEvent(room, 'mp_increase');
+  }
+  if (action.kind === 'scatter_money') {
+    Object.values(room.players).forEach(target => { target.money = Math.min(99, target.money + action.value); });
+    addSoundEvent(room, 'yen_increase');
+  }
   if (action.kind === 'give_enemy_money' && enemy) enemy.money = Math.min(99, enemy.money + action.value);
   if (action.kind === 'absorb_money' && enemy) {
     const amount = Math.min(action.value, enemy.money);
     enemy.money -= amount;
     player.money = Math.min(99, player.money + amount);
+    addSoundEvent(room, 'yen_absorb');
   }
-  if (action.kind === 'recover_money') player.money = Math.min(99, player.money + action.value);
-  if (action.kind === 'add_item' && player.hand.length < 18) player.hand.push(drawArtifact(room));
+  if (action.kind === 'recover_money') {
+    player.money = Math.min(99, player.money + action.value);
+    addSoundEvent(room, 'yen_increase');
+  }
+  if (action.kind === 'add_item' && player.hand.length < 18) {
+    player.hand.push(drawArtifact(room));
+    addSoundEvent(room, 'card');
+  }
   if (action.kind === 'random_miracle') {
     const miracles = GF_BASE_CARDS.filter(card => card.type === 'miracle');
     const miracle = { ...miracles[Math.floor(Math.random() * miracles.length)] };
@@ -854,6 +942,7 @@ function runAssistantAction(room, player, roomName) {
 }
 
 function resolveMystery(room, actor, nextTurnId, roomName) {
+  addSoundEvent(room, 'mystery');
   const type = ASSISTANT_TYPES[Math.floor(Math.random() * ASSISTANT_TYPES.length)];
   const players = Object.values(room.players).filter(player => !player.ascended && player.hp > 0);
   if (type === 'mars') players.forEach(player => applyAilment(player, 'fever'));
@@ -908,6 +997,8 @@ function forceSale(room, seller, buyer, card) {
 
 function processAilments(player, room) {
   const result = processEndOfTurnAilments(player);
+  if (result.hpChange) addSoundEvent(room, 'disease');
+  if (result.progressedTo) addSoundEvent(room, 'worse');
   if (result.hpChange) room.log.push(`${player.name} の病気効果: HP ${result.hpChange > 0 ? '+' : ''}${result.hpChange}`);
   if (result.progressedTo) room.log.push(`${player.name} の病気が ${result.progressedTo} に悪化した。`);
   if (result.fatal) room.log.push(`${player.name} は天国病の発作でHPが0になった。`);
@@ -928,6 +1019,7 @@ function endTurnInternal(room, nextTurnId) {
    room.phase = 'main';
    const player = room.players[nextTurnId];
    room.log.push(`--- ${player.name}'s Turn ---`);
+   addSoundEvent(room, 'client_turn', { targetId: nextTurnId });
    runAssistantAction(room, player, room.name);
 }
 
@@ -951,12 +1043,14 @@ function checkDeath(room) {
          if (reviveIndex >= 0) {
            const [reviver] = player.hand.splice(reviveIndex, 1);
            player.hp = reviver.reviveHp;
+           addSoundEvent(room, 'revive');
            room.log.push(`${reviver.name} により ${player.name} はHP${player.hp}で復活した。`);
            return;
          }
          const dyingAttackIndex = player.hand.findIndex(card => card.dyingAttack);
          if (dyingAttackIndex >= 0) {
            const [dyingCard] = player.hand.splice(dyingAttackIndex, 1);
+           addSoundEvent(room, 'dying_attack');
            players.filter(target => target.id !== player.id && !target.ascended && target.hp > 0).forEach(target => {
              if (Math.random() * 100 < dyingCard.dyingAttack.hitRate) {
                target.hp = Math.max(0, target.hp - dyingCard.dyingAttack.attack);
@@ -965,6 +1059,7 @@ function checkDeath(room) {
            });
          }
          player.ascended = true;
+         addSoundEvent(room, 'dead');
          room.log.push(`${player.name} has ascended (died)!`);
       }
    });
@@ -974,6 +1069,12 @@ function checkDeath(room) {
       room.phase = 'ended';
       room.turn = null;
       room.winnerId = survivors[0]?.id || null;
+      if (room.winnerId) {
+        addSoundEvent(room, 'game_win', { targetId: room.winnerId });
+        addSoundEvent(room, 'winner', { targetId: room.winnerId, delayMs: 500 });
+      } else {
+        addSoundEvent(room, 'game_draw');
+      }
       room.log.push(survivors[0] ? `${survivors[0].name} wins!` : 'The battle ended in a draw.');
    }
 }
@@ -984,6 +1085,8 @@ function startGame(roomName) {
   room.winnerId = null;
   room.lastDamage = null;
   room.lastAction = null;
+  room.soundEvents = [];
+  room.soundSeq = 0;
   room.field = null;
   room.attackQueue = [];
   room.attackContext = null;
@@ -1019,6 +1122,9 @@ function startGame(roomName) {
   room.mainTurnOwner = startingPlayer;
   room.phase = 'main'; // main or defense
   room.log = [`Game started! ${room.players[startingPlayer].name} goes first.`];
+  addSoundEvent(room, 'game_start_number');
+  addSoundEvent(room, 'game_start', { delayMs: 550 });
+  addSoundEvent(room, 'client_turn', { targetId: startingPlayer, delayMs: 900 });
   
   console.log(`Game started in room ${roomName}. Turn: ${startingPlayer}`);
   
@@ -1041,6 +1147,7 @@ function emitGameState(roomName) {
       field: room.field,
       lastDamage: room.lastDamage,
       lastAction: room.lastAction,
+      soundEvents: (room.soundEvents || []).filter(event => !event.targetId || event.targetId === id),
       me: room.players[id],
       opponent: room.players[playerIds.find(p => p !== id)],
       opponents: playerIds.filter(playerId => playerId !== id).map(playerId => ({

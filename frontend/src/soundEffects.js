@@ -30,10 +30,15 @@ export function installUiSounds(root = document) {
   let lastHoveredButton = null;
 
   const onPointerOver = event => {
+    if (event.target.closest('.lobby-players span, .player-pill')) {
+      playSound('entry_toggle_over', 0.3);
+      return;
+    }
     const button = event.target.closest('button, [role="button"]');
     if (button && button !== lastHoveredButton && !button.disabled) {
       lastHoveredButton = button;
-      playSound(button.dataset.soundOver || 'button_over', 0.35);
+      playSound(button.dataset.soundOver
+        || (button.closest('.learned-miracles') ? 'book_tab_over' : 'button_over'), 0.35);
     }
   };
 
@@ -52,8 +57,18 @@ export function installUiSounds(root = document) {
       playSound('card', 0.55);
       return;
     }
+    if (event.target.closest('[data-target]')) {
+      playSound('target', 0.55);
+      return;
+    }
+    if (event.target.closest('a, [data-sound-cover]')) {
+      playSound('open_cover', 0.5);
+      return;
+    }
     const button = event.target.closest('button, [role="button"]');
-    if (button && !button.disabled) playSound('button_down', 0.5);
+    if (button && !button.disabled) {
+      playSound(button.closest('.learned-miracles') ? 'book_tab_down' : 'button_down', 0.5);
+    }
   };
 
   const onChange = event => {
@@ -73,4 +88,3 @@ export function installUiSounds(root = document) {
     root.removeEventListener('change', onChange);
   };
 }
-

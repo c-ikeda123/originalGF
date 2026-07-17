@@ -41,3 +41,13 @@ test('Flash版の効果音46種がすべて存在する', () => {
     assert.ok(fs.statSync(file).size > 0, file);
   }
 });
+
+test('Flash版の効果音46種がゲームイベントまたは画面操作に割り当てられている', () => {
+  const implementation = [
+    fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8'),
+    fs.readFileSync(path.join(__dirname, '..', 'frontend', 'src', 'soundEffects.js'), 'utf8'),
+    fs.readFileSync(path.join(__dirname, '..', 'frontend', 'src', 'pages', 'GameRoom.jsx'), 'utf8'),
+  ].join('\n');
+
+  flashSounds.forEach(sound => assert.match(implementation, new RegExp(`['\"]${sound}['\"]`), sound));
+});
