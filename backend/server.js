@@ -178,12 +178,33 @@ io.on('connection', (socket) => {
     emitRoomUpdate(roomName);
   });
 
-  socket.on('setTeam', ({ roomName, team }) => {
+  socket.on('setTeam', ({ roomName, team, playerId = socket.id }) => {
     const room = rooms[roomName];
-    const player = room?.players[socket.id];
+    const player = room?.players[playerId];
     if (!player || room.state !== 'waiting' || ![null, 'red', 'blue'].includes(team)) return;
+    if (playerId !== socket.id && (room.hostId !== socket.id || !player.isBot)) return;
     player.team = team;
-    player.ready = false;
+    player.ready = Boolean(player.isBot);
+    emitRoomUpdate(roomName);
+  });
+
+  socket.on('addBot', ({ roomName }) => {
+    const room = rooms[roomName];
+    if (!room || room.state !== 'waiting' || room.hostId !== socket.id || Object.keys(room.players).length >= 8) return;
+    const botNumber = Object.values(room.players).filter(player => player.isBot).length + 1;
+    const botId = `bot_${Date.now()}_${botNumber}`;
+    room.players[botId] = {
+      id: botId, name: `Bot ${botNumber}`, isBot: true, ready: true, team: null,
+      hp: 40, mp: 0, money: 0, hand: [], learnedMiracles: [], ailments: [],
+      defending: false, ascended: false,
+    };
+    emitRoomUpdate(roomName);
+  });
+
+  socket.on('removeBot', ({ roomName, botId }) => {
+    const room = rooms[roomName];
+    if (!room || room.state !== 'waiting' || room.hostId !== socket.id || !room.players[botId]?.isBot) return;
+    delete room.players[botId];
     emitRoomUpdate(roomName);
   });
 
@@ -255,7 +276,7 @@ io.on('connection', (socket) => {
       player.pendingDamage = null;
       player.pendingDraws = 0;
       player.ascended = false;
-      player.ready = false;
+      player.ready = Boolean(player.isBot);
     });
     io.to(roomName).emit('gameStateCleared');
     emitRoomUpdate(roomName);
@@ -278,7 +299,9 @@ io.on('connection', (socket) => {
         if (Object.keys(room.players).length === 0) {
           delete rooms[roomName]; // Clean up empty room
         } else {
-          if (room.hostId === socket.id) room.hostId = Object.keys(room.players)[0];
+          if (room.hostId === socket.id) {
+            room.hostId = Object.values(room.players).find(player => !player.isBot)?.id || Object.keys(room.players)[0];
+          }
           if (room.state === 'playing') {
             checkDeath(room);
             if (wasActivePlayer && room.state === 'playing') {
@@ -1297,6 +1320,68 @@ function startGame(roomName) {
   emitGameState(roomName);
 }
 
+function scheduleBotTurn(roomName) {
+  const room = rooms[roomName];
+  if (!room) return;
+  clearTimeout(room.botTimer);
+  const bot = room.players[room.turn];
+  if (room.state !== 'playing' || !bot?.isBot || !['main', 'defense'].includes(room.phase)) return;
+  room.botTimer = setTimeout(() => performBotTurn(roomName), 350);
+}
+
+function performBotTurn(roomName) {
+  const room = rooms[roomName];
+  const bot = room?.players[room.turn];
+  if (!room || room.state !== 'playing' || !bot?.isBot) return;
+  if (room.phase === 'defense') {
+    const choiceIndex = bot.hand.findIndex(card => {
+      const validation = validateCardPlay([card], 'defense', bot.ailments, bot.pendingDamage, bot.pendingDamage?.defensesUsed || 0);
+      if (!validation.valid) return false;
+      return ['reduce', 'block', 'remove_attribute'].includes(resolveDefenseCard(bot.pendingDamage, card).action);
+    });
+    if (choiceIndex >= 0) {
+      const [card] = bot.hand.splice(choiceIndex, 1);
+      queueReplacementDraws(bot, 1);
+      const resolution = resolveDefenseCard(bot.pendingDamage, card);
+      room.field.defenseCards.push(card);
+      bot.pendingDamage.defensesUsed = (bot.pendingDamage.defensesUsed || 0) + 1;
+      if (resolution.action === 'remove_attribute') bot.pendingDamage.attribute = 'none';
+      applyDamageAndClearField(room, bot, resolution.amount, roomName);
+    } else {
+      applyDamageAndClearField(room, bot, bot.pendingDamage?.amount || 0, roomName);
+    }
+    return;
+  }
+
+  const enemies = Object.values(room.players).filter(player => areEnemies(bot, player) && !player.ascended && player.hp > 0);
+  const target = enemies[Math.floor(Math.random() * enemies.length)];
+  const cardIndex = bot.hand.findIndex(card => card.attack > 0
+    && ['weapon', 'miracle'].includes(card.type)
+    && bot.mp >= (card.costMp || 0));
+  if (target && cardIndex >= 0) {
+    const [card] = bot.hand.splice(cardIndex, 1);
+    bot.mp -= card.costMp || 0;
+    if (card.type === 'miracle' && !bot.learnedMiracles.some(miracle => miracle.id === card.id)) {
+      const learned = { ...card };
+      delete learned.instanceId;
+      bot.learnedMiracles.push(learned);
+      if (bot.learnedMiracles.length > 6) bot.learnedMiracles.shift();
+    }
+    queueReplacementDraws(bot, 1);
+    card.forcedTargetId = target.id;
+    const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, bot.id);
+    room.log.push(`${bot.name}は${card.name}を使用した。`);
+    queueAttackSequence(room, bot, nextTurnId, card, [card], roomName);
+    emitGameState(roomName);
+    return;
+  }
+
+  if (!bot.hand.some(card => card.type === 'weapon') && bot.hand.length < 18) bot.hand.push(drawArtifact(room));
+  const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, bot.id);
+  endTurnInternal(room, nextTurnId);
+  emitGameState(roomName);
+}
+
 function emitGameState(roomName) {
   const room = rooms[roomName];
   if (!room) return;
@@ -1342,6 +1427,7 @@ function emitGameState(roomName) {
     
     io.to(id).emit('gameState', stateView);
   });
+  scheduleBotTurn(roomName);
 }
 
 server.listen(PORT, '0.0.0.0', () => {

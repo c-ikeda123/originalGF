@@ -133,9 +133,31 @@ export default function GameRoom() {
           </label>
           <div className="ready-status-list">
             {roomState?.players?.map(player => (
-              <span key={player.id}>{player.name}: {player.ready ? '準備完了' : '準備中'}</span>
+              <span key={player.id}>
+                {player.name}: {player.ready ? '準備完了' : '準備中'}
+                {player.isBot && socketId === roomState?.hostId && (
+                  <>
+                    <select
+                      value={player.team || ''}
+                      onChange={event => socket.emit('setTeam', {
+                        roomName: id, playerId: player.id, team: event.target.value || null,
+                      })}
+                    >
+                      <option value="">個人</option>
+                      <option value="red">赤</option>
+                      <option value="blue">青</option>
+                    </select>
+                    <button type="button" onClick={() => socket.emit('removeBot', { roomName: id, botId: player.id })}>削除</button>
+                  </>
+                )}
+              </span>
             ))}
           </div>
+          {socketId === roomState?.hostId && (
+            <button type="button" className="btn btn-secondary" onClick={() => socket.emit('addBot', { roomName: id })}>
+              Botを追加
+            </button>
+          )}
           {socketId === roomState?.hostId && (
             <button className="btn" disabled={(roomState?.players?.length || 0) < 2} onClick={() => socket.emit('startGame', { roomName: id })}>対戦を開始</button>
           )}
