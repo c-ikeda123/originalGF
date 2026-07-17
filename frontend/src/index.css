@@ -386,6 +386,94 @@ h1, h2, h3, h4, h5, h6 {
   font-weight: 700;
 }
 
+.effect-edit-badge {
+  display: inline-flex;
+  flex: none;
+  padding: 3px 7px;
+  border: 2px solid #dc2626;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.67rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.effect-change-banner {
+  padding: 9px 12px;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.base-effect-editor {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #cbd5e1;
+}
+
+.base-effect-editor h4 {
+  margin: 0;
+}
+
+.base-effect-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.base-effect-grid label,
+.special-effect-editor,
+.special-effect-editor label {
+  display: grid;
+  gap: 5px;
+}
+
+.base-effect-grid label > span,
+.special-effect-editor label > span {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.special-effect-editor textarea {
+  min-height: 170px;
+  resize: vertical;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.special-effect-editor .btn {
+  justify-self: start;
+}
+
+.special-effect-message {
+  color: #b45309;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.special-effect-key-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 7px 0;
+}
+
+.special-effect-key-list code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(15, 118, 110, 0.1);
+  color: inherit;
+  font-size: 0.68rem;
+}
+
 .room-card-row:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -462,6 +550,10 @@ h1, h2, h3, h4, h5, h6 {
 
   .room-editor-body {
     grid-template-columns: 1fr;
+  }
+
+  .base-effect-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
