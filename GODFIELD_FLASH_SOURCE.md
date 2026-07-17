@@ -11,4 +11,6 @@
 
 画像素材の移植は、本リポジトリおよび素材の作者であるユーザー本人から、この開発セッションで明示された許可に基づきます。
 
+効果音は同じ参照コミットの `client-files/static.godfield.net/sounds/` から、MP3全46ファイルを `frontend/public/godfield-flash/sounds/` へ移植しています。一覧は `shared/flashSounds.json` です。
+
 移植元の `server-src/` は GNU Affero General Public License v3.0 です。ゲーム挙動の移植では同コードをそのまま収録せず、挙動を参照して本リポジトリのNode.js実装へ適合させます。
