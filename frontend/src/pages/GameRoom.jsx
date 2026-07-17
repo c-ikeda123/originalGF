@@ -367,23 +367,21 @@ export default function GameRoom() {
 
   const renderAilments = (player) => {
     const names = { cold: '風邪', fever: '熱病', hell: '地獄病', heaven: '天国病', fog: '霧', flash: '閃光', dream: '夢', darkcloud: '暗雲' };
-    return player.ailments.map(a => {
-      let icon = '';
-      if(a === 'cold') icon = '🤧';
-      if(a === 'fever') icon = '🤒';
-      if(a === 'hell') icon = '🔥';
-      if(a === 'heaven') icon = '👼';
-      if(a === 'fog') icon = '🌫️';
-      if(a === 'flash') icon = '✨';
-      if(a === 'dream') icon = '🌀';
-      if(a === 'darkcloud') icon = '☁️';
-      return <span key={a} className="ailment-icon" title={names[a] || a}>{icon}</span>;
-    });
+    const files = { flash: 'glory', dream: 'illusion', darkcloud: 'dark_cloud' };
+    return player.ailments.map(ailment => (
+      <img
+        key={ailment}
+        className="ailment-icon"
+        src={`/godfield-flash/ui/game/status/harm/${files[ailment] || ailment}.png`}
+        alt={names[ailment] || ailment}
+        title={names[ailment] || ailment}
+      />
+    ));
   };
 
   const renderAssistant = (assistant) => assistant && (
     <div className="assistant-status">
-      <img src={`/godfield-flash/cards/assistant/${assistant.type}.png`} alt="" />
+      <img src={`/godfield-flash/ui/game/status/assistant/${assistant.type}.png`} alt="" />
       <span>守護神 {assistant.type}（HP {assistant.hp}）</span>
     </div>
   );

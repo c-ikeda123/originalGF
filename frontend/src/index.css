@@ -889,14 +889,18 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gf-battle-sidebar .assistant-status {
-  min-height: 18px;
-  padding-left: 18px;
-  font: 9px Arial, sans-serif;
+  width: 300px;
+  height: 40px;
+  box-sizing: border-box;
+  gap: 4px;
+  padding: 0 8px 0 0;
+  background: url('/godfield-flash/ui/game/status/single_up.png') 0 0 / 300px 40px no-repeat;
+  font: 11px/40px Arial, sans-serif;
 }
 
 .gf-battle-sidebar .assistant-status img {
-  width: 18px;
-  height: 18px;
+  width: 50px;
+  height: 40px;
 }
 
 .gf-battle-log {
@@ -1366,7 +1370,20 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .battle-player-ailments {
-  display: none;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.battle-player-ailments .ailment-icon {
+  width: 30px;
+  height: 16px;
+  margin: 0;
+  border-radius: 0;
+  background: none;
 }
 
 .gf-battle-log,
