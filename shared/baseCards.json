@@ -16,7 +16,8 @@
     "costMp": 0,
     "copies": 3,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/dou_no_kombou.png"
   },
   {
     "id": "gf_weapon_002",
@@ -35,7 +36,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/gin_no_kombou.png"
   },
   {
     "id": "gf_weapon_003",
@@ -54,7 +56,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/kin_no_kombou.png"
   },
   {
     "id": "gf_weapon_004",
@@ -73,7 +76,8 @@
     "costMp": 0,
     "copies": 4,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/sabita_ken.png"
   },
   {
     "id": "gf_weapon_005",
@@ -92,7 +96,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/saver_rod.png"
   },
   {
     "id": "gf_weapon_006",
@@ -111,7 +116,8 @@
     "costMp": 0,
     "copies": 5,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/alumi_knife.png"
   },
   {
     "id": "gf_weapon_007",
@@ -130,7 +136,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "2回攻撃",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/paper_knife.png"
   },
   {
     "id": "gf_weapon_008",
@@ -149,7 +156,8 @@
     "costMp": 0,
     "copies": 6,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/hangetsutou.png"
   },
   {
     "id": "gf_weapon_009",
@@ -168,7 +176,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/toge_belt.png"
   },
   {
     "id": "gf_weapon_010",
@@ -187,7 +196,8 @@
     "costMp": 0,
     "copies": 7,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/kusarigama.png"
   },
   {
     "id": "gf_weapon_011",
@@ -206,7 +216,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/toushi_no_teppan.png"
   },
   {
     "id": "gf_weapon_012",
@@ -225,7 +236,8 @@
     "costMp": 0,
     "copies": 7,
     "description": "無属性の攻撃を弾く",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/randamuken.png"
   },
   {
     "id": "gf_weapon_013",
@@ -244,7 +256,8 @@
     "costMp": 0,
     "copies": 8,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/otona_no_pachinko.png"
   },
   {
     "id": "gf_weapon_014",
@@ -263,7 +276,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/elbow_sack.png"
   },
   {
     "id": "gf_weapon_015",
@@ -282,7 +296,8 @@
     "costMp": 0,
     "copies": 8,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/hagane_no_knuckle.png"
   },
   {
     "id": "gf_weapon_016",
@@ -301,7 +316,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "HP吸収",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/ghost_sword.png"
   },
   {
     "id": "gf_weapon_017",
@@ -320,7 +336,8 @@
     "costMp": 0,
     "copies": 8,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/mamori_no_hoko.png"
   },
   {
     "id": "gf_weapon_018",
@@ -340,6 +357,7 @@
     "copies": 1,
     "description": "1ダメージ以上で地獄病",
     "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/jigoku_no_hasami.png",
     "ailmentInflict": "hell",
     "ailmentTrigger": "damage"
   },
@@ -360,7 +378,8 @@
     "costMp": 0,
     "copies": 7,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/power_halbert.png"
   },
   {
     "id": "gf_weapon_020",
@@ -380,6 +399,7 @@
     "copies": 1,
     "description": "1ダメージ以上で風邪",
     "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/shippuuken.png",
     "ailmentInflict": "cold",
     "ailmentTrigger": "damage"
   },
@@ -400,7 +420,8 @@
     "costMp": 0,
     "copies": 7,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/wonder_sword.png"
   },
   {
     "id": "gf_weapon_022",
@@ -420,6 +441,7 @@
     "copies": 1,
     "description": "1ダメージ以上で夢",
     "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/goranshin.png",
     "ailmentInflict": "dream",
     "ailmentTrigger": "damage"
   },
@@ -440,7 +462,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/sword_shield.png"
   },
   {
     "id": "gf_weapon_024",
@@ -459,7 +482,8 @@
     "costMp": 0,
     "copies": 3,
     "description": "無属性攻撃をはね返す",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/hanshaken.png"
   },
   {
     "id": "gf_weapon_025",
@@ -478,7 +502,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡をはね返す",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/gekkou_no_ono.png"
   },
   {
     "id": "gf_weapon_026",
@@ -497,7 +522,8 @@
     "costMp": 0,
     "copies": 4,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/energy_whip.png"
   },
   {
     "id": "gf_weapon_027",
@@ -516,7 +542,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を止める",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/wasuretai_tsubasa.png"
   },
   {
     "id": "gf_weapon_028",
@@ -536,6 +563,7 @@
     "copies": 1,
     "description": "1ダメージ以上で暗雲",
     "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/rokkakkyou.png",
     "ailmentInflict": "darkcloud",
     "ailmentTrigger": "damage"
   },
@@ -556,7 +584,8 @@
     "costMp": 0,
     "copies": 4,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/akumu_no_tachi.png"
   },
   {
     "id": "gf_weapon_030",
@@ -575,7 +604,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "HP吸収",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/real_ghost_sword.png"
   },
   {
     "id": "gf_weapon_031",
@@ -594,7 +624,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "MP消費なしで奇跡を使える",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/seirei_no_tsue.png"
   },
   {
     "id": "gf_weapon_032",
@@ -613,7 +644,8 @@
     "costMp": 0,
     "copies": 4,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/zekkei_no_yari.png"
   },
   {
     "id": "gf_weapon_033",
@@ -633,6 +665,7 @@
     "copies": 1,
     "description": "1ダメージ以上で風邪",
     "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/gekiretsu_shippuuken.png",
     "ailmentInflict": "cold",
     "ailmentTrigger": "damage"
   },
@@ -653,7 +686,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/densetsu_no_ken_no_saya.png"
   },
   {
     "id": "gf_weapon_035",
@@ -672,7 +706,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を止める",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/angel_sword.png"
   },
   {
     "id": "gf_weapon_036",
@@ -691,7 +726,8 @@
     "costMp": 0,
     "copies": 3,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/abare_flail.png"
   },
   {
     "id": "gf_weapon_037",
@@ -710,7 +746,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "自分にも同じダメージ",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/jashin_no_taiken.png"
   },
   {
     "id": "gf_weapon_038",
@@ -729,7 +766,8 @@
     "costMp": 0,
     "copies": 3,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/dragon_claw.png"
   },
   {
     "id": "gf_weapon_039",
@@ -748,7 +786,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を止める",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/cosmic_rod.png"
   },
   {
     "id": "gf_weapon_040",
@@ -767,7 +806,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/kami_no_ken.png"
   },
   {
     "id": "gf_weapon_041",
@@ -786,7 +826,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "MPを全消費し攻撃力MP×2",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/magical_stick.png"
   },
   {
     "id": "gf_weapon_042",
@@ -805,7 +846,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/taimatsu.png"
   },
   {
     "id": "gf_weapon_043",
@@ -824,7 +866,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/achichi_knife.png"
   },
   {
     "id": "gf_weapon_044",
@@ -843,7 +886,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/moe_muchi.png"
   },
   {
     "id": "gf_weapon_045",
@@ -862,7 +906,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/homuramaki.png"
   },
   {
     "id": "gf_weapon_046",
@@ -881,7 +926,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/blaze_blade.png"
   },
   {
     "id": "gf_weapon_047",
@@ -900,7 +946,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/karyuu_ikkaku.png"
   },
   {
     "id": "gf_weapon_048",
@@ -919,7 +966,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/tsurara.png"
   },
   {
     "id": "gf_weapon_049",
@@ -939,6 +987,7 @@
     "copies": 1,
     "description": "1ダメージ以上で霧",
     "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/kirideppou.png",
     "ailmentInflict": "fog",
     "ailmentTrigger": "damage"
   },
@@ -959,7 +1008,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/hyouketsu_hammer.png"
   },
   {
     "id": "gf_weapon_051",
@@ -978,7 +1028,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/suiryuu_ikkaku.png"
   },
   {
     "id": "gf_weapon_052",
@@ -997,7 +1048,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/takeyari.png"
   },
   {
     "id": "gf_weapon_053",
@@ -1016,7 +1068,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/ibara_no_muchi.png"
   },
   {
     "id": "gf_weapon_054",
@@ -1035,7 +1088,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/iga_nut.png"
   },
   {
     "id": "gf_weapon_055",
@@ -1055,6 +1109,7 @@
     "copies": 1,
     "description": "1ダメージ以上で夢",
     "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/yume_no_kizuchi.png",
     "ailmentInflict": "dream",
     "ailmentTrigger": "damage"
   },
@@ -1076,6 +1131,7 @@
     "copies": 1,
     "description": "1ダメージ以上で風邪",
     "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/sunakaze_no_tsume.png",
     "ailmentInflict": "cold",
     "ailmentTrigger": "damage"
   },
@@ -1096,7 +1152,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/tsurugiyaki.png"
   },
   {
     "id": "gf_weapon_058",
@@ -1115,7 +1172,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/diamond_sword.png"
   },
   {
     "id": "gf_weapon_059",
@@ -1135,6 +1193,7 @@
     "copies": 1,
     "description": "1ダメージ以上で閃光",
     "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/eikou_aru_dagger.png",
     "ailmentInflict": "flash",
     "ailmentTrigger": "damage"
   },
@@ -1155,7 +1214,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/star_staff.png"
   },
   {
     "id": "gf_weapon_061",
@@ -1174,7 +1234,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/justice_lance.png"
   },
   {
     "id": "gf_weapon_062",
@@ -1193,7 +1254,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/seiken.png"
   },
   {
     "id": "gf_weapon_063",
@@ -1212,7 +1274,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "攻撃先が自分を含めランダム。ウス所持者に99ダメージ",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/abunai_kine.png"
   },
   {
     "id": "gf_weapon_064",
@@ -1231,7 +1294,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/chikurincho.png"
   },
   {
     "id": "gf_weapon_065",
@@ -1250,7 +1314,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/cobra.png"
   },
   {
     "id": "gf_weapon_066",
@@ -1269,7 +1334,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/sayonara_no_ken.png"
   },
   {
     "id": "gf_weapon_067",
@@ -1288,7 +1354,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/killer_fork.png"
   },
   {
     "id": "gf_weapon_068",
@@ -1307,7 +1374,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/shinigami_no_kama.png"
   },
   {
     "id": "gf_weapon_069",
@@ -1327,7 +1395,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/fukiya.png"
   },
   {
     "id": "gf_weapon_070",
@@ -1347,7 +1416,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/bowgun.png"
   },
   {
     "id": "gf_weapon_071",
@@ -1367,7 +1437,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/boomerang.png"
   },
   {
     "id": "gf_weapon_072",
@@ -1387,7 +1458,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/battle_ball.png"
   },
   {
     "id": "gf_weapon_073",
@@ -1407,7 +1479,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/kenshi_no_yumi.png"
   },
   {
     "id": "gf_weapon_074",
@@ -1427,7 +1500,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/lightning_axe.png"
   },
   {
     "id": "gf_weapon_075",
@@ -1447,7 +1521,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/rainbow_blade.png"
   },
   {
     "id": "gf_weapon_076",
@@ -1467,7 +1542,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/psychic_card.png"
   },
   {
     "id": "gf_weapon_077",
@@ -1487,7 +1563,8 @@
     "copies": 1,
     "description": "奇跡を弾く",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/sky_harpoon.png"
   },
   {
     "id": "gf_weapon_078",
@@ -1507,7 +1584,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/kyoufu_no_sharin.png"
   },
   {
     "id": "gf_weapon_079",
@@ -1527,7 +1605,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/koma_combat.png"
   },
   {
     "id": "gf_weapon_080",
@@ -1547,7 +1626,8 @@
     "copies": 1,
     "description": "奇跡を止める",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/angel_no_yumi.png"
   },
   {
     "id": "gf_weapon_081",
@@ -1567,7 +1647,8 @@
     "copies": 1,
     "description": "攻撃を火属性に染める",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/hakka_no_wand.png"
   },
   {
     "id": "gf_weapon_082",
@@ -1587,7 +1668,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/kyuusekki_tomahawk.png"
   },
   {
     "id": "gf_weapon_083",
@@ -1607,7 +1689,8 @@
     "copies": 1,
     "description": "攻撃を水属性に染める",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/masui_no_wand.png"
   },
   {
     "id": "gf_weapon_084",
@@ -1627,7 +1710,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/happa_shuriken.png"
   },
   {
     "id": "gf_weapon_085",
@@ -1647,7 +1731,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/fire_bowgun.png"
   },
   {
     "id": "gf_weapon_086",
@@ -1667,7 +1752,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/kyuusekki_javelin.png"
   },
   {
     "id": "gf_weapon_087",
@@ -1687,7 +1773,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/shinkutou.png"
   },
   {
     "id": "gf_weapon_088",
@@ -1707,7 +1794,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/kagayaki_no_kakera.png"
   },
   {
     "id": "gf_weapon_089",
@@ -1727,7 +1815,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/weapon/kodaishokubutsu_no_muchi.png"
   },
   {
     "id": "gf_weapon_090",
@@ -1746,7 +1835,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/hinoko_bukuro.png"
   },
   {
     "id": "gf_weapon_091",
@@ -1765,7 +1855,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/kaenhai.png"
   },
   {
     "id": "gf_weapon_092",
@@ -1784,7 +1875,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/rekka_shower.png"
   },
   {
     "id": "gf_weapon_093",
@@ -1803,7 +1895,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/flare_axe.png"
   },
   {
     "id": "gf_weapon_094",
@@ -1823,6 +1916,7 @@
     "copies": 1,
     "description": "霧",
     "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/kiri_no_ougi.png",
     "ailmentInflict": "fog",
     "ailmentTrigger": "damage"
   },
@@ -1843,7 +1937,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/reikihai.png"
   },
   {
     "id": "gf_weapon_096",
@@ -1862,7 +1957,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/yukidama_gorogoro.png"
   },
   {
     "id": "gf_weapon_097",
@@ -1881,7 +1977,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/gouu_no_saber.png"
   },
   {
     "id": "gf_weapon_098",
@@ -1900,7 +1997,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "HP吸収",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/tsuru_shoot.png"
   },
   {
     "id": "gf_weapon_099",
@@ -1919,7 +2017,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/shinrinhai.png"
   },
   {
     "id": "gf_weapon_100",
@@ -1938,7 +2037,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/majin_no_mokuba.png"
   },
   {
     "id": "gf_weapon_101",
@@ -1957,7 +2057,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/daichihai.png"
   },
   {
     "id": "gf_weapon_102",
@@ -1976,7 +2077,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/gakettsuchi.png"
   },
   {
     "id": "gf_weapon_103",
@@ -1995,7 +2097,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/petit_saturn.png"
   },
   {
     "id": "gf_weapon_104",
@@ -2014,7 +2117,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/inazuma_kids.png"
   },
   {
     "id": "gf_weapon_105",
@@ -2033,7 +2137,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/hikari_no_orb.png"
   },
   {
     "id": "gf_weapon_106",
@@ -2052,7 +2157,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "昇天時に75%攻30",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/shoutenkyuu.png"
   },
   {
     "id": "gf_weapon_107",
@@ -2071,7 +2177,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で即死",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-flash/cards/weapon/demon_hand.png"
   },
   {
     "id": "gf_armor_108",
@@ -2089,7 +2196,8 @@
     "costMoney": 1,
     "costMp": 0,
     "copies": 10,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/mugiwara_boushi.png"
   },
   {
     "id": "gf_armor_109",
@@ -2107,7 +2215,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を弾く"
+    "description": "奇跡を弾く",
+    "imageUrl": "/godfield-flash/cards/protector/sky_boots.png"
   },
   {
     "id": "gf_armor_110",
@@ -2125,7 +2234,8 @@
     "costMoney": 2,
     "costMp": 0,
     "copies": 10,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/slipper.png"
   },
   {
     "id": "gf_armor_111",
@@ -2143,7 +2253,8 @@
     "costMoney": 3,
     "costMp": 0,
     "copies": 8,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/hibana_no_kutsu.png"
   },
   {
     "id": "gf_armor_112",
@@ -2161,7 +2272,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/oni_no_kutsu.png"
   },
   {
     "id": "gf_armor_113",
@@ -2179,7 +2291,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を弾く"
+    "description": "奇跡を弾く",
+    "imageUrl": "/godfield-flash/cards/protector/sky_gauntlet.png"
   },
   {
     "id": "gf_armor_114",
@@ -2197,7 +2310,8 @@
     "costMoney": 4,
     "costMp": 0,
     "copies": 8,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/sabita_kote.png"
   },
   {
     "id": "gf_armor_115",
@@ -2215,7 +2329,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 8,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/energy_wear.png"
   },
   {
     "id": "gf_armor_116",
@@ -2233,7 +2348,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/oni_no_kote.png"
   },
   {
     "id": "gf_armor_117",
@@ -2251,7 +2367,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を弾く"
+    "description": "奇跡を弾く",
+    "imageUrl": "/godfield-flash/cards/protector/sky_helm.png"
   },
   {
     "id": "gf_armor_118",
@@ -2269,7 +2386,8 @@
     "costMoney": 6,
     "costMp": 0,
     "copies": 6,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/hagane_no_kote.png"
   },
   {
     "id": "gf_armor_119",
@@ -2287,7 +2405,8 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": "MPなしで奇跡"
+    "description": "MPなしで奇跡",
+    "imageUrl": "/godfield-flash/cards/protector/seirei_no_tabi.png"
   },
   {
     "id": "gf_armor_120",
@@ -2305,7 +2424,8 @@
     "costMoney": 7,
     "costMp": 0,
     "copies": 6,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/dragon_no_tate.png"
   },
   {
     "id": "gf_armor_121",
@@ -2323,7 +2443,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/oni_no_kabuto.png"
   },
   {
     "id": "gf_armor_122",
@@ -2341,7 +2462,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を弾く"
+    "description": "奇跡を弾く",
+    "imageUrl": "/godfield-flash/cards/protector/sky_shield.png"
   },
   {
     "id": "gf_armor_123",
@@ -2359,7 +2481,8 @@
     "costMoney": 8,
     "costMp": 0,
     "copies": 6,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/burn_jacket.png"
   },
   {
     "id": "gf_armor_124",
@@ -2377,7 +2500,8 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/mashou_no_tate.png"
   },
   {
     "id": "gf_armor_125",
@@ -2395,7 +2519,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡をはね返す"
+    "description": "奇跡をはね返す",
+    "imageUrl": "/godfield-flash/cards/protector/gekkou_no_kabuto.png"
   },
   {
     "id": "gf_armor_126",
@@ -2413,7 +2538,8 @@
     "costMoney": 9,
     "costMp": 0,
     "copies": 6,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/rare_metal_helm.png"
   },
   {
     "id": "gf_armor_127",
@@ -2431,7 +2557,8 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/oni_no_yoroi.png"
   },
   {
     "id": "gf_armor_128",
@@ -2449,7 +2576,8 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": "MPなしで奇跡"
+    "description": "MPなしで奇跡",
+    "imageUrl": "/godfield-flash/cards/protector/seirei_no_zukin.png"
   },
   {
     "id": "gf_armor_129",
@@ -2467,7 +2595,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を弾く"
+    "description": "奇跡を弾く",
+    "imageUrl": "/godfield-flash/cards/protector/sky_armor.png"
   },
   {
     "id": "gf_armor_130",
@@ -2485,7 +2614,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を止める"
+    "description": "奇跡を止める",
+    "imageUrl": "/godfield-flash/cards/protector/dragon_no_yoroi.png"
   },
   {
     "id": "gf_armor_131",
@@ -2503,7 +2633,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 4,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/flame_mail.png"
   },
   {
     "id": "gf_armor_132",
@@ -2521,7 +2652,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡をはね返す"
+    "description": "奇跡をはね返す",
+    "imageUrl": "/godfield-flash/cards/protector/gekkou_no_tate.png"
   },
   {
     "id": "gf_armor_133",
@@ -2539,7 +2671,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 4,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/wonder_body.png"
   },
   {
     "id": "gf_armor_134",
@@ -2557,7 +2690,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を止める"
+    "description": "奇跡を止める",
+    "imageUrl": "/godfield-flash/cards/protector/angel_no_boushi.png"
   },
   {
     "id": "gf_armor_135",
@@ -2575,7 +2709,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 2,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/elite_no_mantle.png"
   },
   {
     "id": "gf_armor_136",
@@ -2593,7 +2728,8 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": "MPなしで奇跡"
+    "description": "MPなしで奇跡",
+    "imageUrl": "/godfield-flash/cards/protector/seirei_no_obi.png"
   },
   {
     "id": "gf_armor_137",
@@ -2611,7 +2747,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡をはね返す"
+    "description": "奇跡をはね返す",
+    "imageUrl": "/godfield-flash/cards/protector/gekkou_no_yoroi.png"
   },
   {
     "id": "gf_armor_138",
@@ -2629,7 +2766,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 2,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/rainbow_mail.png"
   },
   {
     "id": "gf_armor_139",
@@ -2647,7 +2785,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を止める"
+    "description": "奇跡を止める",
+    "imageUrl": "/godfield-flash/cards/protector/angel_shield.png"
   },
   {
     "id": "gf_armor_140",
@@ -2665,7 +2804,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を止める"
+    "description": "奇跡を止める",
+    "imageUrl": "/godfield-flash/cards/protector/angel_armor.png"
   },
   {
     "id": "gf_armor_141",
@@ -2683,7 +2823,8 @@
     "costMoney": 30,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/kami_no_tate.png"
   },
   {
     "id": "gf_armor_142",
@@ -2701,7 +2842,8 @@
     "costMoney": 4,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/hibana_no_kote.png"
   },
   {
     "id": "gf_armor_143",
@@ -2719,7 +2861,8 @@
     "costMoney": 6,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/flame_boots.png"
   },
   {
     "id": "gf_armor_144",
@@ -2737,7 +2880,8 @@
     "costMoney": 8,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/flame_met.png"
   },
   {
     "id": "gf_armor_145",
@@ -2755,7 +2899,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/flame_shield.png"
   },
   {
     "id": "gf_armor_146",
@@ -2773,7 +2918,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/alumi_shield.png"
   },
   {
     "id": "gf_armor_147",
@@ -2791,7 +2937,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/burn_shield.png"
   },
   {
     "id": "gf_armor_148",
@@ -2809,7 +2956,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/taima_no_kabuto.png"
   },
   {
     "id": "gf_armor_149",
@@ -2828,6 +2976,7 @@
     "costMp": 0,
     "copies": 1,
     "description": "使用者に熱病",
+    "imageUrl": "/godfield-flash/cards/protector/nekkyou_kamen.png",
     "selfAilment": "fever"
   },
   {
@@ -2846,7 +2995,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/kagerou_no_yoroi.png"
   },
   {
     "id": "gf_armor_151",
@@ -2864,7 +3014,8 @@
     "costMoney": 2,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/aqua_shoes.png"
   },
   {
     "id": "gf_armor_152",
@@ -2882,7 +3033,8 @@
     "costMoney": 4,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/aqua_glove.png"
   },
   {
     "id": "gf_armor_153",
@@ -2900,7 +3052,8 @@
     "costMoney": 6,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/ice_boots.png"
   },
   {
     "id": "gf_armor_154",
@@ -2918,7 +3071,8 @@
     "costMoney": 8,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/ice_helm.png"
   },
   {
     "id": "gf_armor_155",
@@ -2936,7 +3090,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/ice_shield.png"
   },
   {
     "id": "gf_armor_156",
@@ -2954,7 +3109,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/ice_armor.png"
   },
   {
     "id": "gf_armor_157",
@@ -2972,7 +3128,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/snow_mitten.png"
   },
   {
     "id": "gf_armor_158",
@@ -2990,7 +3147,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/snow_mask.png"
   },
   {
     "id": "gf_armor_159",
@@ -3008,7 +3166,8 @@
     "costMoney": 2,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/kusa_kammuri.png"
   },
   {
     "id": "gf_armor_160",
@@ -3026,7 +3185,8 @@
     "costMoney": 4,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/ki_no_tate.png"
   },
   {
     "id": "gf_armor_161",
@@ -3044,7 +3204,8 @@
     "costMoney": 6,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/goshimboku_no_kote.png"
   },
   {
     "id": "gf_armor_162",
@@ -3062,7 +3223,8 @@
     "costMoney": 8,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/hayashi_no_tate.png"
   },
   {
     "id": "gf_armor_163",
@@ -3080,7 +3242,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/jushi_de_anda_houi.png"
   },
   {
     "id": "gf_armor_164",
@@ -3098,7 +3261,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/mori_no_tate.png"
   },
   {
     "id": "gf_armor_165",
@@ -3116,7 +3280,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/kohaku_no_muneate.png"
   },
   {
     "id": "gf_armor_166",
@@ -3135,6 +3300,7 @@
     "costMp": 0,
     "copies": 1,
     "description": "使用者に夢、手札を一新",
+    "imageUrl": "/godfield-flash/cards/protector/yumemiru_boushi.png",
     "selfAilment": "dream"
   },
   {
@@ -3153,7 +3319,8 @@
     "costMoney": 2,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/sekiban.png"
   },
   {
     "id": "gf_armor_168",
@@ -3171,7 +3338,8 @@
     "costMoney": 4,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/ganban.png"
   },
   {
     "id": "gf_armor_169",
@@ -3189,7 +3357,8 @@
     "costMoney": 6,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/kesshouban.png"
   },
   {
     "id": "gf_armor_170",
@@ -3207,7 +3376,8 @@
     "costMoney": 8,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/daichi_no_kutsu.png"
   },
   {
     "id": "gf_armor_171",
@@ -3225,7 +3395,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/daichi_no_kote.png"
   },
   {
     "id": "gf_armor_172",
@@ -3243,7 +3414,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/daichi_no_kabuto.png"
   },
   {
     "id": "gf_armor_173",
@@ -3261,7 +3433,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/daichi_no_yoroi.png"
   },
   {
     "id": "gf_armor_174",
@@ -3279,7 +3452,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/pikapika_high_heel.png"
   },
   {
     "id": "gf_armor_175",
@@ -3297,7 +3471,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-flash/cards/protector/kirakira_dress.png"
   },
   {
     "id": "gf_ring_176",
@@ -3315,7 +3490,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 敵全体75%攻{受けたダメージ}"
+    "description": "1ダメージ以上受けた時: 敵全体75%攻{受けたダメージ}",
+    "imageUrl": "/godfield-flash/cards/protector/kasei_no_yubiwa.png"
   },
   {
     "id": "gf_ring_177",
@@ -3334,6 +3510,7 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上受けた時: 攻撃者に霧",
+    "imageUrl": "/godfield-flash/cards/protector/suisei_no_yubiwa.png",
     "retaliateAilment": "fog"
   },
   {
@@ -3353,6 +3530,7 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上受けた時: 攻撃者に夢",
+    "imageUrl": "/godfield-flash/cards/protector/mokusei_no_yubiwa.png",
     "retaliateAilment": "dream"
   },
   {
@@ -3371,7 +3549,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者に攻{受けたダメージ×2}"
+    "description": "1ダメージ以上受けた時: 攻撃者に攻{受けたダメージ×2}",
+    "imageUrl": "/godfield-flash/cards/protector/dosei_no_yubiwa.png"
   },
   {
     "id": "gf_ring_180",
@@ -3390,6 +3569,7 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上受けた時: 攻撃者に閃光",
+    "imageUrl": "/godfield-flash/cards/protector/tennou_no_yubiwa.png",
     "retaliateAilment": "flash"
   },
   {
@@ -3409,6 +3589,7 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上受けた時: 攻撃者に暗雲",
+    "imageUrl": "/godfield-flash/cards/protector/meiou_no_yubiwa.png",
     "retaliateAilment": "darkcloud"
   },
   {
@@ -3427,7 +3608,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 自分に+MP{受けたダメージ×2}"
+    "description": "1ダメージ以上受けた時: 自分に+MP{受けたダメージ×2}",
+    "imageUrl": "/godfield-flash/cards/protector/kaiou_no_yubiwa.png"
   },
   {
     "id": "gf_ring_183",
@@ -3445,7 +3627,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者から￥{受けたダメージ}没収"
+    "description": "1ダメージ以上受けた時: 攻撃者から￥{受けたダメージ}没収",
+    "imageUrl": "/godfield-flash/cards/protector/kinsei_no_yubiwa.png"
   },
   {
     "id": "gf_defense_item_184",
@@ -3463,7 +3646,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 3,
-    "description": "攻撃の属性を取り除く"
+    "description": "攻撃の属性を取り除く",
+    "imageUrl": "/godfield-flash/cards/protector/niji_no_curtain.png"
   },
   {
     "id": "gf_defense_item_185",
@@ -3481,7 +3665,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "何でもはね返す"
+    "description": "何でもはね返す",
+    "imageUrl": "/godfield-flash/cards/protector/super_mirror.png"
   },
   {
     "id": "gf_miracle_186",
@@ -3500,7 +3685,8 @@
     "costMp": 2,
     "copies": 1,
     "description": "+攻2",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/magic/hinotama.png"
   },
   {
     "id": "gf_miracle_187",
@@ -3519,7 +3705,8 @@
     "costMp": 4,
     "copies": 1,
     "description": "75%攻5",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/kemuri.png"
   },
   {
     "id": "gf_miracle_188",
@@ -3538,7 +3725,8 @@
     "costMp": 5,
     "copies": 1,
     "description": "攻10",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/honoo.png"
   },
   {
     "id": "gf_miracle_189",
@@ -3557,7 +3745,8 @@
     "costMp": 10,
     "copies": 1,
     "description": "75%攻15",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/magma.png"
   },
   {
     "id": "gf_miracle_190",
@@ -3576,7 +3765,8 @@
     "costMp": 2,
     "copies": 1,
     "description": "攻4",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/koori.png"
   },
   {
     "id": "gf_miracle_191",
@@ -3595,7 +3785,8 @@
     "costMp": 6,
     "copies": 1,
     "description": "75%攻8",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/nadare.png"
   },
   {
     "id": "gf_miracle_192",
@@ -3614,7 +3805,8 @@
     "costMp": 12,
     "copies": 1,
     "description": "攻25",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/taki.png"
   },
   {
     "id": "gf_miracle_193",
@@ -3633,7 +3825,8 @@
     "costMp": 30,
     "copies": 1,
     "description": "75%攻30",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/hyougaki.png"
   },
   {
     "id": "gf_miracle_194",
@@ -3652,7 +3845,8 @@
     "costMp": 3,
     "copies": 1,
     "description": "攻6",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/taiboku.png"
   },
   {
     "id": "gf_miracle_195",
@@ -3671,7 +3865,8 @@
     "costMp": 4,
     "copies": 1,
     "description": "攻8",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/iwa.png"
   },
   {
     "id": "gf_miracle_196",
@@ -3690,7 +3885,8 @@
     "costMp": 6,
     "copies": 1,
     "description": "50%攻12",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/dosekiryuu.png"
   },
   {
     "id": "gf_miracle_197",
@@ -3710,6 +3906,7 @@
     "copies": 1,
     "description": "25%攻1、閃光",
     "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/eikou.png",
     "ailmentInflict": "flash",
     "ailmentTrigger": "damage"
   },
@@ -3730,7 +3927,8 @@
     "costMp": 4,
     "copies": 1,
     "description": "25%攻10",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/kaminari.png"
   },
   {
     "id": "gf_miracle_199",
@@ -3749,7 +3947,8 @@
     "costMp": 7,
     "copies": 1,
     "description": "+攻10",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-flash/cards/magic/ryuusei.png"
   },
   {
     "id": "gf_miracle_200",
@@ -3768,7 +3967,8 @@
     "costMp": 10,
     "copies": 1,
     "description": "攻10、HP吸収",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/kyuushuu.png"
   },
   {
     "id": "gf_miracle_201",
@@ -3787,7 +3987,8 @@
     "costMp": 5,
     "copies": 1,
     "description": "攻5",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/yami.png"
   },
   {
     "id": "gf_miracle_202",
@@ -3807,6 +4008,7 @@
     "copies": 1,
     "description": "風邪",
     "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/kaze.png",
     "ailmentInflict": "cold",
     "ailmentTrigger": "use"
   },
@@ -3828,6 +4030,7 @@
     "copies": 1,
     "description": "天国病",
     "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/tengokufuu.png",
     "ailmentInflict": "heaven",
     "ailmentTrigger": "use"
   },
@@ -3849,6 +4052,7 @@
     "copies": 1,
     "description": "霧",
     "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/kiri.png",
     "ailmentInflict": "fog",
     "ailmentTrigger": "use"
   },
@@ -3870,6 +4074,7 @@
     "copies": 1,
     "description": "夢",
     "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/genkaku.png",
     "ailmentInflict": "dream",
     "ailmentTrigger": "use"
   },
@@ -3891,6 +4096,7 @@
     "copies": 1,
     "description": "暗雲",
     "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/anun.png",
     "ailmentInflict": "darkcloud",
     "ailmentTrigger": "use"
   },
@@ -3912,6 +4118,7 @@
     "copies": 1,
     "description": "風邪・熱病・霧・閃光を消す",
     "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/neiro.png",
     "cureAilments": [
       "cold",
       "fever",
@@ -3937,6 +4144,7 @@
     "copies": 1,
     "description": "全ての災いを消す",
     "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/utagoe.png",
     "cureAilments": "all"
   },
   {
@@ -3956,7 +4164,8 @@
     "costMp": 6,
     "copies": 1,
     "description": "単体攻撃武器の攻撃力を倍にする",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/aura.png"
   },
   {
     "id": "gf_miracle_210",
@@ -3975,7 +4184,8 @@
     "costMp": 5,
     "copies": 1,
     "description": "単体攻撃武器を100%攻にする",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/shinkirou.png"
   },
   {
     "id": "gf_miracle_211",
@@ -3994,7 +4204,8 @@
     "costMp": 5,
     "copies": 1,
     "description": "奇跡を弾く",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/rankiryuu.png"
   },
   {
     "id": "gf_miracle_212",
@@ -4013,7 +4224,8 @@
     "costMp": 6,
     "copies": 1,
     "description": "無属性武器を止める",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/kabe.png"
   },
   {
     "id": "gf_miracle_213",
@@ -4032,7 +4244,8 @@
     "costMp": 7,
     "copies": 1,
     "description": "+HP10",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/izumi.png"
   },
   {
     "id": "gf_miracle_214",
@@ -4051,7 +4264,8 @@
     "costMp": 5,
     "copies": 1,
     "description": "+￥10",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/zaihou.png"
   },
   {
     "id": "gf_miracle_215",
@@ -4070,7 +4284,8 @@
     "costMp": 15,
     "copies": 1,
     "description": "守護神が現れる",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-flash/cards/magic/kaihou.png"
   },
   {
     "id": "gf_item_216",
@@ -4088,7 +4303,8 @@
     "costMoney": 1,
     "costMp": 0,
     "copies": 12,
-    "description": "+HP5"
+    "description": "+HP5",
+    "imageUrl": "/godfield-flash/cards/sundry/moon_no_shizuku.png"
   },
   {
     "id": "gf_item_217",
@@ -4106,7 +4322,8 @@
     "costMoney": 3,
     "costMp": 0,
     "copies": 8,
-    "description": "+HP10"
+    "description": "+HP10",
+    "imageUrl": "/godfield-flash/cards/sundry/heart_no_shizuku.png"
   },
   {
     "id": "gf_item_218",
@@ -4124,7 +4341,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 4,
-    "description": "+HP15"
+    "description": "+HP15",
+    "imageUrl": "/godfield-flash/cards/sundry/romance_water.png"
   },
   {
     "id": "gf_item_219",
@@ -4142,7 +4360,8 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": "+HP20"
+    "description": "+HP20",
+    "imageUrl": "/godfield-flash/cards/sundry/amanogawa_no_oishii_mizu.png"
   },
   {
     "id": "gf_item_220",
@@ -4160,7 +4379,8 @@
     "costMoney": 1,
     "costMp": 0,
     "copies": 12,
-    "description": "+MP5"
+    "description": "+MP5",
+    "imageUrl": "/godfield-flash/cards/sundry/moon_no_hana.png"
   },
   {
     "id": "gf_item_221",
@@ -4178,7 +4398,8 @@
     "costMoney": 3,
     "costMp": 0,
     "copies": 8,
-    "description": "+MP10"
+    "description": "+MP10",
+    "imageUrl": "/godfield-flash/cards/sundry/heart_no_hana.png"
   },
   {
     "id": "gf_item_222",
@@ -4196,7 +4417,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 4,
-    "description": "+MP15"
+    "description": "+MP15",
+    "imageUrl": "/godfield-flash/cards/sundry/romance_no_kouboku.png"
   },
   {
     "id": "gf_item_223",
@@ -4215,6 +4437,7 @@
     "costMp": 0,
     "copies": 1,
     "description": "+MP20、天国病",
+    "imageUrl": "/godfield-flash/cards/sundry/tengokusou.png",
     "selfAilment": "heaven"
   },
   {
@@ -4234,6 +4457,7 @@
     "costMp": 0,
     "copies": 12,
     "description": "風邪・熱病・霧・閃光を払う",
+    "imageUrl": "/godfield-flash/cards/sundry/moon_no_kaigara.png",
     "cureAilments": [
       "cold",
       "fever",
@@ -4258,6 +4482,7 @@
     "costMp": 0,
     "copies": 6,
     "description": "全ての災いを払う",
+    "imageUrl": "/godfield-flash/cards/sundry/heart_no_kaigara.png",
     "cureAilments": "all"
   },
   {
@@ -4276,7 +4501,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 3,
-    "description": "守護神が宿る"
+    "description": "守護神が宿る",
+    "imageUrl": "/godfield-flash/cards/sundry/shugofuuin_no_tsubo.png"
   },
   {
     "id": "gf_item_227",
@@ -4294,7 +4520,8 @@
     "costMoney": 1,
     "costMp": 0,
     "copies": 2,
-    "description": "+HP10または10ダメージ"
+    "description": "+HP10または10ダメージ",
+    "imageUrl": "/godfield-flash/cards/sundry/dokidoki_namida.png"
   },
   {
     "id": "gf_item_228",
@@ -4312,7 +4539,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 2,
-    "description": "+攻10"
+    "description": "+攻10",
+    "imageUrl": "/godfield-flash/cards/sundry/weapon_ko.png"
   },
   {
     "id": "gf_item_229",
@@ -4330,7 +4558,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 2,
-    "description": "MP消費0で奇跡を使える"
+    "description": "MP消費0で奇跡を使える",
+    "imageUrl": "/godfield-flash/cards/sundry/seirei_no_nuigurumi.png"
   },
   {
     "id": "gf_item_230",
@@ -4348,7 +4577,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "無作為に神器を3つ掃き飛ばす"
+    "description": "無作為に神器を3つ掃き飛ばす",
+    "imageUrl": "/godfield-flash/cards/sundry/yozora_no_houki.png"
   },
   {
     "id": "gf_item_231",
@@ -4366,7 +4596,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "無作為に習得奇跡を2つ忘れさせる"
+    "description": "無作為に習得奇跡を2つ忘れさせる",
+    "imageUrl": "/godfield-flash/cards/sundry/megami_no_sekken.png"
   },
   {
     "id": "gf_item_232",
@@ -4384,7 +4615,8 @@
     "costMoney": 3,
     "costMp": 0,
     "copies": 1,
-    "description": "超常現象が起こる"
+    "description": "超常現象が起こる",
+    "imageUrl": "/godfield-flash/cards/sundry/ummei_no_himo.png"
   },
   {
     "id": "gf_item_233",
@@ -4402,7 +4634,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "HP0時に+HP10"
+    "description": "HP0時に+HP10",
+    "imageUrl": "/godfield-flash/cards/sundry/taiyou_no_omamori.png"
   },
   {
     "id": "gf_item_234",
@@ -4420,7 +4653,8 @@
     "costMoney": 1,
     "costMp": 0,
     "copies": 1,
-    "description": "キネ発動時99ダメージ。捨てると戻り1ダメージ"
+    "description": "キネ発動時99ダメージ。捨てると戻り1ダメージ",
+    "imageUrl": "/godfield-flash/cards/sundry/abunai_usu.png"
   },
   {
     "id": "gf_trade_235",
@@ -4439,7 +4673,8 @@
     "costMp": 0,
     "copies": 20,
     "description": "HP・MP・￥を1:1で自由配分",
-    "effect": "exchange"
+    "effect": "exchange",
+    "imageUrl": "/godfield-flash/cards/trade/ryougae.png"
   },
   {
     "id": "gf_trade_236",
@@ -4458,7 +4693,8 @@
     "costMp": 0,
     "copies": 20,
     "description": "神器1つを相手に強制的に売る",
-    "effect": "sell"
+    "effect": "sell",
+    "imageUrl": "/godfield-flash/cards/trade/uru.png"
   },
   {
     "id": "gf_trade_237",
@@ -4477,7 +4713,8 @@
     "costMp": 0,
     "copies": 20,
     "description": "相手の神器を無作為に提示し購入を選ぶ",
-    "effect": "buy"
+    "effect": "buy",
+    "imageUrl": "/godfield-flash/cards/trade/kau.png"
   },
   {
     "id": "gf_incarnation_238",
@@ -4497,7 +4734,8 @@
     "copies": 0,
     "description": "炎のささやき30%:75%攻3／つぶやき25%:75%攻4／しゃべり20%:75%攻5／うなり15%:75%攻6／叫び10%:75%攻7",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/mars.png"
   },
   {
     "id": "gf_incarnation_239",
@@ -4517,7 +4755,8 @@
     "copies": 0,
     "description": "霧雨30%／かすむ息25%／しぶき20%／泡15%／あられ10%。霧を伴う水攻撃",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/mercury.png"
   },
   {
     "id": "gf_incarnation_240",
@@ -4537,7 +4776,8 @@
     "copies": 0,
     "description": "枝30%／根っこ25%／触手20%／紅葉15%／落ち葉の舞10%。吸収と夢",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/jupiter.png"
   },
   {
     "id": "gf_incarnation_241",
@@ -4557,7 +4797,8 @@
     "copies": 0,
     "description": "小石30%攻2／石25%攻4／大きな石20%攻6／体当たり15%攻9／ダイヤモンドアクス10%攻15",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/saturn.png"
   },
   {
     "id": "gf_incarnation_242",
@@ -4577,7 +4818,8 @@
     "copies": 0,
     "description": "点滅30%／電撃25%／後光20%／祝福15%／レーザービーム10%。閃光と吸収",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/uranus.png"
   },
   {
     "id": "gf_incarnation_243",
@@ -4597,7 +4839,8 @@
     "copies": 0,
     "description": "思考30%／まばたき25%／不吉な予感20%／咳払い15%／挙手10%。闇攻撃と暗雲",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/pluto.png"
   },
   {
     "id": "gf_incarnation_244",
@@ -4617,7 +4860,8 @@
     "copies": 0,
     "description": "さざなみの音30%／潮汁25%／磯の香り20%／あっさり潮汁15%／さわやかな磯の香り10%。治癒と回復",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/neptune.png"
   },
   {
     "id": "gf_incarnation_245",
@@ -4637,7 +4881,8 @@
     "copies": 0,
     "description": "小銭ばらまき30%／わいろ25%／罰金20%／つまらない物15%／豪華なアクセサリー10%。￥を操作",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/venus.png"
   },
   {
     "id": "gf_incarnation_246",
@@ -4657,7 +4902,8 @@
     "copies": 0,
     "description": "神器を授かり率で抽選し、その神器に応じて自律行動する",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/earth.png"
   },
   {
     "id": "gf_incarnation_247",
@@ -4677,6 +4923,7 @@
     "copies": 0,
     "description": "受身を除く28種類の奇跡から無作為に使用する",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/moon.png"
   }
 ]

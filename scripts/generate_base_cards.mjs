@@ -1,19 +1,23 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { godfieldFlashImages } from './godfieldFlashImages.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cards = [];
 let serial = 0;
 
 const attr = { '-': 'none', 火: 'fire', 水: 'water', 木: 'wood', 土: 'earth', 光: 'light', 闇: 'dark', 天: 'light' };
-const add = (category, name, data = {}) => cards.push({
-  id: `gf_${category}_${String(++serial).padStart(3, '0')}`,
-  name, category, type: data.type || category, attribute: data.attribute || 'none',
-  target: data.target || 'single', attack: 0, attackBonus: 0, defense: 0,
-  hitRate: 100, healHp: 0, healMp: 0, costMoney: 0, costMp: 0,
-  copies: 1, description: '', ...data,
-});
+const add = (category, name, data = {}) => {
+  const id = `gf_${category}_${String(++serial).padStart(3, '0')}`;
+  cards.push({
+    id, name, category, type: data.type || category, attribute: data.attribute || 'none',
+    target: data.target || 'single', attack: 0, attackBonus: 0, defense: 0,
+    hitRate: 100, healHp: 0, healMp: 0, costMoney: 0, costMp: 0,
+    copies: 1, description: '', ...data,
+    imageUrl: data.imageUrl || godfieldFlashImages[id] || '',
+  });
+};
 const rate = percent => Math.round(percent * 5);
 
 // 神器一覧-単体武器-: 通常武器
