@@ -69,6 +69,16 @@ function addSoundEvent(room, name, { targetId = null, delayMs = 0 } = {}) {
   }].slice(-60);
 }
 
+function addAscensionEvent(room, player) {
+  room.ascensionSeq = (room.ascensionSeq || 0) + 1;
+  room.ascensionEvents = [...(room.ascensionEvents || []), {
+    id: room.ascensionSeq,
+    playerId: player.id,
+    playerName: player.name,
+    timestamp: Date.now(),
+  }].slice(-20);
+}
+
 function emitRoomUpdate(roomName) {
   const room = rooms[roomName];
   if (!room) return;
@@ -129,6 +139,8 @@ io.on('connection', (socket) => {
         lastAction: null,
         soundEvents: [],
         soundSeq: 0,
+        ascensionEvents: [],
+        ascensionSeq: 0,
         winnerId: null,
         winnerTeam: null,
         followUpAttacks: [],
@@ -1268,6 +1280,7 @@ function checkDeath(room) {
       room.log.push(`${player.name}の${dyingCard.name}が昇天攻撃を開始した。`);
     }
     player.ascended = true;
+    addAscensionEvent(room, player);
     addSoundEvent(room, 'dead');
     room.log.push(`${player.name}は昇天した。`);
   });
@@ -1308,6 +1321,8 @@ function startGame(roomName) {
   room.lastAction = null;
   room.soundEvents = [];
   room.soundSeq = 0;
+  room.ascensionEvents = [];
+  room.ascensionSeq = 0;
   room.field = null;
   room.attackQueue = [];
   room.attackContext = null;
@@ -1465,6 +1480,7 @@ function emitGameState(roomName) {
       lastDamage: room.lastDamage,
       lastAction: room.lastAction,
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId || event.targetId === id),
+      ascensionEvents: room.ascensionEvents || [],
       chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly || message.team === room.players[id].team),
       me: room.players[id],
       opponent: room.players[playerIds.find(p => p !== id)],
@@ -1510,6 +1526,7 @@ function emitGameState(roomName) {
       lastDamage: room.lastDamage,
       lastAction: room.lastAction,
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId),
+      ascensionEvents: room.ascensionEvents || [],
       chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly),
       me: { id: spectator.id, name: spectator.name, hp: 0, mp: 0, money: 0, hand: [], learnedMiracles: [], ailments: [], ascended: true },
       opponent: visiblePlayers[0] || null,
