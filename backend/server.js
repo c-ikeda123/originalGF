@@ -857,10 +857,12 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      room.log.push(`${player.name} の守護神が ${absorbed} ダメージを引き受けた。`);
      if (assistant.hp <= 0) {
        addSoundEvent(room, 'assistant_remove');
+       addEffectEvent(room, 'assistant_remove', player, 0, { assistantType: assistant.type });
        room.log.push(`${player.name} の守護神は去った。`);
        player.assistant = null;
      } else if (shouldAssistantLeave(assistant)) {
        addSoundEvent(room, 'assistant_remove');
+       addEffectEvent(room, 'assistant_remove', player, 0, { assistantType: assistant.type });
        room.log.push(`${player.name} の守護神は被弾して立ち去った。`);
        player.assistant = null;
      }
@@ -1088,6 +1090,7 @@ function setRandomAssistant(player, room) {
   const type = ASSISTANT_TYPES[Math.floor(Math.random() * ASSISTANT_TYPES.length)];
   player.assistant = { type, hp: 20, actionRate: 30, leaveOnDamageRate: 10 };
   addSoundEvent(room, 'assistant_add');
+  addEffectEvent(room, 'assistant_add', player, 0, { assistantType: type });
   room.log.push(`${player.name} に ${type} の守護神が宿った。`);
 }
 
@@ -1098,6 +1101,7 @@ function runAssistantAction(room, player, roomName, { nextTurnId = player.id, de
   const enemy = enemies[Math.floor(Math.random() * enemies.length)];
   if (!action) return;
   addSoundEvent(room, 'assistant');
+  addEffectEvent(room, 'assistant_action', player, 0, { assistantType: player.assistant.type });
   room.log.push(`${player.name} の守護神 ${player.assistant.type} が行動した。`);
   const scheduleAttack = card => {
     if (!enemy) return false;
