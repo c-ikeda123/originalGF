@@ -139,7 +139,11 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
           {draft ? (
             <>
               <div className="lock-status">{ownsLock ? '編集中・変更は自動保存されます' : locks[selectedId] ? `${locks[selectedId].ownerName} が編集中です` : '編集権を取得中…'}</div>
-              <label>名前<input className="input-field" value={draft.name} disabled={!ownsLock} onChange={event => setDraft(card => ({ ...card, name: event.target.value }))} /></label>
+              <label className="room-name-field">
+                <span>名前</span>
+                <input className="input-field" value={draft.name} disabled={!ownsLock} onChange={event => setDraft(card => ({ ...card, name: event.target.value }))} />
+                {edits[selectedId] && <span className="original-card-name">元の名前: {selectedBase.name}</span>}
+              </label>
               <label>画像URL<input className="input-field" value={draft.imageUrl || ''} disabled={!ownsLock} onChange={event => setDraft(card => ({ ...card, imageUrl: event.target.value }))} /></label>
               <label>画像ファイル<input className="input-field" type="file" accept="image/*" disabled={!ownsLock} onChange={uploadImage} /></label>
               <div className="room-card-image-preview">

@@ -490,6 +490,20 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1;
 }
 
+.room-card-form .room-name-field {
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+  align-items: center;
+}
+
+.original-card-name {
+  max-width: 240px;
+  overflow: hidden;
+  color: #526d66;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .assistant-status {
   display: flex;
   align-items: center;
