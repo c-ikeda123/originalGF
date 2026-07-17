@@ -1,14 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import dreamRules from '../../../shared/dreamRules.cjs';
 import { getDreamDisplayedCard, isDreamAffectedCard } from './dreamCards.js';
 
-test('夢の対象判定をサーバーと共有する', () => {
+test('夢の対象判定がサーバーと一致する', () => {
   const weapon = { id: 'weapon', instanceId: 'b', type: 'weapon' };
   const sell = { id: 'sell', instanceId: 'b', effect: 'sell' };
 
-  assert.equal(isDreamAffectedCard(weapon, true), true);
+  assert.equal(isDreamAffectedCard(weapon, true), dreamRules.isDreamAffected(weapon));
   assert.equal(isDreamAffectedCard(weapon, false), false);
-  assert.equal(isDreamAffectedCard(sell, true), false);
+  assert.equal(isDreamAffectedCard(sell, true), dreamRules.isDreamAffected(sell));
 });
 
 test('夢状態でも確定前の神器は元の姿で表示する', () => {
