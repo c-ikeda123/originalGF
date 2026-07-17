@@ -361,6 +361,12 @@ function getDamageResolutionDelay(darkDamage = 0) {
   return darkDamage > 0 ? 2150 : 1500;
 }
 
+const FIELD_CLEAR_DELAY_MS = 2000;
+
+function getTurnSoundDelay(field) {
+  return field ? FIELD_CLEAR_DELAY_MS + 100 : 0;
+}
+
 function isActionLocked(room, now = Date.now()) {
   return (room?.actionLockedUntil || 0) > now;
 }
@@ -388,6 +394,7 @@ function clearFieldIfCurrent(room, scheduledField) {
 }
 
 module.exports = {
+  FIELD_CLEAR_DELAY_MS,
   applyAilment,
   areEnemies,
   combineAttackCards,
@@ -406,6 +413,7 @@ module.exports = {
   getNextAlivePlayerId,
   getReplacementDrawCount,
   getTurnTimerKey,
+  getTurnSoundDelay,
   getWinningSide,
   isActionLocked,
   isDefenseCard,

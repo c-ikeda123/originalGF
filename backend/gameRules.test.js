@@ -11,6 +11,7 @@ const {
   createDyingAttackCard,
   createInitialHand,
   createMoonAssistantAttack,
+  FIELD_CLEAR_DELAY_MS,
   cureAilments,
   getAssistantAction,
   getEarthArtifactMode,
@@ -19,6 +20,7 @@ const {
   getNextAlivePlayerId,
   getReplacementDrawCount,
   getTurnTimerKey,
+  getTurnSoundDelay,
   getWinningSide,
   isActionLocked,
   isDefenseCard,
@@ -311,4 +313,9 @@ test('複数人の手番は昇天者を飛ばして循環する', () => {
   };
   assert.equal(getNextAlivePlayerId(['A', 'B', 'C'], players, 'A'), 'C');
   assert.equal(getNextAlivePlayerId(['A', 'B', 'C'], players, 'C'), 'A');
+});
+
+test('次の手番音は直前の場札が消えてから鳴らす', () => {
+  assert.equal(getTurnSoundDelay(null), 0);
+  assert.ok(getTurnSoundDelay({ attackCard: {} }) > FIELD_CLEAR_DELAY_MS);
 });

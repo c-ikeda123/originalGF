@@ -14,6 +14,7 @@ const {
   createDyingAttackCard,
   createInitialHand,
   createMoonAssistantAttack,
+  FIELD_CLEAR_DELAY_MS,
   getAssistantAction,
   getDamageResolutionDelay,
   getEarthArtifactMode,
@@ -21,6 +22,7 @@ const {
   getNextAlivePlayerId,
   getReplacementDrawCount,
   getTurnTimerKey,
+  getTurnSoundDelay,
   getWinningSide,
   isActionLocked,
   isDefenseCard,
@@ -985,7 +987,7 @@ function clearFieldLater(roomName) {
     if (!room || room.state === 'waiting') return;
     if (!clearFieldIfCurrent(room, scheduledField)) return;
     emitGameState(roomName);
-  }, 2000);
+  }, FIELD_CLEAR_DELAY_MS);
 }
 
 function withInstanceId(card) {
@@ -1335,7 +1337,7 @@ function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false } 
    room.phase = 'main';
    const player = room.players[nextTurnId];
     room.log.push(`--- ${player.name}'s Turn ---`);
-    addSoundEvent(room, 'client_turn', { targetId: nextTurnId });
+    addSoundEvent(room, 'client_turn', { targetId: nextTurnId, delayMs: getTurnSoundDelay(room.field) });
  }
 
 function createActionEvent(attacker, defender, card, outcome) {
