@@ -20,13 +20,14 @@ const {
   FIELD_CLEAR_DELAY_MS,
   getAssistantAction,
   getActivatedCards,
-  getCounterAilment,
+  getDamageAilments,
   getDamageAfterDefense,
   getDamageResolutionDelay,
   getEarthArtifactMode,
   getNextEventTimestamp,
   getNextAlivePlayerId,
   getReplacementDrawCount,
+  getRetaliationAilments,
   getTurnTimerKey,
   getTurnSoundDelay,
   getWinningSide,
@@ -926,21 +927,15 @@ function applyDamageAndClearField(room, player, amount, roomName) {
        room.log.push(`${attacker.name} も ${resolvedDamage} ダメージを受けた。`);
      }
      for (const defenseCard of room.field?.defenseCards || []) {
-       if (attacker && defenseCard.retaliateAilment) {
-         const applied = applyAilment(attacker, defenseCard.retaliateAilment);
-         addSoundEvent(room, 'harm_add');
+       for (const retaliationAilment of getRetaliationAilments(defenseCard)) {
+         if (!attacker) break;
+         const applied = applyAilment(attacker, retaliationAilment);
+         addSoundEvent(room, retaliationAilment === 'dream' ? 'illusion_item' : 'harm_add');
          addAilmentEffect(room, attacker, applied);
          room.log.push(`${attacker.name} は ${defenseCard.name} により ${applied} になった。`);
        }
        for (const reactiveEffect of new Set([defenseCard.reactiveEffect, ...(defenseCard.reactiveEffects || [])].filter(Boolean))) {
          if (!attacker) continue;
-         const counterAilment = getCounterAilment(reactiveEffect);
-         if (counterAilment) {
-           const applied = applyAilment(attacker, counterAilment);
-           addSoundEvent(room, counterAilment === 'dream' ? 'illusion_item' : 'harm_add');
-           addAilmentEffect(room, attacker, applied);
-           room.log.push(`${attacker.name} は ${defenseCard.name} により ${applied} になった。`);
-         }
          if (reactiveEffect === 'counter_damage_all') {
            const counterCard = createCounterAttackCard(reactiveEffect, resolvedDamage, defenseCard);
            queueFollowUpAttack(room, player.id, pendingDamage.nextTurnId, counterCard);
@@ -1038,7 +1033,7 @@ function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, 
     card,
     assistantAction: options.assistantAction || false,
     skipAssistantOpportunity: options.skipAssistantOpportunity || false,
-    ailments: cards.filter(usedCard => usedCard.ailmentTrigger === 'damage').map(usedCard => usedCard.ailmentInflict).filter(Boolean),
+    ailments: getDamageAilments(cards),
   };
   startNextQueuedAttack(room, roomName);
 }

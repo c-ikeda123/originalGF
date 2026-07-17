@@ -19,12 +19,14 @@ const {
   getAssistantAction,
   getActivatedCards,
   getCounterAilment,
+  getDamageAilments,
   getDamageAfterDefense,
   getEarthArtifactMode,
   getDamageResolutionDelay,
   getNextEventTimestamp,
   getNextAlivePlayerId,
   getReplacementDrawCount,
+  getRetaliationAilments,
   getTurnTimerKey,
   getTurnSoundDelay,
   getWinningSide,
@@ -129,6 +131,19 @@ test('状態異常を返す指輪の効果を攻撃者の災いへ変換する',
   assert.equal(getCounterAilment('counter_flash'), 'flash');
   assert.equal(getCounterAilment('counter_darkcloud'), 'darkcloud');
   assert.equal(getCounterAilment('recover_double_mp'), null);
+});
+
+test('指輪と複合攻撃の重複した災いは1回だけ発動する', () => {
+  assert.deepEqual(getRetaliationAilments({
+    retaliateAilment: 'fog',
+    reactiveEffect: 'counter_fog',
+    reactiveEffects: ['counter_fog'],
+  }), ['fog']);
+  assert.deepEqual(getDamageAilments([
+    { ailmentTrigger: 'damage', ailmentInflict: 'cold' },
+    { ailmentTrigger: 'damage', ailmentInflict: 'cold' },
+    { ailmentTrigger: 'use', ailmentInflict: 'dream' },
+  ]), ['cold']);
 });
 
 test('昇天弓は元の神器情報を保った防御可能な全体攻撃を生成する', () => {

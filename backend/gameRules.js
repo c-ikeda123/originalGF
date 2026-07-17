@@ -256,6 +256,21 @@ function getCounterAilment(reactiveEffect) {
   }[reactiveEffect] || null;
 }
 
+function getRetaliationAilments(card) {
+  const reactiveEffects = [card?.reactiveEffect, ...(card?.reactiveEffects || [])].filter(Boolean);
+  return [...new Set([
+    card?.retaliateAilment,
+    ...reactiveEffects.map(getCounterAilment),
+  ].filter(Boolean))];
+}
+
+function getDamageAilments(cards) {
+  return [...new Set(cards
+    .filter(card => card.ailmentTrigger === 'damage')
+    .map(card => card.ailmentInflict)
+    .filter(Boolean))];
+}
+
 function createDyingAttackCard(card) {
   if (!card?.dyingAttack) return null;
   return {
@@ -452,9 +467,11 @@ module.exports = {
   getDamageResolutionDelay,
   getDamageAfterDefense,
   getCounterAilment,
+  getDamageAilments,
   getNextEventTimestamp,
   getNextAlivePlayerId,
   getReplacementDrawCount,
+  getRetaliationAilments,
   getTurnTimerKey,
   getTurnSoundDelay,
   getWinningSide,
