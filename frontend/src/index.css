@@ -408,6 +408,12 @@ h1, h2, h3, h4, h5, h6 {
   line-height: 1;
 }
 
+.gf-card-square.disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.75);
+  opacity: 0.42;
+}
+
 /* GF Classic Field Card (Detailed) */
 .gf-card-field {
   width: 220px;

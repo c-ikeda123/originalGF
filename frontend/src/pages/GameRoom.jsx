@@ -101,17 +101,34 @@ export default function GameRoom() {
   const { me, opponent, turn, phase, field } = gameState;
   const isMyTurn = turn === me.id;
   const hasFog = me.ailments.includes('fog');
-  const hasHallucination = me.ailments.includes('hallucination');
+  const hasDream = me.ailments.includes('dream');
+
+  const isCardUsable = (card) => {
+    if (!isMyTurn || !card) return false;
+    if (phase === 'main') return !['armor', 'ring', 'defense_item'].includes(card.type);
+    if (phase === 'defense') {
+      if (me.ailments.includes('flash') && selectedCards.length > 0) return false;
+      return ['armor', 'ring', 'defense_item', 'accessory'].includes(card.type)
+        || (card.type === 'miracle' && card.defense > 0);
+    }
+    return false;
+  };
+
+  const isHiddenByDream = (card) => {
+    if (!hasDream) return false;
+    const value = [...String(card.instanceId || card.id)].reduce((sum, character) => sum + character.charCodeAt(0), 0);
+    return value % 2 === 0;
+  };
 
   const handlePlayCard = (cardIndex) => {
-    if (!isMyTurn) return;
+    if (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex)) return;
     const cardIndices = selectedCards.includes(cardIndex) ? selectedCards : [cardIndex];
     socket.emit('playCard', { roomName: id, cardIndices, targetId: opponent?.id });
     setSelectedCards([]);
   };
 
   const toggleCard = (index) => {
-    if (!isMyTurn) return;
+    if (!selectedCards.includes(index) && !isCardUsable(me.hand[index])) return;
     setSelectedCards(current => current.includes(index)
       ? current.filter(i => i !== index)
       : [...current, index].sort((a, b) => a - b));
@@ -124,7 +141,9 @@ export default function GameRoom() {
 
   // Render a small square card for the hand
   const renderSquareCard = (realCard, index) => {
-    const card = hasHallucination ? {
+    const hiddenByDream = isHiddenByDream(realCard);
+    const usable = isCardUsable(realCard) || selectedCards.includes(index);
+    const card = hiddenByDream ? {
        ...realCard, name: '?', type: '?', attack: '?', defense: '?', costMp: '?', costMoney: '?'
     } : realCard;
 
@@ -140,13 +159,15 @@ export default function GameRoom() {
     return (
       <div 
          key={realCard.instanceId} 
-         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''}`} 
+         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${usable ? '' : 'disabled'}`}
+         aria-disabled={!usable}
+         title={usable ? realCard.name : (phase === 'main' ? 'この神器は防御時に使用します' : '現在は使用できません')}
          onClick={() => toggleCard(index)}
-         onDoubleClick={() => handlePlayCard(index)}
+         onDoubleClick={() => usable && handlePlayCard(index)}
          onMouseEnter={() => setHoveredCardIndex(index)}
          onMouseLeave={() => setHoveredCardIndex(null)}
       >
-         {card.imageUrl && !hasHallucination ? (
+         {card.imageUrl && !hiddenByDream ? (
             <div className="image-area" style={{backgroundImage: `url(${card.imageUrl})`}} />
          ) : (
             <div className="image-area" style={{backgroundColor: '#e2e8f0'}}>{card.type.charAt(0).toUpperCase()}</div>
@@ -344,7 +365,7 @@ export default function GameRoom() {
          {/* Hovered Card Detail */}
          {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
             <div style={{ position: 'absolute', top: '-85px', left: `${Math.min(hoveredCardIndex * 70, window.innerWidth - 240)}px`, zIndex: 100 }}>
-               {renderFieldCard(hasHallucination ? { ...me.hand[hoveredCardIndex], name: '???', type: '???', attack: '?', defense: '?', costMp: '?', costMoney: '?' } : me.hand[hoveredCardIndex])}
+               {renderFieldCard(isHiddenByDream(me.hand[hoveredCardIndex]) ? { ...me.hand[hoveredCardIndex], name: '???', type: '???', attack: '?', defense: '?', costMp: '?', costMoney: '?' } : me.hand[hoveredCardIndex])}
             </div>
          )}
 
@@ -358,7 +379,7 @@ export default function GameRoom() {
                <button
                  key={`${miracle.id}-${index}`}
                  className="btn btn-secondary"
-                 disabled={!isMyTurn || !['main', 'defense'].includes(phase) || me.mp < (miracle.costMp || 0)}
+                 disabled={!isMyTurn || (phase !== 'main' && miracle.defense <= 0) || !['main', 'defense'].includes(phase) || me.mp < (miracle.costMp || 0)}
                  onClick={() => socket.emit('castMiracle', { roomName: id, miracleIndex: index, targetId: opponent?.id })}
                >
                  {miracle.name}（MP{miracle.costMp || 0}）

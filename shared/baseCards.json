@@ -339,7 +339,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で地獄病",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "ailmentInflict": "hell",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_019",
@@ -377,7 +379,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で風邪",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "ailmentInflict": "cold",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_021",
@@ -415,7 +419,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で夢",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "ailmentInflict": "dream",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_023",
@@ -529,7 +535,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で暗雲",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "ailmentInflict": "darkcloud",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_029",
@@ -624,7 +632,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で風邪",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "ailmentInflict": "cold",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_034",
@@ -928,7 +938,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で霧",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "ailmentInflict": "fog",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_050",
@@ -1042,7 +1054,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で夢",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "ailmentInflict": "dream",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_056",
@@ -1061,7 +1075,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で風邪",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "ailmentInflict": "cold",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_057",
@@ -1118,7 +1134,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で閃光",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "ailmentInflict": "flash",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_060",
@@ -1804,7 +1822,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "霧",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "ailmentInflict": "fog",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_095",
@@ -2807,7 +2827,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "使用者に熱病"
+    "description": "使用者に熱病",
+    "selfAilment": "fever"
   },
   {
     "id": "gf_armor_150",
@@ -3113,7 +3134,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": "使用者に夢、手札を一新"
+    "description": "使用者に夢、手札を一新",
+    "selfAilment": "dream"
   },
   {
     "id": "gf_armor_167",
@@ -3311,7 +3333,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者に霧"
+    "description": "1ダメージ以上受けた時: 攻撃者に霧",
+    "retaliateAilment": "fog"
   },
   {
     "id": "gf_ring_178",
@@ -3329,7 +3352,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者に夢"
+    "description": "1ダメージ以上受けた時: 攻撃者に夢",
+    "retaliateAilment": "dream"
   },
   {
     "id": "gf_ring_179",
@@ -3365,7 +3389,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者に閃光"
+    "description": "1ダメージ以上受けた時: 攻撃者に閃光",
+    "retaliateAilment": "flash"
   },
   {
     "id": "gf_ring_181",
@@ -3383,7 +3408,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者に暗雲"
+    "description": "1ダメージ以上受けた時: 攻撃者に暗雲",
+    "retaliateAilment": "darkcloud"
   },
   {
     "id": "gf_ring_182",
@@ -3683,7 +3709,9 @@
     "costMp": 3,
     "copies": 1,
     "description": "25%攻1、閃光",
-    "additive": false
+    "additive": false,
+    "ailmentInflict": "flash",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_miracle_198",
@@ -3778,7 +3806,9 @@
     "costMp": 6,
     "copies": 1,
     "description": "風邪",
-    "additive": false
+    "additive": false,
+    "ailmentInflict": "cold",
+    "ailmentTrigger": "use"
   },
   {
     "id": "gf_miracle_203",
@@ -3797,7 +3827,9 @@
     "costMp": 15,
     "copies": 1,
     "description": "天国病",
-    "additive": false
+    "additive": false,
+    "ailmentInflict": "heaven",
+    "ailmentTrigger": "use"
   },
   {
     "id": "gf_miracle_204",
@@ -3816,7 +3848,9 @@
     "costMp": 3,
     "copies": 1,
     "description": "霧",
-    "additive": false
+    "additive": false,
+    "ailmentInflict": "fog",
+    "ailmentTrigger": "use"
   },
   {
     "id": "gf_miracle_205",
@@ -3835,7 +3869,9 @@
     "costMp": 6,
     "copies": 1,
     "description": "夢",
-    "additive": false
+    "additive": false,
+    "ailmentInflict": "dream",
+    "ailmentTrigger": "use"
   },
   {
     "id": "gf_miracle_206",
@@ -3854,7 +3890,9 @@
     "costMp": 5,
     "copies": 1,
     "description": "暗雲",
-    "additive": false
+    "additive": false,
+    "ailmentInflict": "darkcloud",
+    "ailmentTrigger": "use"
   },
   {
     "id": "gf_miracle_207",
@@ -3873,7 +3911,13 @@
     "costMp": 2,
     "copies": 1,
     "description": "風邪・熱病・霧・閃光を消す",
-    "additive": false
+    "additive": false,
+    "cureAilments": [
+      "cold",
+      "fever",
+      "fog",
+      "flash"
+    ]
   },
   {
     "id": "gf_miracle_208",
@@ -3892,7 +3936,8 @@
     "costMp": 5,
     "copies": 1,
     "description": "全ての災いを消す",
-    "additive": false
+    "additive": false,
+    "cureAilments": "all"
   },
   {
     "id": "gf_miracle_209",
@@ -4169,7 +4214,8 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": "+MP20、天国病"
+    "description": "+MP20、天国病",
+    "selfAilment": "heaven"
   },
   {
     "id": "gf_item_224",
@@ -4187,7 +4233,13 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 12,
-    "description": "風邪・熱病・霧・閃光を払う"
+    "description": "風邪・熱病・霧・閃光を払う",
+    "cureAilments": [
+      "cold",
+      "fever",
+      "fog",
+      "flash"
+    ]
   },
   {
     "id": "gf_item_225",
@@ -4205,7 +4257,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 6,
-    "description": "全ての災いを払う"
+    "description": "全ての災いを払う",
+    "cureAilments": "all"
   },
   {
     "id": "gf_item_226",

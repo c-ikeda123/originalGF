@@ -113,6 +113,35 @@ const guardians = [
 ];
 guardians.forEach(([n,a,e])=>add('incarnation',n,{type:'incarnation',attribute:a,copies:0,description:e,actionRate:25,leaveOnDamageRate:10}));
 
+const damageAilments = new Map([
+  ['地獄のハサミ', 'hell'], ['疾風剣', 'cold'], ['激烈疾風剣', 'cold'], ['風のカギ爪', 'cold'],
+  ['いんちきスピア', 'dream'], ['夢の木づち', 'dream'], ['霧鉄砲', 'fog'], ['霧の扇', 'fog'],
+  ['フラッシュダガー', 'flash'], ['六角凶', 'darkcloud'], ['＜閃光＞', 'flash'],
+]);
+const directAilments = new Map([
+  ['＜風＞', 'cold'], ['＜天国風＞', 'heaven'], ['＜霧＞', 'fog'], ['＜夢＞', 'dream'], ['＜暗雲＞', 'darkcloud'],
+]);
+const retaliationAilments = new Map([
+  ['水星の指輪', 'fog'], ['木星の指輪', 'dream'], ['天王の指輪', 'flash'], ['冥王の指輪', 'darkcloud'],
+]);
+
+cards.forEach(card => {
+  if (damageAilments.has(card.name)) {
+    card.ailmentInflict = damageAilments.get(card.name);
+    card.ailmentTrigger = 'damage';
+  }
+  if (directAilments.has(card.name)) {
+    card.ailmentInflict = directAilments.get(card.name);
+    card.ailmentTrigger = 'use';
+  }
+  if (retaliationAilments.has(card.name)) card.retaliateAilment = retaliationAilments.get(card.name);
+  if (card.name === '熱狂仮面') card.selfAilment = 'fever';
+  if (card.name === '夢見る帽子') card.selfAilment = 'dream';
+  if (card.name === '天国草') card.selfAilment = 'heaven';
+  if (['＜音色＞', 'スマイルの貝がら'].includes(card.name)) card.cureAilments = ['cold', 'fever', 'fog', 'flash'];
+  if (['＜歌声＞', 'ハートの貝がら'].includes(card.name)) card.cureAilments = 'all';
+});
+
 const output = resolve(root, 'shared', 'baseCards.json');
 await mkdir(dirname(output), { recursive: true });
 await writeFile(output, `${JSON.stringify(cards, null, 2)}\n`, 'utf8');

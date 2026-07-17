@@ -3,6 +3,13 @@ const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
 const path = require('path');
+const {
+  applyAilment,
+  cureAilments,
+  processEndOfTurnAilments,
+  rollAttack,
+  validateCardPlay,
+} = require('./gameRules');
 
 const app = express();
 app.use(cors());
@@ -72,6 +79,7 @@ io.on('connection', (socket) => {
         log: [],
         field: null,
         lastDamage: null,
+        lastAction: null,
         winnerId: null,
         deck: [] // The shared deck
       };
@@ -167,6 +175,7 @@ io.on('connection', (socket) => {
     room.phase = 'main';
     room.field = null;
     room.lastDamage = null;
+    room.lastAction = null;
     room.winnerId = null;
     room.pendingBuy = null;
     room.editLocks = {};
@@ -229,16 +238,9 @@ io.on('connection', (socket) => {
       socket.emit('errorMsg', '「売る」と売却する神器を2枚選択してください。');
       return;
     }
-    const combinationTypes = room.phase === 'defense'
-      ? ['armor', 'ring', 'defense_item', 'accessory', 'miracle']
-      : ['weapon', 'accessory', 'miracle'];
-    const hasPhaseCard = room.phase === 'defense'
-      ? cards.some(c => c.defense > 0)
-      : cards.some(c => c.attack > 0);
-    const allowedCombination = isSell || isSingleTrade || cards.length === 1 ||
-      (hasPhaseCard && cards.every(c => combinationTypes.includes(c.type)));
-    if (!allowedCombination || cards.length !== requestedIndices.length) {
-      socket.emit('errorMsg', 'These cards cannot be combined.');
+    const validation = validateCardPlay(cards, room.phase, player.ailments);
+    if (!validation.valid || cards.length !== requestedIndices.length) {
+      socket.emit('errorMsg', validation.message || '選択したカードを使用できません。');
       return;
     }
 
@@ -272,6 +274,17 @@ io.on('connection', (socket) => {
 
     const opponentId = targetId || Object.keys(room.players).find(id => id !== socket.id);
     const opponent = room.players[opponentId];
+
+    cards.forEach(usedCard => {
+      if (usedCard.selfAilment) {
+        const applied = applyAilment(player, usedCard.selfAilment);
+        room.log.push(`${player.name} は ${applied} になった。`);
+      }
+      if (usedCard.cureAilments) {
+        const cured = cureAilments(player, usedCard.cureAilments);
+        if (cured.length) room.log.push(`${player.name} の災い（${cured.join('、')}）が治った。`);
+      }
+    });
 
     if (isSell) {
       const sellIndex = cards.findIndex(c => c.effect === 'sell');
@@ -320,34 +333,21 @@ io.on('connection', (socket) => {
        // In GF, Hallucination just makes cards look like other cards, but when you play it, it uses the real card.
        // We can just handle this visually on frontend, backend doesn't need to change play logic.
        
-       // Ailment: Dark Clouds (all attacks hit)
-       const hasDarkClouds = opponent.ailments.includes('darkcloud') || player.ailments.includes('darkcloud');
-
-       // Check Cure
-       if (card.ailmentCure && card.ailmentCure !== 'none') {
-           player.ailments = player.ailments.filter(a => a !== card.ailmentCure);
-           room.log.push(`${player.name} cured ${card.ailmentCure}!`);
-       }
-
        if (combinedCard.type === 'weapon') {
          // Attack logic
-         const hitRoll = Math.random() * 100;
-         if (hasDarkClouds || hitRoll <= combinedCard.hitRate) {
-           room.log.push(`${combinedCard.name} hit!`);
-           
-           if (card.ailmentInflict && card.ailmentInflict !== 'none') {
-              if (!opponent.ailments.includes(card.ailmentInflict)) {
-                 opponent.ailments.push(card.ailmentInflict);
-                 room.log.push(`${opponent.name} was inflicted with ${card.ailmentInflict}!`);
-              }
-           }
+         const hitResult = rollAttack(combinedCard, opponent.ailments);
+         room.lastAction = createActionEvent(player, opponent, combinedCard, hitResult.outcome);
+         if (hitResult.hit) {
+           room.log.push(hitResult.outcome === 'unavoidable' ? `${combinedCard.name} は不可避！` : `${combinedCard.name} が命中！`);
 
            room.phase = 'defense';
            room.turn = opponentId; // Opponent's turn to defend
            room.players[opponentId].pendingDamage = {
              amount: combinedCard.attack,
              attribute: combinedCard.attribute,
-             source: player.name
+             source: player.name,
+             attackerId: player.id,
+             ailments: cards.filter(usedCard => usedCard.ailmentTrigger === 'damage').map(usedCard => usedCard.ailmentInflict).filter(Boolean),
            };
            room.field = {
              attackerId: player.id,
@@ -357,7 +357,7 @@ io.on('connection', (socket) => {
            };
            room.log.push(`${opponent.name} is defending...`);
          } else {
-           room.log.push(`${combinedCard.name} missed!`);
+           room.log.push(`${opponent.name} は ${combinedCard.name} を回避！`);
            room.field = { attackerId: player.id, attackCard: combinedCard, missed: true };
            clearFieldLater(roomName);
            endTurnInternal(room, opponentId);
@@ -369,29 +369,32 @@ io.on('connection', (socket) => {
          room.log.push(`${player.name} recovered stats.`);
          endTurnInternal(room, opponentId);
        } else if (combinedCard.type === 'miracle') {
-         // Simple miracle (attack)
-         if (card.ailmentInflict && card.ailmentInflict !== 'none') {
-            if (!opponent.ailments.includes(card.ailmentInflict)) {
-               opponent.ailments.push(card.ailmentInflict);
-               room.log.push(`${opponent.name} was inflicted with ${card.ailmentInflict}!`);
-            }
-         }
-         
          if (combinedCard.attack > 0) {
-           room.phase = 'defense';
-           room.turn = opponentId;
-           room.players[opponentId].pendingDamage = {
-             amount: combinedCard.attack,
-             attribute: combinedCard.attribute,
-             source: player.name
-           };
-           room.field = {
-             attackerId: player.id,
-             attackCard: combinedCard,
-             defenderId: opponentId,
-             defenseCards: []
-           };
+           const hitResult = rollAttack(combinedCard, opponent.ailments);
+           room.lastAction = createActionEvent(player, opponent, combinedCard, hitResult.outcome);
+           if (hitResult.hit) {
+             room.phase = 'defense';
+             room.turn = opponentId;
+             opponent.pendingDamage = {
+               amount: combinedCard.attack,
+               attribute: combinedCard.attribute,
+               source: player.name,
+               attackerId: player.id,
+               ailments: cards.filter(usedCard => usedCard.ailmentTrigger === 'damage').map(usedCard => usedCard.ailmentInflict).filter(Boolean),
+             };
+             room.field = { attackerId: player.id, attackCard: combinedCard, defenderId: opponentId, defenseCards: [] };
+             room.log.push(hitResult.outcome === 'unavoidable' ? `${combinedCard.name} は不可避！` : `${combinedCard.name} が命中！`);
+           } else {
+             room.field = { attackerId: player.id, attackCard: combinedCard, missed: true };
+             room.log.push(`${opponent.name} は ${combinedCard.name} を回避！`);
+             clearFieldLater(roomName);
+             endTurnInternal(room, opponentId);
+           }
          } else {
+            if (card.ailmentInflict && card.ailmentTrigger === 'use') {
+              const applied = applyAilment(opponent, card.ailmentInflict);
+              room.log.push(`${opponent.name} は ${applied} になった。`);
+            }
             if (card.healHp) player.hp += card.healHp;
             room.field = { attackerId: player.id, attackCard: card };
             clearFieldLater(roomName);
@@ -555,11 +558,25 @@ io.on('connection', (socket) => {
 
 function applyDamageAndClearField(room, player, amount, roomName) {
    const actualDamage = Math.max(0, amount);
-   const isDarkLethal = player.pendingDamage?.attribute === 'dark' && actualDamage > 0;
+   const pendingDamage = player.pendingDamage;
+   const isDarkLethal = pendingDamage?.attribute === 'dark' && actualDamage > 0;
    player.hp = isDarkLethal ? 0 : player.hp - actualDamage;
    room.log.push(isDarkLethal
      ? `${player.name} took dark damage and ascended!`
      : `${player.name} took ${actualDamage} damage!`);
+   if (actualDamage > 0) {
+     for (const ailment of pendingDamage?.ailments || []) {
+       const applied = applyAilment(player, ailment);
+       room.log.push(`${player.name} は ${applied} になった。`);
+     }
+     const attacker = room.players[pendingDamage?.attackerId];
+     for (const defenseCard of room.field?.defenseCards || []) {
+       if (attacker && defenseCard.retaliateAilment) {
+         const applied = applyAilment(attacker, defenseCard.retaliateAilment);
+         room.log.push(`${attacker.name} は ${defenseCard.name} により ${applied} になった。`);
+       }
+     }
+   }
    player.pendingDamage = null;
    
    // Store last damage to trigger UI animation
@@ -614,28 +631,34 @@ function forceSale(room, seller, buyer, card) {
 }
 
 function processAilments(player, room) {
-  if (player.hp <= 0) return;
-  // Simplified ailments
-  player.ailments.forEach(ailment => {
-     if (ailment === 'cold') { player.hp -= 1; room.log.push(`${player.name} takes 1 damage from Cold.`); }
-     if (ailment === 'fever') { player.hp -= 2; room.log.push(`${player.name} takes 2 damage from Fever.`); }
-     if (ailment === 'hell') { player.hp -= 5; room.log.push(`${player.name} takes 5 damage from Hell Sickness.`); }
-     if (ailment === 'heaven') { 
-        if (Math.random() < 0.1) {
-           player.hp = 0; room.log.push(`${player.name} suffered a fatal Heaven Sickness attack!`);
-        } else {
-           player.hp += 5; room.log.push(`${player.name} recovered 5 HP from Heaven Sickness.`);
-        }
-     }
-  });
+  const result = processEndOfTurnAilments(player);
+  if (result.hpChange) room.log.push(`${player.name} の病気効果: HP ${result.hpChange > 0 ? '+' : ''}${result.hpChange}`);
+  if (result.progressedTo) room.log.push(`${player.name} の病気が ${result.progressedTo} に悪化した。`);
+  if (result.fatal) room.log.push(`${player.name} は天国病の発作でHPが0になった。`);
 }
 
 function endTurnInternal(room, nextTurnId) {
+   const endingPlayer = room.players[room.mainTurnOwner];
+   if (endingPlayer && endingPlayer.id !== nextTurnId) processAilments(endingPlayer, room);
+   checkDeath(room);
+   if (room.state === 'ended') return;
    room.turn = nextTurnId;
+   room.mainTurnOwner = nextTurnId;
    room.phase = 'main';
    const player = room.players[nextTurnId];
    room.log.push(`--- ${player.name}'s Turn ---`);
-   processAilments(player, room);
+}
+
+function createActionEvent(attacker, defender, card, outcome) {
+  return {
+    id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
+    type: 'attack',
+    outcome,
+    attackerId: attacker.id,
+    defenderId: defender.id,
+    card: { id: card.id, name: card.name, imageUrl: card.imageUrl || '', attribute: card.attribute, target: card.target },
+    timestamp: Date.now(),
+  };
 }
 
 function checkDeath(room) {
@@ -661,6 +684,7 @@ function startGame(roomName) {
   room.state = 'playing';
   room.winnerId = null;
   room.lastDamage = null;
+  room.lastAction = null;
   room.field = null;
   
   const playerIds = Object.keys(room.players);
@@ -688,6 +712,7 @@ function startGame(roomName) {
   // Decide starting player randomly
   const startingPlayer = playerIds[Math.floor(Math.random() * playerIds.length)];
   room.turn = startingPlayer;
+  room.mainTurnOwner = startingPlayer;
   room.phase = 'main'; // main or defense
   room.log = [`Game started! ${room.players[startingPlayer].name} goes first.`];
   
@@ -711,6 +736,7 @@ function emitGameState(roomName) {
       log: room.log,
       field: room.field,
       lastDamage: room.lastDamage,
+      lastAction: room.lastAction,
       me: room.players[id],
       opponent: room.players[playerIds.find(p => p !== id)],
       gameStateStr: room.state,
