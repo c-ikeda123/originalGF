@@ -508,7 +508,7 @@ h1, h2, h3, h4, h5, h6 {
 .damage-overlay {
   position: absolute;
   top: 50%;
-  left: 50%;
+  left: 42%;
   transform: translate(-50%, -50%);
   background: #333;
   color: #ff3333;
@@ -521,6 +521,98 @@ h1, h2, h3, h4, h5, h6 {
   animation: damagePop 1.5s ease-out forwards;
   pointer-events: none;
   border: 3px solid #555;
+  text-align: center;
+}
+
+.damage-overlay.target-opponent {
+  top: 22%;
+}
+
+.damage-overlay.target-me {
+  top: 72%;
+}
+
+.damage-overlay small {
+  display: block;
+  color: white;
+  font-size: 0.9rem;
+  text-shadow: none;
+}
+
+.damage-overlay span {
+  font-size: 2rem;
+}
+
+.combat-action-overlay {
+  position: absolute;
+  z-index: 110;
+  left: 40%;
+  top: 46%;
+  min-width: 260px;
+  padding: 10px 16px 10px 10px;
+  border: 3px solid #0f766e;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+  animation: combatAction 1.4s ease-out forwards;
+}
+
+.combat-action-overlay.target-opponent {
+  top: 20%;
+}
+
+.combat-action-overlay.target-me {
+  top: 68%;
+}
+
+.combat-action-overlay.outcome-evade {
+  border-color: #0284c7;
+}
+
+.combat-action-overlay.outcome-unavoidable {
+  border-color: #7c3aed;
+}
+
+.combat-action-card {
+  width: 58px;
+  height: 58px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #e2e8f0;
+  display: grid;
+  place-items: center;
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.combat-action-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.combat-action-overlay strong,
+.combat-action-overlay span {
+  display: block;
+}
+
+.combat-action-overlay span {
+  margin-top: 4px;
+  color: #dc2626;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+@keyframes combatAction {
+  0% { transform: translate(-50%, -50%) scale(0.65); opacity: 0; }
+  12% { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+  22%, 78% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -58%) scale(0.96); opacity: 0; }
 }
 
 @keyframes damagePop {

@@ -20,15 +20,52 @@ export default function GameRoom() {
   const [socketId, setSocketId] = useState('');
   const [error, setError] = useState('');
   const [damageAnim, setDamageAnim] = useState(null);
+  const [actionAnim, setActionAnim] = useState(null);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
   const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
   const lastDamageTimestamp = useRef(null);
+  const lastActionId = useRef(null);
   const damageTimer = useRef(null);
+  const actionTimer = useRef(null);
+  const audioContext = useRef(null);
+
+  const enableAudio = () => {
+    if (!audioContext.current) {
+      const AudioContext = window.AudioContext || window.webkitAudioContext;
+      if (AudioContext) audioContext.current = new AudioContext();
+    }
+    audioContext.current?.resume();
+    return audioContext.current;
+  };
+
+  const playEffectSound = (effect) => {
+    const context = enableAudio();
+    if (!context || context.state !== 'running') return;
+    const notes = effect === 'damage' ? [110, 70]
+      : effect === 'evade' ? [520, 760]
+        : effect === 'unavoidable' ? [180, 180, 120]
+          : effect === 'hit' ? [240, 360] : [320];
+    const start = context.currentTime;
+    notes.forEach((frequency, index) => {
+      const oscillator = context.createOscillator();
+      const gain = context.createGain();
+      oscillator.type = effect === 'damage' ? 'sawtooth' : 'sine';
+      oscillator.frequency.setValueAtTime(frequency, start + index * 0.07);
+      gain.gain.setValueAtTime(0.0001, start + index * 0.07);
+      gain.gain.exponentialRampToValueAtTime(0.09, start + index * 0.07 + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + index * 0.07 + 0.14);
+      oscillator.connect(gain).connect(context.destination);
+      oscillator.start(start + index * 0.07);
+      oscillator.stop(start + index * 0.07 + 0.15);
+    });
+  };
 
   useEffect(() => {
     socket = io(serverUrl);
     socket.on('connect', () => setSocketId(socket.id));
+    const unlockAudio = () => enableAudio();
+    window.addEventListener('pointerdown', unlockAudio, { once: true });
 
     const savedCards = JSON.parse(localStorage.getItem('gf_custom_cards') || '[]');
     const baseCardsEdits = JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}');
@@ -53,6 +90,15 @@ export default function GameRoom() {
         setDamageAnim(damage);
         clearTimeout(damageTimer.current);
         damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
+        playEffectSound('damage');
+      }
+      const action = data.lastAction;
+      if (action && action.id !== lastActionId.current) {
+        lastActionId.current = action.id;
+        setActionAnim(action);
+        clearTimeout(actionTimer.current);
+        actionTimer.current = setTimeout(() => setActionAnim(null), 1400);
+        playEffectSound(action.outcome);
       }
     });
 
@@ -62,7 +108,9 @@ export default function GameRoom() {
       setGameState(null);
       setSelectedCards([]);
       setDamageAnim(null);
+      setActionAnim(null);
       lastDamageTimestamp.current = null;
+      lastActionId.current = null;
     });
 
     socket.on('errorMsg', (msg) => {
@@ -72,6 +120,8 @@ export default function GameRoom() {
 
     return () => {
       clearTimeout(damageTimer.current);
+      clearTimeout(actionTimer.current);
+      window.removeEventListener('pointerdown', unlockAudio);
       socket.disconnect();
     };
   }, [id, playerName, navigate]);
@@ -204,6 +254,7 @@ export default function GameRoom() {
   };
 
   const renderAilments = (player) => {
+    const names = { cold: '風邪', fever: '熱病', hell: '地獄病', heaven: '天国病', fog: '霧', flash: '閃光', dream: '夢', darkcloud: '暗雲' };
     return player.ailments.map(a => {
       let icon = '';
       if(a === 'cold') icon = '🤧';
@@ -212,11 +263,17 @@ export default function GameRoom() {
       if(a === 'heaven') icon = '👼';
       if(a === 'fog') icon = '🌫️';
       if(a === 'flash') icon = '✨';
-      if(a === 'hallucination') icon = '🌀';
+      if(a === 'dream') icon = '🌀';
       if(a === 'darkcloud') icon = '☁️';
-      return <span key={a} className="ailment-icon" title={a}>{icon}</span>;
+      return <span key={a} className="ailment-icon" title={names[a] || a}>{icon}</span>;
     });
   };
+
+  const actionTargetName = actionAnim?.defenderId === me.id ? me.name : opponent?.name;
+  const damageTargetName = damageAnim?.targetId === me.id ? me.name : opponent?.name;
+  const actionLabel = actionAnim?.outcome === 'evade' ? '回避'
+    : actionAnim?.outcome === 'unavoidable' ? '不可避'
+      : actionAnim?.outcome === 'hit' ? '命中' : '使用';
 
   return (
     <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', height: '100vh', padding: '10px' }}>
@@ -237,8 +294,23 @@ export default function GameRoom() {
          
          {/* Damage Overlay */}
          {damageAnim && (
-           <div className="damage-overlay">
-             {damageAnim.amount} <span style={{fontSize: '2rem'}}>ダメージ</span>
+           <div className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'}`}>
+             <small>{damageTargetName}</small>
+             <div>{damageAnim.amount} <span>ダメージ</span></div>
+           </div>
+         )}
+
+         {actionAnim && (
+           <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`}>
+             <div className="combat-action-card">
+               {actionAnim.card.imageUrl
+                 ? <img src={actionAnim.card.imageUrl} alt="" />
+                 : <span>{actionAnim.card.name.charAt(0)}</span>}
+             </div>
+             <div>
+               <strong>{actionAnim.card.name}</strong>
+               <span>{actionTargetName}：{actionLabel}</span>
+             </div>
            </div>
          )}
 

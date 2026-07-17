@@ -327,6 +327,7 @@ io.on('connection', (socket) => {
     } : card;
 
     room.log.push(`${player.name} played ${combinedCard.name}!`);
+    room.lastAction = createActionEvent(player, opponent, combinedCard, 'use');
 
     if (room.phase === 'main') {
        // Ailment: Hallucination causes random wrong card to be played sometimes? 
