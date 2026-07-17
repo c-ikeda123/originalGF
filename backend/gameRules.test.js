@@ -14,6 +14,7 @@ const {
   FIELD_CLEAR_DELAY_MS,
   cureAilments,
   getAssistantAction,
+  getCounterAilment,
   getDamageAfterDefense,
   getEarthArtifactMode,
   getDamageResolutionDelay,
@@ -116,6 +117,14 @@ test('火星と土星の指輪は通常の防御可能な反撃を生成する',
   assert.deepEqual({ attack: earth.attack, hitRate: earth.hitRate, target: earth.target }, {
     attack: 16, hitRate: 100, target: 'single',
   });
+});
+
+test('状態異常を返す指輪の効果を攻撃者の災いへ変換する', () => {
+  assert.equal(getCounterAilment('counter_fog'), 'fog');
+  assert.equal(getCounterAilment('counter_dream'), 'dream');
+  assert.equal(getCounterAilment('counter_flash'), 'flash');
+  assert.equal(getCounterAilment('counter_darkcloud'), 'darkcloud');
+  assert.equal(getCounterAilment('recover_double_mp'), null);
 });
 
 test('昇天弓は元の神器情報を保った防御可能な全体攻撃を生成する', () => {

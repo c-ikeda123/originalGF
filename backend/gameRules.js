@@ -236,6 +236,15 @@ function createCounterAttackCard(reactiveEffect, damage, defenseCard = {}) {
   return null;
 }
 
+function getCounterAilment(reactiveEffect) {
+  return {
+    counter_fog: 'fog',
+    counter_dream: 'dream',
+    counter_flash: 'flash',
+    counter_darkcloud: 'darkcloud',
+  }[reactiveEffect] || null;
+}
+
 function createDyingAttackCard(card) {
   if (!card?.dyingAttack) return null;
   return {
@@ -416,6 +425,7 @@ module.exports = {
   getEarthArtifactMode,
   getDamageResolutionDelay,
   getDamageAfterDefense,
+  getCounterAilment,
   getNextEventTimestamp,
   getNextAlivePlayerId,
   getReplacementDrawCount,

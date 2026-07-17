@@ -16,6 +16,7 @@ const {
   createMoonAssistantAttack,
   FIELD_CLEAR_DELAY_MS,
   getAssistantAction,
+  getCounterAilment,
   getDamageAfterDefense,
   getDamageResolutionDelay,
   getEarthArtifactMode,
@@ -931,6 +932,13 @@ function applyDamageAndClearField(room, player, amount, roomName) {
        }
        for (const reactiveEffect of new Set([defenseCard.reactiveEffect, ...(defenseCard.reactiveEffects || [])].filter(Boolean))) {
          if (!attacker) continue;
+         const counterAilment = getCounterAilment(reactiveEffect);
+         if (counterAilment) {
+           const applied = applyAilment(attacker, counterAilment);
+           addSoundEvent(room, counterAilment === 'dream' ? 'illusion_item' : 'harm_add');
+           addAilmentEffect(room, attacker, applied);
+           room.log.push(`${attacker.name} は ${defenseCard.name} により ${applied} になった。`);
+         }
          if (reactiveEffect === 'counter_damage_all') {
            const counterCard = createCounterAttackCard(reactiveEffect, resolvedDamage, defenseCard);
            queueFollowUpAttack(room, player.id, pendingDamage.nextTurnId, counterCard);
