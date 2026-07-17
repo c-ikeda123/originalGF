@@ -1851,41 +1851,44 @@ h1, h2, h3, h4, h5, h6 {
 
 .gf-combat-totals {
   right: auto;
-  bottom: 304px;
+  bottom: 344px;
   left: 0;
-  width: 667px;
+  width: 608px;
   height: 38px;
   box-sizing: border-box;
   align-items: flex-start;
-  gap: 8px;
-  padding: 0;
+  justify-content: space-between;
+  padding: 0 20px;
   border: 0;
-  background: url('/godfield-flash/ui/game/time_gauge/cover.png') left bottom / 667px 20px no-repeat;
+  background: none;
 }
 
 .gf-combat-totals span {
-  width: 130px;
+  width: 260px;
   height: 30px;
   box-sizing: border-box;
-  padding: 0 7px;
+  padding: 0 10px;
   overflow: hidden;
-  background: url('/godfield-flash/ui/game/command/value.png') 0 0 / 130px 30px no-repeat;
-  font: bold 14px/30px Georgia, 'Yu Mincho', serif;
+  background: url('/godfield-flash/ui/game/command/value.png') 0 0 / 260px 30px no-repeat;
+  font: bold 25px/30px Georgia, 'Yu Mincho', serif;
+  text-align: center;
   white-space: nowrap;
 }
 
 .gf-field-cards {
-  gap: 4px 8px;
+  position: relative;
+  width: 608px;
+  display: grid;
+  grid-template-columns: repeat(2, 300px);
+  align-items: start;
+  gap: 8px;
 }
 
 .gf-field-group {
   width: 300px;
-  gap: 1px;
-}
-
-.gf-field-group.defender {
   flex-direction: column;
   flex-wrap: nowrap;
+  gap: 10px;
 }
 
 .gf-field-group.defender .pending-defense-card {
@@ -1900,6 +1903,16 @@ h1, h2, h3, h4, h5, h6 {
   border: 0;
   background: url('/godfield-flash/ui/game/commander/single.png') 0 0 / 240px 30px no-repeat;
   font: bold 13px/30px Arial, sans-serif;
+}
+
+.gf-field-target-arrow {
+  position: absolute;
+  top: -5px;
+  left: 248px;
+  z-index: 2;
+  width: 60px;
+  height: 40px;
+  pointer-events: none;
 }
 
 .gf-game-screen .gf-card-field {

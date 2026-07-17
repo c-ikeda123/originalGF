@@ -614,11 +614,17 @@ export default function GameRoom() {
           <div className="gf-field-cards">
             {field && (
               <section className="gf-field-group attacker">
-                <div className="gf-field-owner">{playerNameById(field.attackerId) || '---'} ▶</div>
+                <div className="gf-field-owner">{playerNameById(field.attackerId) || '---'}</div>
                 {renderFieldCard(field.attackCard)}
+                {phase !== 'defense' && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
+                  <div key={card.instanceId} className="pending-defense-card">{renderFieldCard(card)}</div>
+                ))}
               </section>
             )}
-            {field && (field.defenseCards?.length > 0 || (phase === 'defense' && selectedCards.length > 0)) && (
+            {field?.defenderId && (
+              <img className="gf-field-target-arrow" src="/godfield-flash/ui/game/commander/target_arrow_right.png" alt="攻撃対象" />
+            )}
+            {field?.defenderId && (
               <section className="gf-field-group defender">
                 <div className="gf-field-owner">{playerNameById(field.defenderId) || '---'}</div>
                 {(field.defenseCards || []).map((card, index) => <div key={index}>{renderFieldCard(card)}</div>)}
@@ -627,9 +633,6 @@ export default function GameRoom() {
                 ))}
               </section>
             )}
-            {field && phase !== 'defense' && selectedCards.length > 0 && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
-              <div key={card.instanceId} className="pending-defense-card">{renderFieldCard(card)}</div>
-            ))}
             {!field && selectedCards.length > 0 && (
               <div className="selected-field-preview">
                 <div className="selected-field-title">選択中 ({selectedCards.length})</div>
@@ -641,8 +644,8 @@ export default function GameRoom() {
           </div>
           {field && (
             <div className="gf-combat-totals">
-              <span>攻撃 {field.attackCard.attack || 0}</span>
-              <span>防御 {field.defenseCards?.reduce((sum, card) => sum + (card.defense || 0), 0) || 0}</span>
+              <span>攻{field.attackCard.attack || 0}</span>
+              <span>守{field.defenseCards?.reduce((sum, card) => sum + (card.defense || 0), 0) || 0}</span>
             </div>
           )}
         </main>
