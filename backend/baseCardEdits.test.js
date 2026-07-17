@@ -1,6 +1,8 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const { normalizeBaseCardEdit, normalizeBaseCardEdits } = require('./baseCardEdits');
+const editableFields = require('../shared/baseCardEditableFields.json');
+const baseCards = require('../shared/baseCards.json');
 
 const baseCard = {
   id: 'card-1', name: '既定名', description: '既定説明', imageUrl: '/default.png',
@@ -64,4 +66,12 @@ test('効果がないカードへの空の追加は編集差分に含めない',
   assert.deepEqual(normalizeBaseCardEdit(baseCard, {
     moneyGain: 0, mystery: false, dyingAttack: null,
   }), {});
+});
+
+test('全基礎カードの効果項目が編集対象に含まれている', () => {
+  const structuralFields = new Set(['id', 'category', 'type', 'copies']);
+  const editable = new Set(Object.values(editableFields).flat());
+  const missing = [...new Set(baseCards.flatMap(card => Object.keys(card)))]
+    .filter(key => !structuralFields.has(key) && !editable.has(key));
+  assert.deepEqual(missing, []);
 });
