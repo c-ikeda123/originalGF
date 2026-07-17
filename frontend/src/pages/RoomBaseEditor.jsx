@@ -110,11 +110,14 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
             const lock = locks[card.id];
             return (
               <button key={card.id} className={`room-card-row ${selectedId === card.id ? 'active' : ''} ${edits[card.id] ? 'edited' : ''}`} onClick={() => selectCard(card)} disabled={lock && lock.ownerId !== myId}>
-                <span className="card-list-name">
-                  {edits[card.id]?.name || card.name}
-                  {edits[card.id] && <span className="edited-card-badge">編集済み</span>}
+                <img className="room-card-thumbnail" src={edits[card.id]?.imageUrl || card.imageUrl} alt="" />
+                <span className="room-card-summary">
+                  <span className="card-list-name">
+                    {edits[card.id]?.name || card.name}
+                    {edits[card.id] && <span className="edited-card-badge">編集済み</span>}
+                  </span>
+                  <small>{lock ? `${lock.ownerName} が編集中` : labels[card.category]}</small>
                 </span>
-                <small>{lock ? `${lock.ownerName} が編集中` : labels[card.category]}</small>
               </button>
             );
           })}

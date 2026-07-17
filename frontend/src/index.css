@@ -266,7 +266,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .room-card-row {
-  padding: 8px;
+  min-height: 58px;
+  padding: 4px 8px 4px 4px;
   border: 1px solid #cbd5e1;
   border-radius: 7px;
   background: white;
@@ -808,10 +809,28 @@ h1, h2, h3, h4, h5, h6 {
   left: 8px;
   right: 8px;
   display: flex;
-  justify-content: space-between;
+  align-items: center;
   color: #294f45;
   border-top: 1px solid rgba(29, 142, 97, 0.45);
   font: bold 12px Georgia, serif;
+}
+
+.room-card-thumbnail {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border: 1px solid rgba(15, 118, 110, 0.28);
+  background: #edfdf8;
+  object-fit: cover;
+}
+
+.room-card-summary {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .gf-battle-sidebar {
