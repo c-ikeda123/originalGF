@@ -42,6 +42,13 @@ test('Flash版の効果音46種がすべて存在する', () => {
   }
 });
 
+test('Flash版の昇天画像が原寸で存在する', () => {
+  const file = path.join(publicDir, 'godfield-flash', 'ui', 'game-ja', 'effect', 'dead.png');
+  const png = fs.readFileSync(file);
+  assert.equal(png.readUInt32BE(16), 330);
+  assert.equal(png.readUInt32BE(20), 160);
+});
+
 test('ホバー音を除くFlash版効果音がゲームイベントまたは画面操作に割り当てられている', () => {
   const implementation = [
     fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8'),
