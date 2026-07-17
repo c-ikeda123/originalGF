@@ -14,8 +14,10 @@ const {
   cureAilments,
   getAssistantAction,
   getEarthArtifactMode,
+  getDamageResolutionDelay,
   getNextAlivePlayerId,
   getWinningSide,
+  isActionLocked,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDamageSequence,
@@ -25,6 +27,13 @@ const {
   shouldAssistantLeave,
   validateCardPlay,
 } = require('./gameRules');
+
+test('ダメージ演出中は次の行動を待機する', () => {
+  assert.equal(getDamageResolutionDelay(0), 1500);
+  assert.equal(getDamageResolutionDelay(10), 2150);
+  assert.equal(isActionLocked({ actionLockedUntil: 2500 }, 2499), true);
+  assert.equal(isActionLocked({ actionLockedUntil: 2500 }, 2500), false);
+});
 
 test('古い盤面の消去予約は新しい敵攻撃を消さない', () => {
   const oldField = { attackCard: { name: '前の行動' } };

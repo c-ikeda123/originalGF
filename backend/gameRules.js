@@ -357,6 +357,14 @@ function resolveDamageSequence(currentHp, damage, isDarkAttack = false) {
   };
 }
 
+function getDamageResolutionDelay(darkDamage = 0) {
+  return darkDamage > 0 ? 2150 : 1500;
+}
+
+function isActionLocked(room, now = Date.now()) {
+  return (room?.actionLockedUntil || 0) > now;
+}
+
 function clearFieldIfCurrent(room, scheduledField) {
   if (!room || !scheduledField || room.field !== scheduledField) return false;
   room.field = null;
@@ -377,8 +385,10 @@ module.exports = {
   cureAilments,
   getAssistantAction,
   getEarthArtifactMode,
+  getDamageResolutionDelay,
   getNextAlivePlayerId,
   getWinningSide,
+  isActionLocked,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDamageSequence,

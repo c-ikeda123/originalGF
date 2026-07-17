@@ -15,9 +15,11 @@ const {
   createInitialHand,
   createMoonAssistantAttack,
   getAssistantAction,
+  getDamageResolutionDelay,
   getEarthArtifactMode,
   getNextAlivePlayerId,
   getWinningSide,
+  isActionLocked,
   isDefenseCard,
   processEndOfTurnAilments,
   resolveDamageSequence,
@@ -360,6 +362,7 @@ io.on('connection', (socket) => {
     room.field = null;
     room.lastDamage = null;
     room.lastAction = null;
+    room.actionLockedUntil = 0;
     room.soundEvents = [];
     room.soundSeq = 0;
     room.effectEvents = [];
@@ -449,6 +452,7 @@ io.on('connection', (socket) => {
     
     const player = room.players[socket.id];
     if (room.turn !== socket.id) return; // Not their turn
+    if (isActionLocked(room)) return socket.emit('errorMsg', 'ダメージ処理が終わるまでお待ちください。');
     
     const requestedIndices = Array.isArray(cardIndices)
       ? [...new Set(cardIndices)].filter(Number.isInteger).sort((a, b) => a - b)
@@ -726,6 +730,7 @@ io.on('connection', (socket) => {
 
   socket.on('completeExchange', ({ roomName, hp, mp, money }) => {
     const room = rooms[roomName];
+    if (isActionLocked(room)) return;
     const player = room?.players[socket.id];
     const values = [hp, mp, money].map(Number);
     const total = player ? player.hp + player.mp + player.money : -1;
@@ -747,6 +752,7 @@ io.on('connection', (socket) => {
 
   socket.on('resolveBuy', ({ roomName, accept }) => {
     const room = rooms[roomName];
+    if (isActionLocked(room)) return;
     const offer = room?.pendingBuy;
     if (!room || room.phase !== 'buy_offer' || !offer || offer.buyerId !== socket.id) return;
     const buyer = room.players[offer.buyerId];
@@ -777,6 +783,7 @@ io.on('connection', (socket) => {
   socket.on('finishDefense', ({ roomName }) => {
      const room = rooms[roomName];
      if (!room || room.state !== 'playing') return;
+     if (isActionLocked(room)) return;
      const player = room.players[socket.id];
      if (room.turn !== socket.id || room.phase !== 'defense') return;
 
@@ -791,6 +798,7 @@ io.on('connection', (socket) => {
 
   socket.on('discardCards', ({ roomName, cardIndices }) => {
     const room = rooms[roomName];
+    if (isActionLocked(room)) return;
     const player = room?.players[socket.id];
     if (!player || room.state !== 'playing' || room.turn !== socket.id || room.phase !== 'main') return;
     const indices = [...new Set(Array.isArray(cardIndices) ? cardIndices : [])]
@@ -820,6 +828,7 @@ io.on('connection', (socket) => {
   socket.on('pray', ({ roomName }) => {
     const room = rooms[roomName];
     if (!room || room.state !== 'playing') return;
+    if (isActionLocked(room)) return;
     if (room.turn !== socket.id || room.phase !== 'main') return;
     
     const player = room.players[socket.id];
@@ -939,6 +948,7 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      isDark: isDarkAttack,
      timestamp: Date.now(),
    };
+   room.actionLockedUntil = Date.now() + getDamageResolutionDelay(damageSequence.darkDamage);
 
    checkDeath(room);
    if (room.state === 'ended') {
@@ -1391,6 +1401,7 @@ function startGame(roomName) {
   room.winnerTeam = null;
   room.lastDamage = null;
   room.lastAction = null;
+  room.actionLockedUntil = 0;
   room.soundEvents = [];
   room.soundSeq = 0;
   room.ascensionEvents = [];
@@ -1480,13 +1491,15 @@ function scheduleBotTurn(roomName) {
   clearTimeout(room.botTimer);
   const bot = room.players[room.turn];
   if (room.state !== 'playing' || !bot?.isBot || !['main', 'defense'].includes(room.phase)) return;
-  room.botTimer = setTimeout(() => performBotTurn(roomName), 350);
+  const lockDelay = Math.max(0, (room.actionLockedUntil || 0) - Date.now());
+  room.botTimer = setTimeout(() => performBotTurn(roomName), Math.max(350, lockDelay + 20));
 }
 
 function performBotTurn(roomName) {
   const room = rooms[roomName];
   const bot = room?.players[room.turn];
   if (!room || room.state !== 'playing' || !bot?.isBot) return;
+  if (isActionLocked(room)) return scheduleBotTurn(roomName);
   if (room.phase === 'defense') {
     const choiceIndex = bot.hand.findIndex(card => {
       const validation = validateCardPlay([card], 'defense', bot.ailments, bot.pendingDamage, bot.pendingDamage?.defensesUsed || 0);
@@ -1567,6 +1580,7 @@ function emitGameState(roomName) {
       field: room.field,
       lastDamage: room.lastDamage,
       lastAction: room.lastAction,
+      actionLockedUntil: room.actionLockedUntil || 0,
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId || event.targetId === id),
       ascensionEvents: room.ascensionEvents || [],
       effectEvents: room.effectEvents || [],
@@ -1617,6 +1631,7 @@ function emitGameState(roomName) {
       field: room.field,
       lastDamage: room.lastDamage,
       lastAction: room.lastAction,
+      actionLockedUntil: room.actionLockedUntil || 0,
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId),
       ascensionEvents: room.ascensionEvents || [],
       effectEvents: room.effectEvents || [],
