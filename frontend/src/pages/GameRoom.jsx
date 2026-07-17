@@ -44,6 +44,7 @@ export default function GameRoom() {
   const [now, setNow] = useState(Date.now());
   const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
   const [battleScale, setBattleScale] = useState(() => Math.min(window.innerWidth / 1024, window.innerHeight / 768));
+  const handInstanceKey = gameState?.me?.hand.map(card => card.instanceId).join('|') || '';
   const lastDamageTimestamp = useRef(null);
   const lastActionId = useRef(null);
   const lastSoundEventId = useRef(0);
@@ -244,7 +245,8 @@ export default function GameRoom() {
 
   useEffect(() => {
     setSelectedCards([]);
-  }, [gameState?.turn, gameState?.phase, gameState?.actionLockedUntil]);
+    setHoveredCardIndex(null);
+  }, [gameState?.turn, gameState?.phase, gameState?.actionLockedUntil, handInstanceKey]);
 
   const myTeam = gameState?.me?.team
     || roomState?.players?.find(player => player.id === socketId)?.team;
