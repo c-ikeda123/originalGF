@@ -588,6 +588,11 @@ io.on('connection', (socket) => {
     if (isSell) {
       const sellIndex = cards.findIndex(c => c.effect === 'sell');
       const soldCard = cards[sellIndex === 0 ? 1 : 0];
+      const sellCard = cards[sellIndex];
+      room.lastAction = createActionEvent(player, opponent, sellCard, 'use', {
+        type: 'trade',
+        label: `${soldCard.name}を売る`,
+      });
       forceSale(room, player, opponent, soldCard);
       endTurnInternal(room, nextTurnId);
       checkDeath(room);
@@ -596,6 +601,7 @@ io.on('connection', (socket) => {
     }
 
     if (isSingleTrade) {
+      room.lastAction = createActionEvent(player, opponent, card, 'use', { type: 'trade' });
       if (card.effect === 'exchange') {
         room.phase = 'exchange';
         addSoundEvent(room, 'exchange');
@@ -631,7 +637,7 @@ io.on('connection', (socket) => {
     if (combinedCard.target !== 'all' && !combinedCard.forcedTargetId) combinedCard.forcedTargetId = opponent.id;
 
     room.log.push(`${player.name} played ${combinedCard.name}!`);
-    room.lastAction = createActionEvent(player, opponent, combinedCard, 'use');
+    room.lastAction = createActionEvent(player, opponent, combinedCard, 'use', { type: 'card' });
 
     if (room.phase === 'main') {
        // Ailment: Hallucination causes random wrong card to be played sometimes? 
@@ -686,6 +692,8 @@ io.on('connection', (socket) => {
          if (combinedCard.attack > 0) {
            queueAttackSequence(room, player, nextTurnId, combinedCard, cards, roomName);
          } else {
+            addSoundEvent(room, 'card');
+            addSoundEvent(room, 'card', { delayMs: 140 });
             if (card.ailmentInflict && card.ailmentTrigger === 'use') {
               const applied = applyAilment(opponent, card.ailmentInflict);
               addSoundEvent(room, card.ailmentInflict === 'dream' ? 'illusion_item' : 'harm_add');
@@ -864,7 +872,13 @@ io.on('connection', (socket) => {
     });
     queueReplacementDraws(player, discarded.length);
     if (discarded.length) addSoundEvent(room, 'item_remove');
-    if (discarded.length) room.log.push(`${player.name} は ${discarded.map(discardedCard => discardedCard.name).join('、')} を捨てた。`);
+    if (discarded.length) {
+      room.lastAction = createActionEvent(player, null, discarded[0], 'use', {
+        type: 'discard',
+        label: `${discarded[0].name}を捨てる`,
+      });
+      room.log.push(`${player.name} は ${discarded.map(discardedCard => discardedCard.name).join('、')} を捨てた。`);
+    }
     const next = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
     checkDeath(room);
     if (room.state === 'ended') return emitGameState(roomName);
@@ -892,6 +906,11 @@ io.on('connection', (socket) => {
     } else {
        room.log.push(`${player.name} は祈った... (しかし何も起きなかった)`);
     }
+    room.lastAction = createActionEvent(player, null, null, 'use', {
+      type: 'pray',
+      label: '祈る',
+    });
+    addSoundEvent(room, 'game_draw');
 
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
     endTurnInternal(room, nextTurnId);
@@ -1395,14 +1414,22 @@ function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false } 
     addSoundEvent(room, 'client_turn', { targetId: nextTurnId, delayMs: getTurnSoundDelay(room.field) });
  }
 
-function createActionEvent(attacker, defender, card, outcome) {
+function createActionEvent(attacker, defender, card, outcome, { type = 'attack', label = '' } = {}) {
   return {
     id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
-    type: 'attack',
+    type,
     outcome,
     attackerId: attacker.id,
-    defenderId: defender.id,
-    card: { id: card.id, name: card.name, imageUrl: card.imageUrl || '', attribute: card.attribute, target: card.target },
+    attackerName: attacker.name,
+    defenderId: defender?.id || null,
+    label,
+    card: card ? {
+      id: card.id,
+      name: card.name,
+      imageUrl: card.imageUrl || '',
+      attribute: card.attribute,
+      target: card.target,
+    } : null,
     timestamp: Date.now(),
   };
 }
