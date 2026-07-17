@@ -137,7 +137,7 @@ export default function GameRoom() {
         lastActionId.current = action.id;
         setActionAnim(action);
         clearTimeout(actionTimer.current);
-        actionTimer.current = setTimeout(() => setActionAnim(null), 1400);
+        actionTimer.current = setTimeout(() => setActionAnim(null), action.outcome === 'use' ? 2000 : 1400);
       }
       const newSoundEvents = (data.soundEvents || []).filter(event => event.id > lastSoundEventId.current);
       if (newSoundEvents.length) {
@@ -645,6 +645,24 @@ export default function GameRoom() {
         )}
 
         {startAnim && <img className="gf-game-start-effect" src="/godfield-flash/ui/game-ja/effect/game_start.png" alt="ゲーム開始" />}
+
+        {actionAnim && !damageAnim && actionAnim.outcome === 'use' && (
+          <div
+            className={`activity-action-overlay ${actionAnim.attackerId === me.id ? 'actor-me' : 'actor-opponent'}`}
+            role="status"
+            aria-label={`${actionAnim.attackerName || playerNameById(actionAnim.attackerId)}が${actionAnim.label || `${actionAnim.card?.name}を使用`}`}
+          >
+            <div className={`activity-action-card ${actionAnim.type === 'pray' ? 'pray' : ''}`}>
+              {actionAnim.card?.imageUrl
+                ? <img src={actionAnim.card.imageUrl} alt="" />
+                : <span>{actionAnim.type === 'pray' ? '祈' : '効'}</span>}
+            </div>
+            <div>
+              <strong>{actionAnim.attackerName || playerNameById(actionAnim.attackerId)}</strong>
+              <span>{actionAnim.label || `${actionAnim.card?.name || '神器'}を使用`}</span>
+            </div>
+          </div>
+        )}
 
         {actionAnim && !damageAnim && actionAnim.outcome !== 'use' && (
           <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`}>
