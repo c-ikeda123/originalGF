@@ -62,6 +62,14 @@ function getAssistantAction(type, random = Math.random) {
   return { ...actions.at(-1) };
 }
 
+function shouldAssistantAct(assistant, random = Math.random) {
+  return Boolean(assistant) && random() * 100 < (assistant.actionRate ?? 25);
+}
+
+function shouldAssistantLeave(assistant, random = Math.random) {
+  return Boolean(assistant) && assistant.hp > 0 && random() * 100 < (assistant.leaveOnDamageRate ?? 10);
+}
+
 function isDefenseCard(card) {
   return Boolean(card && (
     (card.defense || 0) > 0
@@ -264,5 +272,7 @@ module.exports = {
   processEndOfTurnAilments,
   resolveDefenseCard,
   rollAttack,
+  shouldAssistantAct,
+  shouldAssistantLeave,
   validateCardPlay,
 };

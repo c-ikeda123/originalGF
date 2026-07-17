@@ -11,6 +11,8 @@ const {
   processEndOfTurnAilments,
   resolveDefenseCard,
   rollAttack,
+  shouldAssistantAct,
+  shouldAssistantLeave,
   validateCardPlay,
 } = require('./gameRules');
 
@@ -138,4 +140,13 @@ test('閃光中は既に防御済みなら追加の防具を使えない', () =>
   const pendingDamage = { amount: 10, attribute: 'none', sourceType: 'weapon' };
   const armor = { type: 'armor', defense: 5, attribute: 'none' };
   assert.equal(validateCardPlay([armor], 'defense', ['flash'], pendingDamage, 1).valid, false);
+});
+
+test('守護神の行動率と被弾離脱率を判定する', () => {
+  const assistant = { hp: 10, actionRate: 25, leaveOnDamageRate: 10 };
+  assert.equal(shouldAssistantAct(assistant, () => 0.249), true);
+  assert.equal(shouldAssistantAct(assistant, () => 0.25), false);
+  assert.equal(shouldAssistantLeave(assistant, () => 0.099), true);
+  assert.equal(shouldAssistantLeave(assistant, () => 0.1), false);
+  assert.equal(shouldAssistantLeave({ ...assistant, hp: 0 }, () => 0), false);
 });

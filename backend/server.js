@@ -13,6 +13,8 @@ const {
   processEndOfTurnAilments,
   resolveDefenseCard,
   rollAttack,
+  shouldAssistantAct,
+  shouldAssistantLeave,
   validateCardPlay,
 } = require('./gameRules');
 
@@ -581,12 +583,16 @@ function applyDamageAndClearField(room, player, amount, roomName) {
    const resolvedDamage = Math.max(0, amount);
    let hpDamage = isDarkAttack ? 999 : resolvedDamage;
    if (hpDamage > 0 && player.assistant?.hp > 0) {
-     const absorbed = Math.min(hpDamage, player.assistant.hp);
-     player.assistant.hp -= absorbed;
+     const assistant = player.assistant;
+     const absorbed = Math.min(hpDamage, assistant.hp);
+     assistant.hp -= absorbed;
      hpDamage -= absorbed;
      room.log.push(`${player.name} の守護神が ${absorbed} ダメージを引き受けた。`);
-     if (player.assistant.hp <= 0) {
+     if (assistant.hp <= 0) {
        room.log.push(`${player.name} の守護神は去った。`);
+       player.assistant = null;
+     } else if (shouldAssistantLeave(assistant)) {
+       room.log.push(`${player.name} の守護神は被弾して立ち去った。`);
        player.assistant = null;
      }
    }
@@ -762,12 +768,12 @@ function removeRandomEntries(entries, count) {
 
 function setRandomAssistant(player, room) {
   const type = ASSISTANT_TYPES[Math.floor(Math.random() * ASSISTANT_TYPES.length)];
-  player.assistant = { type, hp: 20 };
+  player.assistant = { type, hp: 20, actionRate: 25, leaveOnDamageRate: 10 };
   room.log.push(`${player.name} に ${type} の守護神が宿った。`);
 }
 
 function runAssistantAction(room, player, roomName) {
-  if (!player.assistant) return;
+  if (!shouldAssistantAct(player.assistant)) return;
   const action = getAssistantAction(player.assistant.type);
   const enemies = Object.values(room.players).filter(candidate => candidate.id !== player.id && !candidate.ascended && candidate.hp > 0);
   const enemy = enemies[Math.floor(Math.random() * enemies.length)];
