@@ -1663,7 +1663,8 @@
     "description": "攻撃を火属性に染める",
     "weaponKind": "additional",
     "additive": true,
-    "imageUrl": "/godfield-flash/cards/weapon/hakka_no_wand.png"
+    "imageUrl": "/godfield-flash/cards/weapon/hakka_no_wand.png",
+    "supportEffect": "set_attribute"
   },
   {
     "id": "gf_weapon_082",
@@ -1705,7 +1706,8 @@
     "description": "攻撃を水属性に染める",
     "weaponKind": "additional",
     "additive": true,
-    "imageUrl": "/godfield-flash/cards/weapon/masui_no_wand.png"
+    "imageUrl": "/godfield-flash/cards/weapon/masui_no_wand.png",
+    "supportEffect": "set_attribute"
   },
   {
     "id": "gf_weapon_084",

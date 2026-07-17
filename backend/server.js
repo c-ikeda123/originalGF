@@ -194,6 +194,7 @@ io.on('connection', (socket) => {
       player.learnedMiracles = [];
       player.ailments = [];
       player.pendingDamage = null;
+      player.pendingDraws = 0;
       player.ascended = false;
     });
     io.to(roomName).emit('gameStateCleared');
@@ -244,7 +245,13 @@ io.on('connection', (socket) => {
       socket.emit('errorMsg', '「売る」と売却する神器を2枚選択してください。');
       return;
     }
-    const validation = validateCardPlay(cards, room.phase, player.ailments);
+    const validation = validateCardPlay(
+      cards,
+      room.phase,
+      player.ailments,
+      player.pendingDamage,
+      player.pendingDamage?.defensesUsed || 0,
+    );
     if (!validation.valid || cards.length !== requestedIndices.length) {
       socket.emit('errorMsg', validation.message || '選択したカードを使用できません。');
       return;
@@ -273,11 +280,10 @@ io.on('connection', (socket) => {
     const consumedIndices = [...requestedIndices];
     consumedIndices.sort((a, b) => b - a).forEach(index => player.hand.splice(index, 1));
 
-    // Draw a replacement card (up to 18)
+    // Replacements are dealt after the whole action, so freshly drawn cards
+    // cannot be used to defend against the attack that generated them.
     const replacementCount = isSingleTrade && card.effect === 'buy' ? 0 : consumedIndices.length;
-    for (let i = 0; i < replacementCount && room.deck.length > 0 && player.hand.length < 18; i++) {
-       player.hand.push(drawArtifact(room));
-    }
+    queueReplacementDraws(player, replacementCount);
 
     const opponentId = targetId || Object.keys(room.players).find(id => id !== socket.id);
     const opponent = room.players[opponentId];
@@ -397,6 +403,7 @@ io.on('connection', (socket) => {
 
          const hasFlash = player.ailments.includes('flash');
          const resolution = resolveDefenseCard(pDamage, combinedCard);
+         pDamage.defensesUsed = (pDamage.defensesUsed || 0) + cards.length;
          room.field.defenseCards.push(combinedCard);
          if (resolution.action === 'reflect' || resolution.action === 'flick') {
            const candidates = Object.values(room.players).filter(candidate => candidate.id !== player.id && !candidate.ascended && candidate.hp > 0);
@@ -484,7 +491,7 @@ io.on('connection', (socket) => {
       room.log.push(`${buyer.name} declined the purchase.`);
     }
     room.pendingBuy = null;
-    for (let i = 0; i < (offer.drawAfter || 0) && buyer.hand.length < 18; i++) buyer.hand.push(drawArtifact(room));
+    queueReplacementDraws(buyer, offer.drawAfter || 0);
     const next = Object.keys(room.players).find(id => id !== socket.id);
     endTurnInternal(room, next);
     emitGameState(roomName);
@@ -505,16 +512,6 @@ io.on('connection', (socket) => {
      }
   });
 
-  socket.on('endTurn', ({ roomName }) => {
-    const room = rooms[roomName];
-    if (!room || room.state !== 'playing') return;
-    if (room.turn !== socket.id || room.phase !== 'main') return;
-    
-    const opponentId = Object.keys(room.players).find(id => id !== socket.id);
-    endTurnInternal(room, opponentId);
-    emitGameState(roomName);
-  });
-
   socket.on('discardCards', ({ roomName, cardIndices }) => {
     const room = rooms[roomName];
     const player = room?.players[socket.id];
@@ -533,7 +530,7 @@ io.on('connection', (socket) => {
         discarded.push(...player.hand.splice(index, 1));
       }
     });
-    for (let i = 0; i < discarded.length && player.hand.length < 18; i++) player.hand.push(drawArtifact(room));
+    queueReplacementDraws(player, discarded.length);
     if (discarded.length) room.log.push(`${player.name} は ${discarded.map(discardedCard => discardedCard.name).join('、')} を捨てた。`);
     const next = Object.keys(room.players).find(id => id !== socket.id);
     checkDeath(room);
@@ -550,7 +547,7 @@ io.on('connection', (socket) => {
     const player = room.players[socket.id];
     
     // Check if player has any attack weapon
-    const hasWeapon = player.hand.some(c => c.type === 'weapon' && c.attack > 0);
+    const hasWeapon = player.hand.some(c => c.type === 'weapon');
     if (hasWeapon) {
        socket.emit('errorMsg', '攻撃可能な武器がある場合は「祈る」ことはできません');
        return;
@@ -663,6 +660,20 @@ function drawArtifact(room) {
   return withInstanceId(room.deck[Math.floor(Math.random() * room.deck.length)]);
 }
 
+function queueReplacementDraws(player, count) {
+  player.pendingDraws = (player.pendingDraws || 0) + Math.max(0, count);
+}
+
+function flushReplacementDraws(room) {
+  for (const player of Object.values(room.players)) {
+    while ((player.pendingDraws || 0) > 0 && player.hand.length < 18 && room.deck.length > 0 && !player.ascended) {
+      player.hand.push(drawArtifact(room));
+      player.pendingDraws -= 1;
+    }
+    player.pendingDraws = 0;
+  }
+}
+
 function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, options = {}) {
   const targets = card.target === 'all'
     ? Object.values(room.players).filter(player => player.id !== attacker.id && !player.ascended && player.hp > 0)
@@ -702,6 +713,7 @@ function startNextQueuedAttack(room, roomName) {
       lethalOnDamage: context.card.lethalOnDamage,
       nextTurnId: context.nextTurnId,
       ailments: context.ailments,
+      defensesUsed: 0,
     };
     room.phase = 'defense';
     room.turn = target.id;
@@ -864,6 +876,7 @@ function endTurnInternal(room, nextTurnId) {
    if (endingPlayer && endingPlayer.id !== nextTurnId) processAilments(endingPlayer, room);
    checkDeath(room);
    if (room.state === 'ended') return;
+   flushReplacementDraws(room);
    room.turn = nextTurnId;
    room.mainTurnOwner = nextTurnId;
    room.phase = 'main';
@@ -892,7 +905,6 @@ function checkDeath(room) {
          if (reviveIndex >= 0) {
            const [reviver] = player.hand.splice(reviveIndex, 1);
            player.hp = reviver.reviveHp;
-           if (player.hand.length < 18) player.hand.push(drawArtifact(room));
            room.log.push(`${reviver.name} により ${player.name} はHP${player.hp}で復活した。`);
            return;
          }
@@ -943,6 +955,7 @@ function startGame(roomName) {
     player.ailments = [];
     player.assistant = null;
     player.pendingDamage = null;
+    player.pendingDraws = 0;
     
     // Draw initial 9 cards from the shared room deck
     player.hand = [];

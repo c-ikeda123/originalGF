@@ -71,15 +71,21 @@ function isDefenseCard(card) {
   ));
 }
 
-function validateCardPlay(cards, phase, ailments = []) {
+function validateCardPlay(cards, phase, ailments = [], pendingDamage = null, defensesUsed = 0) {
   if (!cards.length) return { valid: false, message: 'カードを選択してください。' };
 
   if (phase === 'defense') {
-    if (ailments.includes('flash') && cards.length > 1) {
+    if (ailments.includes('flash') && defensesUsed + cards.length > 1) {
       return { valid: false, message: '閃光状態では防御神器を1つしか使えません。' };
     }
     if (!cards.every(isDefenseCard)) {
       return { valid: false, message: '防御中に使用できる神器を選んでください。' };
+    }
+    if (pendingDamage) {
+      const resolution = resolveDefenseCard(pendingDamage, combineAttackCards(cards));
+      if (resolution.action === 'invalid_attribute') {
+        return { valid: false, message: 'この属性では攻撃を防げません。' };
+      }
     }
     return { valid: true };
   }
@@ -91,7 +97,14 @@ function validateCardPlay(cards, phase, ailments = []) {
   if (cards.some(card => ['armor', 'ring', 'defense_item'].includes(card.type))) {
     return { valid: false, message: '防具は攻撃を受けた防御時にだけ使用できます。' };
   }
-  if (cards.length === 1) return { valid: true };
+  if (cards.length === 1) {
+    const [card] = cards;
+    const isModifierOnly = card.attack <= 0 && ['double_attack', 'wide_attack', 'magic_free', 'increase_attack', 'set_attribute'].includes(card.supportEffect);
+    const isDefenseOnlyMiracle = card.type === 'miracle' && card.attack <= 0 && card.defenseEffect;
+    return isModifierOnly || isDefenseOnlyMiracle
+      ? { valid: false, message: 'この神器は攻撃または奇跡と組み合わせてください。' }
+      : { valid: true };
+  }
 
   const combinationTypes = new Set(['weapon', 'accessory', 'miracle', 'item']);
   const baseAttacks = cards.filter(card => card.attack > 0 && !card.additive);
@@ -127,13 +140,14 @@ function combineAttackCards(cards) {
   }
   if (cards.some(card => card.supportEffect === 'double_attack')) attack *= 2;
   const wide = cards.some(card => card.supportEffect === 'wide_attack');
+  const attributeSetter = cards.findLast(card => card.supportEffect === 'set_attribute');
   return {
     ...base,
     name: cards.map(card => card.name).join(' + '),
     attack,
     defense: cards.reduce((sum, card) => sum + (card.defense || 0), 0),
     hitRate: wide ? 100 : (attackingCards.length ? Math.min(...attackingCards.map(card => card.hitRate ?? 100)) : (base.hitRate ?? 100)),
-    attribute: wide ? 'none' : combineAttributes(cards),
+    attribute: wide ? 'none' : (attributeSetter?.attribute || combineAttributes(cards)),
     target: wide || cards.some(card => card.target === 'all') ? 'all' : 'single',
     sourceType: base.type,
     repeatCount: Math.max(1, ...cards.map(card => card.repeatCount || 1)),
@@ -170,6 +184,9 @@ function resolveDefenseCard(pendingDamage, card) {
   const sourceType = pendingDamage.sourceType;
   const matchesWeapon = sourceType === 'weapon';
   const matchesMagic = sourceType === 'miracle';
+  const attributeValid = canDefendAttribute(pendingDamage.attribute, card.attribute);
+  const weaponSpecial = matchesWeapon && [...effects].some(effect => ['reflect_weapon', 'flick_weapon', 'block_weapon'].includes(effect));
+  if (weaponSpecial && !attributeValid) return { action: 'invalid_attribute', amount: pendingDamage.amount };
   if (effects.has('reflect_any')
     || (effects.has('reflect_weapon') && matchesWeapon)
     || (effects.has('reflect_magic') && matchesMagic)) return { action: 'reflect', amount: pendingDamage.amount };
@@ -180,7 +197,7 @@ function resolveDefenseCard(pendingDamage, card) {
     return { action: 'block', amount: 0 };
   }
   if (effects.has('remove_attribute')) return { action: 'remove_attribute', amount: pendingDamage.amount, attribute: 'none' };
-  if (!canDefendAttribute(pendingDamage.attribute, card.attribute)) {
+  if (!attributeValid) {
     return { action: 'invalid_attribute', amount: pendingDamage.amount };
   }
   return { action: 'reduce', amount: Math.max(0, pendingDamage.amount - (card.defense || 0)) };

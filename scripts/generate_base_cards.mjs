@@ -20,6 +20,7 @@ const deriveSystemFields = card => {
   if (description.includes('1ダメージ以上で即死')) fields.lethalOnDamage = true;
   if (description.includes('単体攻撃武器の攻撃力を倍にする')) fields.supportEffect = 'double_attack';
   if (description.includes('単体攻撃武器を100%攻にする')) fields.supportEffect = 'wide_attack';
+  if (description.includes('属性に染める')) fields.supportEffect = 'set_attribute';
   if (description.includes('MP消費なしで奇跡') || description.includes('MP消費0で奇跡') || description.includes('MPなしで奇跡')) fields.supportEffect = 'magic_free';
   if (card.name === 'ちからの粉') {
     fields.supportEffect = 'increase_attack';

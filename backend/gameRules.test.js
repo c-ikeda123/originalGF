@@ -79,8 +79,9 @@ test('属性相性と特殊防御を解決する', () => {
   assert.equal(canDefendAttribute('fire', 'earth'), false);
   assert.equal(canDefendAttribute('light', 'dark'), false);
   const attack = { amount: 10, attribute: 'fire', sourceType: 'weapon' };
-  assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'reflect_weapon' }), { action: 'reflect', amount: 10 });
-  assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'block_weapon' }), { action: 'block', amount: 0 });
+  assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'reflect_weapon', attribute: 'water' }), { action: 'reflect', amount: 10 });
+  assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'reflect_weapon', attribute: 'earth' }), { action: 'invalid_attribute', amount: 10 });
+  assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'block_weapon', attribute: 'water' }), { action: 'block', amount: 0 });
   assert.deepEqual(resolveDefenseCard(attack, { defenseEffect: 'remove_attribute' }), { action: 'remove_attribute', amount: 10, attribute: 'none' });
   assert.deepEqual(resolveDefenseCard(attack, { defense: 4, attribute: 'earth' }), { action: 'invalid_attribute', amount: 10 });
 });
@@ -113,4 +114,28 @@ test('守護神の行動をFlash版の重みで抽選する', () => {
     kind: 'attack', attack: 6, hitRate: 75, attribute: 'fire', weight: 2,
   });
   assert.equal(getAssistantAction('unknown', () => 0), null);
+});
+
+test('属性を染める追加神器は元の攻撃属性を上書きする', () => {
+  const weapon = { name: '水武器', type: 'weapon', attack: 5, attribute: 'water' };
+  const fireDye = { name: '発火', type: 'weapon', attack: 2, attackBonus: 2, additive: true, attribute: 'fire', supportEffect: 'set_attribute' };
+  assert.equal(combineAttackCards([weapon, fireDye]).attribute, 'fire');
+});
+
+test('攻撃補助神器は単独使用できない', () => {
+  for (const supportEffect of ['double_attack', 'wide_attack', 'magic_free', 'increase_attack', 'set_attribute']) {
+    assert.equal(validateCardPlay([{ type: 'item', attack: 0, supportEffect }], 'main').valid, false);
+  }
+});
+
+test('属性不適合の防具は消費前に拒否する', () => {
+  const pendingDamage = { amount: 10, attribute: 'fire', sourceType: 'weapon' };
+  const armor = { type: 'armor', defense: 5, attribute: 'earth' };
+  assert.equal(validateCardPlay([armor], 'defense', [], pendingDamage).valid, false);
+});
+
+test('閃光中は既に防御済みなら追加の防具を使えない', () => {
+  const pendingDamage = { amount: 10, attribute: 'none', sourceType: 'weapon' };
+  const armor = { type: 'armor', defense: 5, attribute: 'none' };
+  assert.equal(validateCardPlay([armor], 'defense', ['flash'], pendingDamage, 1).valid, false);
 });

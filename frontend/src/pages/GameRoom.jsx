@@ -193,11 +193,6 @@ export default function GameRoom() {
       : [...current, index].sort((a, b) => a - b));
   };
 
-  const handleEndTurn = () => {
-    if (!isMyTurn || phase !== 'main') return;
-    socket.emit('endTurn', { roomName: id });
-  };
-
   // Render a small square card for the hand
   const renderSquareCard = (realCard, index) => {
     const usable = isCardUsable(realCard) || (isMyTurn && phase === 'main') || selectedCards.includes(index);
@@ -489,9 +484,6 @@ export default function GameRoom() {
             )}
             {isMyTurn && phase === 'main' && selectedCards.length > 0 && (
                <button className="btn btn-secondary" onClick={() => { socket.emit('discardCards', { roomName: id, cardIndices: selectedCards }); setSelectedCards([]); }}>捨てる ({selectedCards.length})</button>
-            )}
-            {isMyTurn && phase === 'main' && (
-               <button className="btn" onClick={handleEndTurn}>ターン終了</button>
             )}
          </div>
       </div>
