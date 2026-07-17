@@ -24,6 +24,7 @@ export default function GameRoom() {
   const [damageAnim, setDamageAnim] = useState(null);
   const [actionAnim, setActionAnim] = useState(null);
   const [startAnim, setStartAnim] = useState(false);
+  const [ascensionAnim, setAscensionAnim] = useState(null);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
   const [selectedTargetId, setSelectedTargetId] = useState(null);
@@ -36,6 +37,11 @@ export default function GameRoom() {
   const lastDamageTimestamp = useRef(null);
   const lastActionId = useRef(null);
   const lastSoundEventId = useRef(0);
+  const lastAscensionEventId = useRef(0);
+  const hasReceivedGameState = useRef(false);
+  const ascensionQueue = useRef([]);
+  const ascensionActive = useRef(false);
+  const ascensionTimer = useRef(null);
   const soundTimers = useRef([]);
   const damageTimer = useRef(null);
   const actionTimer = useRef(null);
@@ -47,6 +53,18 @@ export default function GameRoom() {
 
   useEffect(() => {
     const activeSoundTimers = soundTimers.current;
+    const playNextAscension = () => {
+      const event = ascensionQueue.current.shift();
+      if (!event) {
+        ascensionActive.current = false;
+        setAscensionAnim(null);
+        return;
+      }
+      ascensionActive.current = true;
+      setAscensionAnim(event);
+      clearTimeout(ascensionTimer.current);
+      ascensionTimer.current = setTimeout(playNextAscension, 1900);
+    };
     socket = io(serverUrl);
     socket.on('connect', () => setSocketId(socket.id));
 
@@ -107,6 +125,17 @@ export default function GameRoom() {
           }
         });
       }
+      const ascensionEvents = data.ascensionEvents || [];
+      if (!hasReceivedGameState.current) {
+        hasReceivedGameState.current = true;
+        lastAscensionEventId.current = Math.max(0, ...ascensionEvents.map(event => event.id));
+      }
+      const newAscensions = ascensionEvents.filter(event => event.id > lastAscensionEventId.current);
+      if (newAscensions.length) {
+        lastAscensionEventId.current = Math.max(...newAscensions.map(event => event.id));
+        ascensionQueue.current.push(...newAscensions);
+        if (!ascensionActive.current) playNextAscension();
+      }
     });
 
     socket.on('baseEditorState', data => setBaseEditorState(data));
@@ -125,6 +154,12 @@ export default function GameRoom() {
       lastDamageTimestamp.current = null;
       lastActionId.current = null;
       lastSoundEventId.current = 0;
+      lastAscensionEventId.current = 0;
+      hasReceivedGameState.current = false;
+      ascensionQueue.current = [];
+      ascensionActive.current = false;
+      clearTimeout(ascensionTimer.current);
+      setAscensionAnim(null);
     });
 
     socket.on('errorMsg', (msg) => {
@@ -136,6 +171,9 @@ export default function GameRoom() {
     return () => {
       clearTimeout(damageTimer.current);
       clearTimeout(actionTimer.current);
+      clearTimeout(ascensionTimer.current);
+      ascensionQueue.current = [];
+      ascensionActive.current = false;
       activeSoundTimers.forEach(clearTimeout);
       socket.disconnect();
     };
@@ -444,7 +482,16 @@ export default function GameRoom() {
         <button type="button">教典</button>
       </div>
 
-      <div className="gf-battle-shell">
+        <div className="gf-battle-shell">
+        {ascensionAnim && (
+          <div key={ascensionAnim.id} className="ascension-overlay" role="status" aria-label={`${ascensionAnim.playerName}が昇天`}>
+            <div className="ascension-screen-flash" />
+            <div className="ascension-light-column" />
+            <div className="ascension-soul" />
+            <img className="ascension-title" src="/godfield-flash/ui/game-ja/effect/dead.png" alt="昇天" />
+            <div className="ascension-player-name">{ascensionAnim.playerName}</div>
+          </div>
+        )}
         {damageAnim && (
           <div
             key={`${damageAnim.timestamp}-${damageAnim.isDarkFollowUp ? 'dark' : 'normal'}`}
@@ -602,7 +649,7 @@ export default function GameRoom() {
         </div>
       )}
 
-      {gameState.gameStateStr === 'ended' && (
+      {gameState.gameStateStr === 'ended' && !ascensionAnim && (
         <div className="game-end-overlay">
           <div className="glass-panel game-end-panel">
             <img

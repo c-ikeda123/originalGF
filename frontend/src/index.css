@@ -1818,6 +1818,121 @@ h1, h2, h3, h4, h5, h6 {
   filter: drop-shadow(0 0 12px #581c87) drop-shadow(0 0 5px #0f172a);
 }
 
+.ascension-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1900;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ascension-screen-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  animation: ascensionFlash 1.9s ease-out forwards;
+}
+
+.ascension-light-column {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 50%;
+  width: 310px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 210, 0.9) 28%, #fff 50%, rgba(255, 255, 210, 0.9) 72%, transparent);
+  filter: blur(5px);
+  animation: ascensionColumn 1.9s ease-out forwards;
+}
+
+.ascension-soul {
+  position: absolute;
+  bottom: 17%;
+  left: 50%;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, #fff 0 28%, #fff7a8 45%, rgba(255, 255, 255, 0) 72%);
+  box-shadow: 0 0 25px #fff, 0 0 55px #fef08a;
+  animation: ascensionSoul 1.45s ease-in forwards;
+}
+
+.ascension-title {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: 330px;
+  height: 160px;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 5px 2px rgba(0, 0, 0, 0.6));
+  animation: ascensionTitle 1.9s ease-out forwards;
+}
+
+.ascension-player-name {
+  position: absolute;
+  top: calc(42% + 82px);
+  left: 50%;
+  min-width: 220px;
+  padding: 4px 18px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 220, 0.85);
+  border-radius: 999px;
+  background: rgba(0, 45, 43, 0.78);
+  color: #fffde7;
+  font: bold 18px/28px Georgia, 'Yu Mincho', serif;
+  text-align: center;
+  text-shadow: 0 2px 2px #000;
+  animation: ascensionName 1.9s ease-out forwards;
+}
+
+@keyframes ascensionFlash {
+  0% { opacity: 0; }
+  10% { opacity: 0.92; }
+  32% { opacity: 0.25; }
+  78% { opacity: 0.12; }
+  100% { opacity: 0; }
+}
+
+@keyframes ascensionColumn {
+  0% { opacity: 0; transform: translateX(-50%) scaleX(0.15); }
+  16% { opacity: 1; transform: translateX(-50%) scaleX(1); }
+  72% { opacity: 0.72; }
+  100% { opacity: 0; transform: translateX(-50%) scaleX(0.45); }
+}
+
+@keyframes ascensionSoul {
+  0% { opacity: 0; transform: translate(-50%, 35px) scale(0.35); }
+  18% { opacity: 1; }
+  74% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(-50%, -520px) scale(1.35); }
+}
+
+@keyframes ascensionTitle {
+  0%, 12% { opacity: 0; transform: translate(-50%, -50%) scale(2.4); }
+  25% { opacity: 1; transform: translate(-50%, -50%) scale(0.88); }
+  32% { transform: translate(-50%, -50%) scale(1.04); }
+  38%, 76% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -66%) scale(1.04); }
+}
+
+@keyframes ascensionName {
+  0%, 28% { opacity: 0; transform: translate(-50%, 10px); }
+  40%, 78% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -12px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ascension-screen-flash,
+  .ascension-light-column,
+  .ascension-soul,
+  .ascension-title,
+  .ascension-player-name {
+    animation-duration: 0.01ms;
+  }
+}
+
 .gf-damage-label {
   width: 200px;
   height: 70px;
