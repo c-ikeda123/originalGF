@@ -12,11 +12,12 @@ function Home() {
   const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [playerName, setPlayerName] = useState('Player');
+  const [role, setRole] = useState('player');
 
   const handleJoin = (e) => {
     e.preventDefault();
     if (password.trim() && playerName.trim()) {
-      navigate(`/room/${password}`, { state: { playerName } });
+      navigate(`/room/${password}`, { state: { playerName, role } });
     }
   };
 
@@ -35,6 +36,10 @@ function Home() {
             onChange={(e) => setPlayerName(e.target.value)}
             required
           />
+          <select className="input-field" value={role} onChange={event => setRole(event.target.value)}>
+            <option value="player">プレイヤーとして参加</option>
+            <option value="spectator">観戦する</option>
+          </select>
           <input 
             type="text" 
             placeholder="Room Password (合言葉)" 

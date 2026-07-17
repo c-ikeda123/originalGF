@@ -75,6 +75,7 @@ function emitRoomUpdate(roomName) {
     players: Object.values(room.players).map(player => ({
       id: player.id, name: player.name, ready: player.ready, team: player.team || null, isBot: Boolean(player.isBot),
     })),
+    spectators: Object.values(room.spectators || {}).map(spectator => ({ id: spectator.id, name: spectator.name })),
   });
 }
 
@@ -92,16 +93,21 @@ function emitBaseEditorState(roomName) {
 io.on('connection', (socket) => {
   console.log('User connected:', socket.id);
 
-  socket.on('joinRoom', ({ password, playerName, customCards = [], baseCardsEdits = {} }) => {
+  socket.on('joinRoom', ({ password, playerName, role = 'player', customCards = [], baseCardsEdits = {} }) => {
     let room = rooms[password];
-    if (room && room.state !== 'waiting') {
+    if (room && room.state !== 'waiting' && role !== 'spectator') {
       socket.emit('errorMsg', '対戦中の部屋にはプレイヤーとして参加できません。');
+      return;
+    }
+    if (!room && role === 'spectator') {
+      socket.emit('errorMsg', '観戦する部屋が見つかりません。');
       return;
     }
     if (!room) {
       room = {
         name: password,
         players: {},
+        spectators: {},
         hostId: socket.id,
         baseCardsEdits: { ...baseCardsEdits },
         editLocks: {},
@@ -121,6 +127,14 @@ io.on('connection', (socket) => {
         deck: [] // The shared deck
       };
       rooms[password] = room;
+    }
+    if (role === 'spectator') {
+      room.spectators ||= {};
+      room.spectators[socket.id] = { id: socket.id, name: playerName };
+      socket.join(password);
+      emitRoomUpdate(password);
+      if (room.state !== 'waiting') emitGameState(password);
+      return;
     }
     
     room.players[socket.id] = {
@@ -288,6 +302,11 @@ io.on('connection', (socket) => {
     // Remove from room
     for (const roomName in rooms) {
       const room = rooms[roomName];
+      if (room.spectators?.[socket.id]) {
+        delete room.spectators[socket.id];
+        emitRoomUpdate(roomName);
+        continue;
+      }
       if (room.players[socket.id]) {
         const disconnectedTurnIndex = room.turnOrder?.indexOf(socket.id) ?? -1;
         const wasActivePlayer = room.turn === socket.id || room.mainTurnOwner === socket.id;
@@ -1426,6 +1445,30 @@ function emitGameState(roomName) {
     }
     
     io.to(id).emit('gameState', stateView);
+  });
+  Object.values(room.spectators || {}).forEach(spectator => {
+    const visiblePlayers = playerIds.map(playerId => ({
+      ...room.players[playerId],
+      hand: room.players[playerId].hand.map(() => ({ hidden: true })),
+    }));
+    io.to(spectator.id).emit('gameState', {
+      spectator: true,
+      turn: room.turn,
+      phase: room.phase,
+      log: room.log,
+      field: room.field,
+      lastDamage: room.lastDamage,
+      lastAction: room.lastAction,
+      soundEvents: (room.soundEvents || []).filter(event => !event.targetId),
+      me: { id: spectator.id, name: spectator.name, hp: 0, mp: 0, money: 0, hand: [], learnedMiracles: [], ailments: [], ascended: true },
+      opponent: visiblePlayers[0] || null,
+      opponents: visiblePlayers,
+      gameStateStr: room.state,
+      winner: room.winnerId
+        ? { id: room.winnerId, name: room.players[room.winnerId]?.name }
+        : (room.winnerTeam ? { team: room.winnerTeam, name: `${room.winnerTeam}チーム` } : null),
+      buyOffer: null,
+    });
   });
   scheduleBotTurn(roomName);
 }

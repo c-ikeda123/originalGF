@@ -14,6 +14,7 @@ export default function GameRoom() {
   const location = useLocation();
   const navigate = useNavigate();
   const playerName = location.state?.playerName || 'Player';
+  const role = location.state?.role || 'player';
   
   const [gameState, setGameState] = useState(null);
   const [roomState, setRoomState] = useState(null);
@@ -45,7 +46,8 @@ export default function GameRoom() {
        password: id, 
        playerName, 
        customCards: savedCards,
-       baseCardsEdits 
+       baseCardsEdits,
+       role,
     });
 
     socket.on('roomUpdate', (data) => {
@@ -102,7 +104,7 @@ export default function GameRoom() {
       activeSoundTimers.forEach(clearTimeout);
       socket.disconnect();
     };
-  }, [id, playerName, navigate]);
+  }, [id, playerName, role, navigate]);
 
   useEffect(() => {
     if (gameState?.phase === 'exchange' && gameState.me) {
@@ -117,9 +119,9 @@ export default function GameRoom() {
         <div className="glass-panel lobby-header">
           <div><h2>Room: {id}</h2><p>{roomState?.players?.length || 0}人参加中</p></div>
           <div className="lobby-players">{roomState?.players?.map(player => <span key={player.id}>{player.name}{player.id === roomState.hostId ? '（部屋主）' : ''}</span>)}</div>
-          <button className="btn btn-secondary" onClick={() => socket.emit('toggleReady', { roomName: id })}>
+          {role === 'player' && <button className="btn btn-secondary" onClick={() => socket.emit('toggleReady', { roomName: id })}>
             {roomState?.players?.find(player => player.id === socketId)?.ready ? '準備を取り消す' : '準備完了'}
-          </button>
+          </button>}
           <label>
             チーム
             <select
@@ -153,6 +155,9 @@ export default function GameRoom() {
               </span>
             ))}
           </div>
+          {(roomState?.spectators?.length || 0) > 0 && (
+            <div>観戦: {roomState.spectators.map(spectator => spectator.name).join('、')}</div>
+          )}
           {socketId === roomState?.hostId && (
             <button type="button" className="btn btn-secondary" onClick={() => socket.emit('addBot', { roomName: id })}>
               Botを追加
@@ -312,6 +317,7 @@ export default function GameRoom() {
 
   return (
     <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', height: '100vh', padding: '10px' }}>
+      {gameState.spectator && <div className="spectator-banner">観戦中（操作はできません）</div>}
       
       {/* Top Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', background: 'var(--gf-green)', color: 'white', padding: '4px 10px', borderRadius: '4px' }}>
