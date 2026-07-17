@@ -5,7 +5,7 @@ import '../index.css';
 import RoomBaseEditor from './RoomBaseEditor';
 import { playSound } from '../soundEffects';
 import { canAddCardToSelection } from '../utils/cardSelection';
-import { getDreamDisplayedCard } from '../utils/dreamCards';
+import { getDreamDisplayedCard, isDreamAffectedCard } from '../utils/dreamCards';
 
 let socket;
 const serverUrl = import.meta.env.VITE_SERVER_URL
@@ -379,7 +379,7 @@ export default function GameRoom() {
   };
 
   const getDisplayedCard = (card, index) => {
-    return getDreamDisplayedCard(me.hand, index, hasDream) || card;
+    return getDreamDisplayedCard(me.hand, index) || card;
   };
 
   const renderSelectedCard = (index, className) => {
@@ -415,6 +415,7 @@ export default function GameRoom() {
   const renderSquareCard = (realCard, index) => {
     const usable = isCardUsable(realCard) || (isMyTurn && phase === 'main') || selectedCards.includes(index);
     const card = getDisplayedCard(realCard, index);
+    const dreamAffected = isDreamAffectedCard(realCard, hasDream);
 
     let statText = '';
     if (card.attack > 0) statText = `攻${card.attack}`;
@@ -428,9 +429,9 @@ export default function GameRoom() {
     return (
       <div 
          key={realCard.instanceId} 
-         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${usable ? '' : 'disabled'}`}
+         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${dreamAffected ? 'dream-affected' : ''} ${usable ? '' : 'disabled'}`}
          aria-disabled={!usable}
-         title={usable ? card.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません')}
+         title={dreamAffected ? `${card.name}（夢の影響中）` : (usable ? card.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません'))}
          onClick={() => toggleCard(index)}
          onDoubleClick={() => usable && handlePlayCard(index)}
          onMouseEnter={() => setHoveredCardIndex(index)}
@@ -568,7 +569,33 @@ export default function GameRoom() {
           </div>
         )}
         {effectAnim && (
-          RESOURCE_EFFECT_TYPES.has(effectAnim.type) ? (
+          effectAnim.dreamReveal ? (
+            <div
+              key={effectAnim.id}
+              className={`dream-reveal-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              role="status"
+              aria-label={effectAnim.changed ? '夢の影響で神器が変化' : '夢の影響を受けたが神器はそのまま'}
+            >
+              <img className="dream-reveal-title" src="/godfield-flash/ui/game-ja/effect/illusion.png" alt="夢" />
+              <div className="dream-reveal-cards">
+                {effectAnim.fromCards.map((fromCard, index) => (
+                  <div className="dream-reveal-pair" key={`${fromCard.name}-${index}`}>
+                    <div className="dream-reveal-card">
+                      {fromCard.imageUrl && <img src={fromCard.imageUrl} alt="" />}
+                      <span>{fromCard.name}</span>
+                    </div>
+                    <strong>{effectAnim.toCards[index]?.name === fromCard.name ? 'そのまま' : '→'}</strong>
+                    {effectAnim.toCards[index]?.name !== fromCard.name && (
+                      <div className="dream-reveal-card changed">
+                        {effectAnim.toCards[index]?.imageUrl && <img src={effectAnim.toCards[index].imageUrl} alt="" />}
+                        <span>{effectAnim.toCards[index]?.name}</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : RESOURCE_EFFECT_TYPES.has(effectAnim.type) ? (
             <div
               key={effectAnim.id}
               className={`resource-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}

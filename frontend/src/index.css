@@ -1307,6 +1307,22 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 0 2px #f5df38, 1px 2px 4px rgba(0, 0, 0, 0.35);
 }
 
+.gf-hand-dock .gf-card-square.dream-affected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: url('/godfield-flash/cards/harm/illusion_item.png') center / 100% 100% no-repeat;
+  filter: saturate(1.25) drop-shadow(0 0 4px #ff7a00);
+  pointer-events: none;
+  animation: dreamAffectedPulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes dreamAffectedPulse {
+  from { opacity: 0.62; }
+  to { opacity: 1; }
+}
+
 .gf-hand-dock .gf-card-square .stat-bar {
   height: 13px;
   font-size: 9px;
@@ -2169,6 +2185,82 @@ h1, h2, h3, h4, h5, h6 {
   font: bold 15px/24px Georgia, 'Yu Mincho', serif;
   text-align: center;
   text-shadow: 0 2px 2px #000;
+}
+
+.dream-reveal-overlay {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  z-index: 127;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: statusEffectStamp 1.25s ease-out forwards;
+}
+
+.dream-reveal-overlay.target-me {
+  top: 64%;
+}
+
+.dream-reveal-title {
+  width: auto;
+  height: 74px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.7));
+}
+
+.dream-reveal-cards,
+.dream-reveal-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.dream-reveal-pair > strong {
+  min-width: 54px;
+  color: #fff4cb;
+  font: bold 16px/24px Georgia, 'Yu Mincho', serif;
+  text-align: center;
+  text-shadow: 0 2px 3px #8b2600, 0 0 7px #ff7a00;
+}
+
+.dream-reveal-card {
+  width: 70px;
+  padding: 3px;
+  border: 2px solid #ff8b19;
+  border-radius: 4px;
+  background: rgba(255, 238, 190, 0.94);
+  box-shadow: 0 0 12px #ff6a00;
+  color: #553000;
+  text-align: center;
+}
+
+.dream-reveal-card img {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+}
+
+.dream-reveal-card span {
+  display: block;
+  overflow: hidden;
+  font: bold 10px/16px 'Yu Gothic', sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dream-reveal-card.changed {
+  animation: dreamCardChange 0.55s steps(2, end) both;
+}
+
+@keyframes dreamCardChange {
+  0% { opacity: 0; transform: scale(0.7) rotateY(90deg); }
+  55% { opacity: 1; transform: scale(1.12) rotateY(0); }
+  100% { opacity: 1; transform: scale(1) rotateY(0); }
 }
 
 @keyframes statusEffectStamp {
