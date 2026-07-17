@@ -1546,6 +1546,20 @@ function emitGameState(roomName) {
   const playerIds = Object.keys(room.players);
   
   playerIds.forEach(id => {
+    const viewer = room.players[id];
+    const usableDefenseInstanceIds = room.phase === 'defense' && room.turn === id
+      ? viewer.hand.filter(card => validateCardPlay(
+        [card], 'defense', viewer.ailments, viewer.pendingDamage, viewer.pendingDamage?.defensesUsed || 0,
+      ).valid).map(card => card.instanceId)
+      : [];
+    const usableDefenseMiracleIndices = room.phase === 'defense' && room.turn === id
+      ? viewer.learnedMiracles.flatMap((miracle, index) => validateCardPlay(
+        [miracle], 'defense', viewer.ailments, viewer.pendingDamage, viewer.pendingDamage?.defensesUsed || 0,
+      ).valid ? [index] : [])
+      : [];
+    const selectableDefenseSupportInstanceIds = room.phase === 'defense' && room.turn === id
+      ? viewer.hand.filter(card => card.supportEffect === 'magic_free').map(card => card.instanceId)
+      : [];
     // Construct player-specific view
     const stateView = {
       turn: room.turn,
@@ -1558,6 +1572,9 @@ function emitGameState(roomName) {
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId || event.targetId === id),
       ascensionEvents: room.ascensionEvents || [],
       effectEvents: room.effectEvents || [],
+      usableDefenseInstanceIds,
+      usableDefenseMiracleIndices,
+      selectableDefenseSupportInstanceIds,
       chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly || message.team === room.players[id].team),
       me: room.players[id],
       opponent: room.players[playerIds.find(p => p !== id)],
@@ -1605,6 +1622,9 @@ function emitGameState(roomName) {
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId),
       ascensionEvents: room.ascensionEvents || [],
       effectEvents: room.effectEvents || [],
+      usableDefenseInstanceIds: [],
+      usableDefenseMiracleIndices: [],
+      selectableDefenseSupportInstanceIds: [],
       chatMessages: (room.chatMessages || []).filter(message => !message.teamOnly),
       me: { id: spectator.id, name: spectator.name, hp: 0, mp: 0, money: 0, hand: [], learnedMiracles: [], ailments: [], ascended: true },
       opponent: visiblePlayers[0] || null,
