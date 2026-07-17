@@ -1280,7 +1280,7 @@ h1, h2, h3, h4, h5, h6 {
   top: 4px;
   right: 3px;
   bottom: 4px;
-  width: 179px;
+  width: 357px;
   min-height: 0;
   display: grid;
   grid-template-rows: auto minmax(80px, 1fr) auto;
@@ -1291,22 +1291,23 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .battle-player-list {
-  width: 150px;
-  justify-self: end;
+  width: 300px;
+  justify-self: start;
+  margin-left: 7px;
   gap: 1px;
 }
 
 .battle-player {
-  width: 150px;
-  height: 20px;
-  min-height: 20px;
+  width: 300px;
+  height: 40px;
+  min-height: 40px;
   box-sizing: border-box;
-  grid-template-columns: 12px 60px 1fr;
-  column-gap: 1px;
-  padding: 0 4px 0 0;
+  grid-template-columns: 24px 120px 1fr;
+  column-gap: 2px;
+  padding: 0 8px 0 0;
   border: 0;
-  background: url('/godfield-flash/ui/game/status/single_up.png') 0 0 / 150px 20px no-repeat;
-  font: 8px/10px Arial, sans-serif;
+  background: url('/godfield-flash/ui/game/status/single_up.png') 0 0 / 300px 40px no-repeat;
+  font: 12px/20px Arial, sans-serif;
 }
 
 .battle-player.active {
@@ -1320,12 +1321,12 @@ h1, h2, h3, h4, h5, h6 {
 
 .battle-player-name {
   color: #237a46;
-  font-size: 9px;
+  font-size: 13px;
 }
 
 .battle-player-stats {
   gap: 2px;
-  font-size: 7px;
+  font-size: 11px;
 }
 
 .battle-player-ailments {
@@ -1341,48 +1342,62 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 9px;
 }
 
-.gf-battle-sidebar .chat-panel {
-  width: 179px;
-  min-height: 101px;
-  padding: 3px;
-  background: url('/godfield-flash/ui/room/chat.png') 0 0 / 178.5px 101px no-repeat;
+.gf-battle-chat-frame {
+  width: 357px;
+  height: 202px;
+  align-self: end;
+  box-sizing: border-box;
+  display: grid;
+  grid-row: 3;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 5px;
+  background: url('/godfield-flash/ui/room/chat.png') 0 0 / 357px 202px no-repeat;
+}
+
+.gf-battle-chat-frame .gf-battle-log,
+.gf-battle-chat-frame .chat-panel {
+  width: auto;
+  min-height: 0;
+  padding: 2px 4px;
+  border: 0;
+  background: transparent;
 }
 
 .gf-hand-dock {
   position: absolute;
   left: 0;
   bottom: 0;
-  width: 334px;
-  height: 152px;
+  width: 667px;
+  height: 304px;
   min-width: 0;
   box-sizing: border-box;
-  padding: 4px 5px;
+  padding: 8px 10px;
   border: 0;
-  background: url('/godfield-flash/ui/game/item/list.png') 0 0 / 333.5px 152px no-repeat;
+  background: url('/godfield-flash/ui/game/item/list.png') 0 0 / 667px 304px no-repeat;
 }
 
 .gf-hand-cards {
-  width: 324px;
-  height: 82px;
+  width: 647px;
+  height: 164px;
   display: grid;
-  grid-template-columns: repeat(8, 40px);
-  grid-auto-rows: 40px;
-  gap: 1px 0;
+  grid-template-columns: repeat(8, 80px);
+  grid-auto-rows: 80px;
+  gap: 2px 0;
   overflow: hidden;
 }
 
 .gf-hand-dock .gf-card-square {
-  width: 40px;
-  height: 40px;
+  width: 80px;
+  height: 80px;
   box-sizing: border-box;
   border-width: 1px;
   box-shadow: none;
 }
 
 .gf-hand-dock .gf-card-square .stat-bar {
-  height: 9px;
-  font-size: 7px;
-  line-height: 9px;
+  height: 18px;
+  font-size: 12px;
+  line-height: 18px;
 }
 
 .gf-hand-dock .gf-card-square:hover,
@@ -1391,20 +1406,21 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gf-hand-actions {
-  top: 87px;
-  right: 4px;
+  top: 174px;
+  left: 230px;
+  right: auto;
   bottom: auto;
-  width: 125px;
-  gap: 1px;
+  width: 250px;
+  gap: 2px;
 }
 
 .gf-hand-actions .btn {
-  min-height: 19px;
+  min-height: 38px;
   padding: 0 4px;
-  background: url('/godfield-flash/ui/game/command/ok_button_up.png') 0 0 / 125px 19px no-repeat;
+  background: url('/godfield-flash/ui/game/command/ok_button_up.png') 0 0 / 250px 38px no-repeat;
   border: 0;
   box-shadow: none;
-  font-size: 9px;
+  font-size: 13px;
 }
 
 .gf-field-cards {
@@ -1412,56 +1428,56 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gf-field-group {
-  width: 150px;
+  width: 300px;
   gap: 1px;
 }
 
 .gf-field-owner {
-  width: 120px;
-  height: 15px;
+  width: 240px;
+  height: 30px;
   box-sizing: border-box;
-  padding: 0 5px 0 14px;
+  padding: 0 10px 0 28px;
   border: 0;
-  background: url('/godfield-flash/ui/game/commander/single.png') 0 0 / 120px 15px no-repeat;
-  font: bold 8px/15px Arial, sans-serif;
+  background: url('/godfield-flash/ui/game/commander/single.png') 0 0 / 240px 30px no-repeat;
+  font: bold 13px/30px Arial, sans-serif;
 }
 
 .gf-game-screen .gf-card-field {
-  width: 150px;
-  height: 45px;
+  width: 300px;
+  height: 90px;
   box-sizing: border-box;
   border: 0;
-  background: url('/godfield-flash/ui/game/card.png') 0 0 / 150px 45px no-repeat;
+  background: url('/godfield-flash/ui/game/card.png') 0 0 / 300px 90px no-repeat;
   box-shadow: none;
 }
 
 .gf-game-screen .gf-card-field .image-area {
-  width: 45px;
-  height: 44px;
+  width: 90px;
+  height: 88px;
   flex: none;
   border: 0;
-  background-size: 40px 40px;
+  background-size: 80px 80px;
   background-repeat: no-repeat;
 }
 
 .gf-game-screen .gf-card-field .details {
-  height: 44px;
+  height: 88px;
   box-sizing: border-box;
-  padding: 2px 3px;
+  padding: 4px 6px;
   overflow: hidden;
 }
 
 .gf-game-screen .gf-card-field .card-name {
-  font: bold 9px/11px Georgia, serif;
+  font: bold 16px/22px Georgia, serif;
 }
 
 .gf-game-screen .gf-card-field .card-stat-text {
-  font-size: 7px !important;
-  line-height: 9px;
+  font-size: 12px !important;
+  line-height: 18px;
 }
 
 .hovered-card-detail {
-  top: -47px;
+  top: -92px;
 }
 
 .gf-game-screen .damage-overlay,
@@ -1481,7 +1497,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gf-damage-number {
-  height: 58px;
+  height: 116px;
   display: flex;
   align-items: flex-end;
   justify-content: center;
@@ -1489,13 +1505,13 @@ h1, h2, h3, h4, h5, h6 {
 
 .gf-damage-number img {
   width: auto;
-  height: 57.5px;
+  height: 115px;
   object-fit: contain;
 }
 
 .gf-damage-label {
-  width: 100px;
-  height: 35px;
+  width: 200px;
+  height: 70px;
   object-fit: contain;
 }
 
@@ -1514,6 +1530,6 @@ h1, h2, h3, h4, h5, h6 {
 
 .gf-game-screen .combat-action-overlay > img {
   width: auto;
-  height: 35px;
+  height: 70px;
   object-fit: contain;
 }

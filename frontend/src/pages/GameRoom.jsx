@@ -492,10 +492,12 @@ export default function GameRoom() {
             {renderPlayerStatus(me, true)}
             {renderAssistant(me.assistant)}
           </div>
-          <div className="gf-battle-log">
-            {gameState.log.slice(-12).map((line, index) => <div key={index}>{line}</div>)}
+          <div className="gf-battle-chat-frame">
+            <div className="gf-battle-log">
+              {gameState.log.slice(-12).map((line, index) => <div key={index}>{line}</div>)}
+            </div>
+            {renderChat()}
           </div>
-          {renderChat()}
         </aside>
 
         <section className="gf-hand-dock">
