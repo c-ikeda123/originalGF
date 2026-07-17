@@ -312,7 +312,7 @@ export default function GameRoom() {
     let statText = '';
     if (card.attack > 0) statText = `攻${card.attack}`;
     else if (card.defense > 0) statText = `守${card.defense}`;
-    else if (card.healHp > 0) statText = `回${card.healHp}`;
+    else if (card.healHp > 0) statText = `HP+${card.healHp}`;
     
     // Convert attributes to class for color
     const attrClass = `attr-bg-${card.attribute}`;
@@ -343,8 +343,10 @@ export default function GameRoom() {
   const renderFieldCard = (card) => {
     if (!card) return null;
     let statText = '';
-    if (card.attack > 0) statText += `攻${card.attack} `;
-    if (card.hitRate > 0 && card.type !== 'armor') statText += `${card.hitRate}% `;
+    if (card.attack > 0) {
+      statText += `攻${card.attack} `;
+      if (card.hitRate > 0) statText += `命中${card.hitRate}% `;
+    }
     if (card.defense > 0) statText += `守${card.defense} `;
     if (card.healHp > 0) statText += `HP+${card.healHp} `;
 
@@ -482,8 +484,8 @@ export default function GameRoom() {
           </div>
           {field && (
             <div className="gf-combat-totals">
-              <span>Atk{field.attackCard.attack || 0}</span>
-              <span>{field.defenderId ? `Dfs${field.defenseCards?.reduce((sum, card) => sum + (card.defense || 0), 0) || 0}` : '(No Defense)'}</span>
+              <span>攻撃 {field.attackCard.attack || 0}</span>
+              <span>防御 {field.defenseCards?.reduce((sum, card) => sum + (card.defense || 0), 0) || 0}</span>
             </div>
           )}
         </main>
@@ -533,10 +535,10 @@ export default function GameRoom() {
          )}
           <div className="gf-hand-actions">
             {isMyTurn && (phase === 'main' || phase === 'defense') && selectedCards.length > 0 && (
-               <button className="btn gf-command-button" onClick={() => handlePlayCard(selectedCards[0])}>選択カードを使用 ({selectedCards.length})</button>
+               <button className="btn gf-command-button" aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>使用する</button>
             )}
-            {isMyTurn && phase === 'defense' && (
-               <button className="btn gf-command-button" onClick={() => socket.emit('finishDefense', { roomName: id })}>ダメージを受ける</button>
+            {isMyTurn && phase === 'defense' && selectedCards.length === 0 && (
+               <button className="btn gf-command-button" aria-label="防御せずダメージを受ける" onClick={() => socket.emit('finishDefense', { roomName: id })}>防御しない</button>
             )}
             {isMyTurn && phase === 'main' && (
                <button className="btn gf-fixed-action pray-action" onClick={() => socket.emit('pray', { roomName: id })} title="手札に武器がない場合のみ可能">祈る (ドロー)</button>

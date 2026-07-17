@@ -1526,11 +1526,13 @@ h1, h2, h3, h4, h5, h6 {
   left: 230px;
   width: 250px;
   min-height: 38px;
-  padding: 0 4px;
+  box-sizing: border-box;
+  padding: 0 60px 0 18px;
   background: url('/godfield-flash/ui/game/command/ok_button_up.png') 0 0 / 250px 38px no-repeat;
   border: 0;
   box-shadow: none;
   font-size: 13px;
+  text-align: center;
 }
 
 .gf-hand-actions .gf-fixed-action {
@@ -1565,10 +1567,22 @@ h1, h2, h3, h4, h5, h6 {
   width: 667px;
   height: 38px;
   box-sizing: border-box;
-  align-items: center;
-  padding: 0 8px;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0;
   border: 0;
   background: url('/godfield-flash/ui/game/time_gauge/cover.png') left bottom / 667px 20px no-repeat;
+}
+
+.gf-combat-totals span {
+  width: 130px;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 7px;
+  overflow: hidden;
+  background: url('/godfield-flash/ui/game/command/value.png') 0 0 / 130px 30px no-repeat;
+  font: bold 14px/30px Georgia, 'Yu Mincho', serif;
+  white-space: nowrap;
 }
 
 .gf-field-cards {
