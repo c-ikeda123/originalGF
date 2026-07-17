@@ -1818,6 +1818,50 @@ h1, h2, h3, h4, h5, h6 {
   filter: drop-shadow(0 0 12px #581c87) drop-shadow(0 0 5px #0f172a);
 }
 
+.resource-effect-overlay {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  z-index: 125;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.55));
+  animation: resourceEffectPop 1.25s ease-out forwards;
+}
+
+.resource-effect-overlay.target-me {
+  top: 64%;
+}
+
+.resource-effect-label {
+  width: auto;
+  height: 78px;
+  object-fit: contain;
+}
+
+.resource-effect-number {
+  height: 92px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.resource-effect-number img {
+  width: auto;
+  height: 90px;
+  object-fit: contain;
+}
+
+@keyframes resourceEffectPop {
+  0% { opacity: 0; transform: translate(-50%, 20px) scale(0.45); }
+  18% { opacity: 1; transform: translate(-50%, -6px) scale(1.08); }
+  28%, 72% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -40px) scale(0.96); }
+}
+
 .ascension-overlay {
   position: absolute;
   inset: 0;
