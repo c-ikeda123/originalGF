@@ -262,7 +262,7 @@ io.on('connection', (socket) => {
 
   socket.on('lockBaseCard', ({ roomName, cardId }) => {
     const room = rooms[roomName];
-    if (!room || room.state !== 'waiting' || !GF_BASE_CARDS.some(card => card.id === cardId)) return;
+    if (!room || !room.players[socket.id] || room.state !== 'waiting' || !GF_BASE_CARDS.some(card => card.id === cardId)) return;
     const ownerId = room.editLocks[cardId];
     if (ownerId && ownerId !== socket.id) return socket.emit('errorMsg', 'このカードは他の参加者が編集中です。');
     room.editLocks[cardId] = socket.id;
@@ -278,7 +278,7 @@ io.on('connection', (socket) => {
 
   socket.on('updateRoomBaseCard', ({ roomName, cardId, patch }) => {
     const room = rooms[roomName];
-    if (!room || room.state !== 'waiting' || room.editLocks[cardId] !== socket.id) return;
+    if (!room || !room.players[socket.id] || room.state !== 'waiting' || room.editLocks[cardId] !== socket.id) return;
     const allowed = {};
     for (const key of ['name', 'description', 'imageUrl']) {
       if (typeof patch?.[key] === 'string') allowed[key] = patch[key];
@@ -289,7 +289,7 @@ io.on('connection', (socket) => {
 
   socket.on('importRoomBaseEdits', ({ roomName, edits }) => {
     const room = rooms[roomName];
-    if (!room || room.state !== 'waiting' || !edits || typeof edits !== 'object') return;
+    if (!room || !room.players[socket.id] || room.state !== 'waiting' || !edits || typeof edits !== 'object') return;
     for (const [cardId, patch] of Object.entries(edits)) {
       if (room.editLocks[cardId] && room.editLocks[cardId] !== socket.id) continue;
       if (!GF_BASE_CARDS.some(card => card.id === cardId)) continue;
@@ -357,8 +357,12 @@ io.on('connection', (socket) => {
         }
         delete room.players[socket.id];
         room.turnOrder = (room.turnOrder || []).filter(id => id !== socket.id);
-        if (Object.keys(room.players).length === 0) {
-          delete rooms[roomName]; // Clean up empty room
+        const hasHumanPresence = Object.values(room.players).some(player => !player.isBot)
+          || Object.keys(room.spectators || {}).length > 0;
+        if (!hasHumanPresence) {
+          clearTimeout(room.turnTimer);
+          clearTimeout(room.botTimer);
+          delete rooms[roomName]; // Clean up rooms with no human participants or spectators.
         } else {
           if (room.hostId === socket.id) {
             room.hostId = Object.values(room.players).find(player => !player.isBot)?.id || Object.keys(room.players)[0];
@@ -405,6 +409,14 @@ io.on('connection', (socket) => {
     if (learnedMiracle) cards.push({ ...learnedMiracle, _learnedCast: true });
     const card = cards.find(c => c.type === 'weapon' || c.type === 'miracle') || cards[0];
     if (!card) return;
+    const defaultOpponent = room.phase === 'defense'
+      ? room.players[player.pendingDamage?.attackerId]
+      : Object.values(room.players).find(candidate => areEnemies(player, candidate) && !candidate.ascended && candidate.hp > 0);
+    const opponent = room.phase === 'defense' ? defaultOpponent : (room.players[targetId] || defaultOpponent);
+    if (!opponent || (room.phase === 'main' && (!areEnemies(player, opponent) || opponent.ascended || opponent.hp <= 0))) {
+      socket.emit('errorMsg', 'その参加者は対象にできません。');
+      return;
+    }
 
     const isSell = room.phase === 'main' && cards.length === 2 && cards.some(c => c.effect === 'sell');
     const isSingleTrade = room.phase === 'main' && cards.length === 1 && cards[0].type === 'trade';
@@ -452,13 +464,7 @@ io.on('connection', (socket) => {
     const replacementCount = isSingleTrade && card.effect === 'buy' ? 0 : consumedIndices.length + (learnedMiracle ? 1 : 0);
     queueReplacementDraws(player, replacementCount);
 
-    const opponentId = targetId || getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
-    const opponent = room.players[opponentId];
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
-    if (!opponent || !areEnemies(player, opponent)) {
-      socket.emit('errorMsg', '同じチームの参加者は対象にできません。');
-      return;
-    }
 
     cards.forEach(usedCard => {
       if (usedCard.selfAilment) {
@@ -522,7 +528,7 @@ io.on('connection', (socket) => {
       combinedCard.forcedTargetId = target?.id;
       if (mortarOwner) combinedCard.attack = 99;
     }
-    if (combinedCard.target !== 'all' && !combinedCard.forcedTargetId) combinedCard.forcedTargetId = opponentId;
+    if (combinedCard.target !== 'all' && !combinedCard.forcedTargetId) combinedCard.forcedTargetId = opponent.id;
 
     room.log.push(`${player.name} played ${combinedCard.name}!`);
     room.lastAction = createActionEvent(player, opponent, combinedCard, 'use');
@@ -1203,6 +1209,8 @@ function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false } 
       Object.values(room.players)
         .filter(player => areEnemies(endingPlayer, player) && !player.ascended && player.hp > 0 && player.assistant)
         .forEach(player => runAssistantAction(room, player, room.name, { nextTurnId, deferAttack: true }));
+      checkDeath(room);
+      if (room.state === 'ended' || room.attackContext) return;
       if (startNextFollowUpAttack(room, room.name)) return;
     }
    flushReplacementDraws(room);
@@ -1226,52 +1234,6 @@ function createActionEvent(attacker, defender, card, outcome) {
   };
 }
 
-/* Previous direct-damage death resolution kept temporarily for source comparison.
-function checkDeathLegacy(room) {
-   const players = Object.values(room.players);
-   players.forEach(player => {
-      if (player.hp <= 0 && !player.ascended) {
-         const reviveIndex = player.hand.findIndex(card => card.reviveHp > 0);
-         if (reviveIndex >= 0) {
-           const [reviver] = player.hand.splice(reviveIndex, 1);
-           player.hp = reviver.reviveHp;
-           addSoundEvent(room, 'revive');
-           room.log.push(`${reviver.name} により ${player.name} はHP${player.hp}で復活した。`);
-           return;
-         }
-         const dyingAttackIndex = player.hand.findIndex(card => card.dyingAttack);
-         if (dyingAttackIndex >= 0) {
-           const [dyingCard] = player.hand.splice(dyingAttackIndex, 1);
-           addSoundEvent(room, 'dying_attack');
-           players.filter(target => target.id !== player.id && !target.ascended && target.hp > 0).forEach(target => {
-             if (Math.random() * 100 < dyingCard.dyingAttack.hitRate) {
-               target.hp = Math.max(0, target.hp - dyingCard.dyingAttack.attack);
-               room.log.push(`${player.name} の ${dyingCard.name} が ${target.name} に ${dyingCard.dyingAttack.attack} ダメージ！`);
-             }
-           });
-         }
-         player.ascended = true;
-         addSoundEvent(room, 'dead');
-         room.log.push(`${player.name} has ascended (died)!`);
-      }
-   });
-   const survivors = players.filter(player => !player.ascended && player.hp > 0);
-   if (room.state === 'playing' && players.length > 1 && survivors.length <= 1) {
-      room.state = 'ended';
-      room.phase = 'ended';
-      room.turn = null;
-      room.winnerId = survivors[0]?.id || null;
-      if (room.winnerId) {
-        addSoundEvent(room, 'game_win', { targetId: room.winnerId });
-        addSoundEvent(room, 'winner', { targetId: room.winnerId, delayMs: 500 });
-      } else {
-        addSoundEvent(room, 'game_draw');
-      }
-      room.log.push(survivors[0] ? `${survivors[0].name} wins!` : 'The battle ended in a draw.');
-   }
-}
-
-*/
 function checkDeath(room) {
   const players = Object.values(room.players);
   players.forEach(player => {

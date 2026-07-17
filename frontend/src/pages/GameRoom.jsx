@@ -166,7 +166,7 @@ export default function GameRoom() {
           {role === 'player' && <button className="btn btn-secondary" onClick={() => socket.emit('toggleReady', { roomName: id })}>
             {roomState?.players?.find(player => player.id === socketId)?.ready ? '準備を取り消す' : '準備完了'}
           </button>}
-          <label>
+          {role === 'player' && <label>
             チーム
             <select
               value={roomState?.players?.find(player => player.id === socketId)?.team || ''}
@@ -176,7 +176,7 @@ export default function GameRoom() {
               <option value="red">赤</option>
               <option value="blue">青</option>
             </select>
-          </label>
+          </label>}
           <div className="ready-status-list">
             {roomState?.players?.map(player => (
               <span key={player.id}>
@@ -225,7 +225,7 @@ export default function GameRoom() {
             <button className="btn" disabled={(roomState?.players?.length || 0) < 2} onClick={() => socket.emit('startGame', { roomName: id })}>対戦を開始</button>
           )}
         </div>
-        <RoomBaseEditor socket={socket} roomName={id} editorState={baseEditorState} myId={socketId} />
+        {role === 'player' && <RoomBaseEditor socket={socket} roomName={id} editorState={baseEditorState} myId={socketId} />}
         {renderChat()}
       </div>
     );
@@ -654,10 +654,15 @@ export default function GameRoom() {
             <h2>{gameState.winner ? '決着' : '引き分け'}</h2>
             <p>
               {gameState.winner
-                ? (gameState.winner.id === me.id ? 'あなたの勝利です！' : `${gameState.winner.name} の勝利です。`)
+                ? (gameState.winner.id === me.id || (gameState.winner.team && gameState.winner.team === me.team)
+                  ? 'あなたの勝利です！'
+                  : `${gameState.winner.name} の勝利です。`)
                 : '生存者なしで決着しました。'}
             </p>
-            <button className="btn" onClick={() => socket.emit('returnToLobby', { roomName: id })}>待機画面に戻る</button>
+            <button className="btn" onClick={() => gameState.spectator
+              ? navigate('/')
+              : socket.emit('returnToLobby', { roomName: id })}
+            >{gameState.spectator ? 'トップへ戻る' : '待機画面に戻る'}</button>
           </div>
         </div>
       )}
