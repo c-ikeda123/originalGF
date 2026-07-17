@@ -379,6 +379,16 @@ export default function GameRoom() {
     return getDreamDisplayedCard(me.hand, index, hasDream) || card;
   };
 
+  const renderSelectedCard = (index, className) => {
+    const realCard = me.hand[index];
+    if (!realCard) return null;
+    return (
+      <div key={realCard.instanceId} className={className}>
+        {renderFieldCard(getDisplayedCard(realCard, index))}
+      </div>
+    );
+  };
+
   const handlePlayCard = (cardIndex) => {
     if (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex)) return;
     const cardIndices = selectedCards.includes(cardIndex) ? selectedCards : [cardIndex];
@@ -610,9 +620,7 @@ export default function GameRoom() {
               <section className="gf-field-group attacker">
                 <div className="gf-field-owner">{playerNameById(field.attackerId) || '---'}</div>
                 {renderFieldCard(field.attackCard)}
-                {phase !== 'defense' && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
-                  <div key={card.instanceId} className="pending-defense-card">{renderFieldCard(card)}</div>
-                ))}
+                {phase !== 'defense' && selectedCards.map(index => renderSelectedCard(index, 'pending-defense-card'))}
               </section>
             )}
             {field?.defenderId && (
@@ -622,16 +630,14 @@ export default function GameRoom() {
               <section className="gf-field-group defender">
                 <div className="gf-field-owner">{playerNameById(field.defenderId) || '---'}</div>
                 {(field.defenseCards || []).map((card, index) => <div key={index}>{renderFieldCard(card)}</div>)}
-                {phase === 'defense' && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
-                  <div key={card.instanceId} className="pending-defense-card">{renderFieldCard(card)}</div>
-                ))}
+                {phase === 'defense' && selectedCards.map(index => renderSelectedCard(index, 'pending-defense-card'))}
               </section>
             )}
             {!field && selectedCards.length > 0 && (
               <div className="selected-field-preview">
                 <div className="selected-field-title">選択中 ({selectedCards.length})</div>
                 <div className="selected-field-cards">
-                  {selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => <div key={card.instanceId}>{renderFieldCard(card)}</div>)}
+                  {selectedCards.map(index => renderSelectedCard(index))}
                 </div>
               </div>
             )}
