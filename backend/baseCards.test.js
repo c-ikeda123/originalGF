@@ -80,6 +80,12 @@ test('戦闘アニメーションに使うFlash版画像がすべて存在する
   }
 });
 
+test('神器の購入では被害側に発作演出を出さない', () => {
+  const serverSource = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
+  assert.equal((serverSource.match(/addSoundEvent\(room, 'seizure'/g) || []).length, 1);
+  assert.equal((serverSource.match(/addEffectEvent\(room, 'seizure'/g) || []).length, 1);
+});
+
 test('ホバー音を除くFlash版効果音がゲームイベントまたは画面操作に割り当てられている', () => {
   const implementation = [
     fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8'),

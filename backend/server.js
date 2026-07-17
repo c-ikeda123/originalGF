@@ -819,8 +819,7 @@ io.on('connection', (socket) => {
       buyer.money -= price;
       increasePlayerStat(room, seller, 'money', price, { sound: false });
       buyer.hand.push(seller.hand.splice(index, 1)[0]);
-      addSoundEvent(room, 'seizure');
-      addEffectEvent(room, 'seizure', seller, 1);
+      addSoundEvent(room, 'exchange');
       room.log.push(`${buyer.name} bought ${offered.name} for money ${price}.`);
     } else if (accept && offered && buyer.money < price) {
       socket.emit('errorMsg', 'Not enough money.');
@@ -1275,8 +1274,7 @@ function runAssistantAction(room, player, roomName, { nextTurnId = player.id, de
         player.money -= price;
         enemy.money = Math.min(99, enemy.money + price);
         player.hand.push(enemy.hand.splice(enemy.hand.indexOf(offered), 1)[0]);
-        addSoundEvent(room, 'seizure');
-        addEffectEvent(room, 'seizure', enemy, 1);
+        addSoundEvent(room, 'exchange');
       } else {
         addSoundEvent(room, 'no_change');
         addEffectEvent(room, 'no_change', player);
