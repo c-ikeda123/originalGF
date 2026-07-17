@@ -486,6 +486,15 @@ h1, h2, h3, h4, h5, h6 {
   gap: 8px;
 }
 
+.room-card-form {
+  min-height: 0;
+  max-height: 65vh;
+  padding-right: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
 .lock-status,
 .autosave-status {
   color: var(--gf-green);
