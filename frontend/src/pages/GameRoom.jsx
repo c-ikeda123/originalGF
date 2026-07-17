@@ -237,6 +237,10 @@ export default function GameRoom() {
     return () => clearInterval(timer);
   }, [gameState?.turnDeadline]);
 
+  useEffect(() => {
+    setSelectedCards([]);
+  }, [gameState?.turn, gameState?.phase]);
+
   const myTeam = gameState?.me?.team
     || roomState?.players?.find(player => player.id === socketId)?.team;
   const submitChat = event => {
@@ -359,11 +363,8 @@ export default function GameRoom() {
     if (!isMyTurn || !card) return false;
     if (phase === 'main') return !['armor', 'ring', 'defense_item'].includes(card.type);
     if (phase === 'defense') {
-      if (me.ailments.includes('flash') && selectedCards.length > 0) return false;
-      return (card.defense || 0) > 0
-        || Boolean(card.defenseEffect)
-        || Boolean(card.reactiveEffect)
-        || ['ring', 'defense_item', 'accessory'].includes(card.type);
+      return (gameState.usableDefenseInstanceIds || []).includes(card.instanceId)
+        || (gameState.selectableDefenseSupportInstanceIds || []).includes(card.instanceId);
     }
     return false;
   };
@@ -414,7 +415,7 @@ export default function GameRoom() {
          key={realCard.instanceId} 
          className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${usable ? '' : 'disabled'}`}
          aria-disabled={!usable}
-         title={usable ? realCard.name : (phase === 'main' ? 'この神器は防御時に使用します' : '現在は使用できません')}
+         title={usable ? realCard.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません')}
          onClick={() => toggleCard(index)}
          onDoubleClick={() => usable && handlePlayCard(index)}
          onMouseEnter={() => setHoveredCardIndex(index)}
@@ -470,6 +471,10 @@ export default function GameRoom() {
       />
     ));
   };
+
+  const hasSelectedDefense = selectedCards.some(index => (
+    gameState.usableDefenseInstanceIds || []
+  ).includes(me.hand[index]?.instanceId));
 
   const renderAssistant = (assistant) => assistant && (
     <div className="assistant-status">
@@ -663,7 +668,7 @@ export default function GameRoom() {
                  className="btn btn-secondary"
                  disabled={!isMyTurn
                    || !['main', 'defense'].includes(phase)
-                   || (phase === 'defense' && !((miracle.defense || 0) > 0 || miracle.defenseEffect || miracle.reactiveEffect))
+                   || (phase === 'defense' && !(gameState.usableDefenseMiracleIndices || []).includes(index))
                    || (me.mp < (miracle.costMp || 0) && !selectedCards.some(cardIndex => me.hand[cardIndex]?.supportEffect === 'magic_free'))}
                  onClick={() => {
                    socket.emit('castMiracle', { roomName: id, miracleIndex: index, cardIndices: selectedCards, targetId: opponent?.id });
@@ -676,7 +681,7 @@ export default function GameRoom() {
            </div>
          )}
           <div className="gf-hand-actions">
-            {isMyTurn && (phase === 'main' || phase === 'defense') && selectedCards.length > 0 && (
+            {isMyTurn && selectedCards.length > 0 && (phase === 'main' || (phase === 'defense' && hasSelectedDefense)) && (
                <button className="btn gf-command-button" aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>使用する</button>
             )}
             {isMyTurn && phase === 'defense' && selectedCards.length === 0 && (
