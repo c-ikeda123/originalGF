@@ -37,6 +37,7 @@ export default function GameRoom() {
   const [ascensionAnim, setAscensionAnim] = useState(null);
   const [effectAnim, setEffectAnim] = useState(null);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
+  const [hoveredMiracleIndex, setHoveredMiracleIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
   const [selectedTargetId, setSelectedTargetId] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
@@ -434,7 +435,10 @@ export default function GameRoom() {
          title={dreamAffected ? `${card.name}（夢の影響中）` : (usable ? card.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません'))}
          onClick={() => toggleCard(index)}
          onDoubleClick={() => usable && handlePlayCard(index)}
-         onMouseEnter={() => setHoveredCardIndex(index)}
+         onMouseEnter={() => {
+           setHoveredMiracleIndex(null);
+           setHoveredCardIndex(index);
+         }}
          onMouseLeave={() => setHoveredCardIndex(null)}
       >
          {card.imageUrl ? (
@@ -705,28 +709,44 @@ export default function GameRoom() {
               {renderFieldCard(getDisplayedCard(me.hand[hoveredCardIndex], hoveredCardIndex))}
             </div>
           )}
+          {hoveredMiracleIndex !== null && me.learnedMiracles?.[hoveredMiracleIndex] && (
+            <div className="hovered-card-detail" style={{ left: `${hoveredMiracleIndex * 83}px` }}>
+              {renderFieldCard(me.learnedMiracles[hoveredMiracleIndex])}
+            </div>
+          )}
           <div className="gf-hand-cards">{me.hand.map((card, index) => renderSquareCard(card, index))}</div>
-         {me.learnedMiracles?.length > 0 && (
-           <div className="learned-miracles">
-             <span>習得済み奇跡</span>
-             {me.learnedMiracles.map((miracle, index) => (
+          <div className="learned-miracles" aria-label="使用済み奇跡ストック">
+            {Array.from({ length: 6 }, (_, index) => {
+              const miracle = me.learnedMiracles?.[index];
+              if (!miracle) return <div key={`miracle-slot-${index}`} className="miracle-stock-slot empty" aria-hidden="true" />;
+              const disabled = !isMyTurn
+                || !['main', 'defense'].includes(phase)
+                || (phase === 'defense' && !(gameState.usableDefenseMiracleIndices || []).includes(index))
+                || (me.mp < (miracle.costMp || 0) && !selectedCards.some(cardIndex => me.hand[cardIndex]?.supportEffect === 'magic_free'));
+              return (
                <button
+                  type="button"
                  key={`${miracle.id}-${index}`}
-                 className="btn btn-secondary"
-                 disabled={!isMyTurn
-                   || !['main', 'defense'].includes(phase)
-                   || (phase === 'defense' && !(gameState.usableDefenseMiracleIndices || []).includes(index))
-                   || (me.mp < (miracle.costMp || 0) && !selectedCards.some(cardIndex => me.hand[cardIndex]?.supportEffect === 'magic_free'))}
-                 onClick={() => {
-                   socket.emit('castMiracle', { roomName: id, miracleIndex: index, cardIndices: selectedCards, targetId: opponent?.id });
-                   setSelectedCards([]);
-                 }}
-               >
-                 {miracle.name}（MP{miracle.costMp || 0}）
-               </button>
-             ))}
-           </div>
-         )}
+                  className="miracle-stock-slot"
+                  disabled={disabled}
+                  aria-label={`${miracle.name}を使用（MP${miracle.costMp || 0}）`}
+                  title={`${miracle.name}（MP${miracle.costMp || 0}）`}
+                  onMouseEnter={() => {
+                    setHoveredCardIndex(null);
+                    setHoveredMiracleIndex(index);
+                  }}
+                  onMouseLeave={() => setHoveredMiracleIndex(null)}
+                  onClick={() => {
+                    socket.emit('castMiracle', { roomName: id, miracleIndex: index, cardIndices: selectedCards, targetId: opponent?.id });
+                    setSelectedCards([]);
+                  }}
+                >
+                  <img src={miracle.imageUrl} alt="" />
+                  <span>MP{miracle.costMp || 0}</span>
+                </button>
+              );
+            })}
+          </div>
           <div className="gf-hand-actions">
             {isMyTurn && selectedCards.length > 0 && (phase === 'main' || (phase === 'defense' && hasSelectedDefense)) && (
                <button className="btn gf-command-button" aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>使用する</button>

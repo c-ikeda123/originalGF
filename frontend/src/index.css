@@ -1368,18 +1368,57 @@ h1, h2, h3, h4, h5, h6 {
 
 .gf-hand-dock .learned-miracles {
   position: absolute;
+  top: 204px;
   left: 3px;
-  bottom: 2px;
-  justify-content: flex-start;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(6, 80px);
+  gap: 3px;
   margin: 0;
-  font-size: 9px;
 }
 
-.gf-hand-dock .learned-miracles .btn {
-  padding: 1px 4px;
-  border-width: 1px;
-  border-radius: 0;
-  font-size: 9px;
+.gf-hand-dock .miracle-stock-slot {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  box-sizing: border-box;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.gf-hand-dock .miracle-stock-slot.empty {
+  pointer-events: none;
+}
+
+.gf-hand-dock .miracle-stock-slot img {
+  display: block;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+}
+
+.gf-hand-dock .miracle-stock-slot span {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  padding: 0 3px;
+  color: #f5f0ff;
+  border: 1px solid #d8c8ff;
+  background: #7b5ce1;
+  font: bold 10px/14px Arial, sans-serif;
+}
+
+.gf-hand-dock .miracle-stock-slot:hover:not(:disabled) {
+  outline: 2px solid #fff06d;
+  outline-offset: -2px;
+}
+
+.gf-hand-dock .miracle-stock-slot:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.65) brightness(0.68);
 }
 
 .gf-game-screen .gf-card-field {
