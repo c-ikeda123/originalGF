@@ -11,6 +11,7 @@ const {
   createAttackQueue,
   createCounterAttackCard,
   createDyingAttackCard,
+  createInitialHand,
   createMoonAssistantAttack,
   getAssistantAction,
   getEarthArtifactMode,
@@ -1318,13 +1319,7 @@ function startGame(roomName) {
     player.pendingDamage = null;
     player.pendingDraws = 0;
     
-    // Draw initial 9 cards from the shared room deck
-    player.hand = [];
-    for (let i = 0; i < 9; i++) {
-       if (room.deck.length > 0) {
-          player.hand.push(drawArtifact(room));
-       }
-    }
+    player.hand = createInitialHand(room.deck).map(withInstanceId);
   });
   
   // Decide starting player randomly

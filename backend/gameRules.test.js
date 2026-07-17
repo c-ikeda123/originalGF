@@ -8,6 +8,7 @@ const {
   createAttackQueue,
   createCounterAttackCard,
   createDyingAttackCard,
+  createInitialHand,
   createMoonAssistantAttack,
   cureAilments,
   getAssistantAction,
@@ -22,6 +23,20 @@ const {
   shouldAssistantLeave,
   validateCardPlay,
 } = require('./gameRules');
+
+test('初期手札は両替と売るを先頭に固定して9枚配る', () => {
+  const deck = [
+    { id: 'random_1' },
+    { id: 'gf_trade_236', name: '売る' },
+    { id: 'random_2' },
+    { id: 'gf_trade_235', name: '両替' },
+  ];
+  const hand = createInitialHand(deck, () => 0);
+
+  assert.equal(hand.length, 9);
+  assert.deepEqual(hand.slice(0, 2).map(card => card.id), ['gf_trade_235', 'gf_trade_236']);
+  assert.deepEqual(hand.slice(2).map(card => card.id), Array(7).fill('random_1'));
+});
 
 test('火星と土星の指輪は通常の防御可能な反撃を生成する', () => {
   const fire = createCounterAttackCard('counter_damage_all', 8, { id: 'fire-ring', name: '火星の指輪' });

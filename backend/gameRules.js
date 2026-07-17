@@ -337,6 +337,15 @@ function processEndOfTurnAilments(player, random = Math.random) {
   return result;
 }
 
+function createInitialHand(deck, random = Math.random) {
+  const fixedIds = ['gf_trade_235', 'gf_trade_236'];
+  const hand = fixedIds.map(id => deck.find(card => card.id === id)).filter(Boolean);
+  while (hand.length < 9 && deck.length > 0) {
+    hand.push(deck[Math.floor(random() * deck.length)]);
+  }
+  return hand;
+}
+
 module.exports = {
   applyAilment,
   areEnemies,
@@ -345,6 +354,7 @@ module.exports = {
   createAttackQueue,
   createCounterAttackCard,
   createDyingAttackCard,
+  createInitialHand,
   createMoonAssistantAttack,
   cureAilments,
   getAssistantAction,
