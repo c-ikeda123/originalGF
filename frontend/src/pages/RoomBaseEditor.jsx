@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import BaseCardEffectEditor from '../components/BaseCardEffectEditor';
 import { GF_BASE_CARDS } from '../data/baseCards';
+import { hasEffectChanges, normalizeBaseCardEdit } from '../data/baseCardEdits';
 
 const labels = {
   all: 'すべて', weapon: '武器', armor: '防具', ring: '指輪', defense_item: '防御雑貨',
@@ -38,12 +40,12 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
 
   useEffect(() => {
     if (!draft || !selectedId || !ownsLock) return;
-    const savedCard = { ...selectedBase, ...(edits[selectedId] || {}) };
-    if (['name', 'description', 'imageUrl'].every(key => (draft[key] || '') === (savedCard[key] || ''))) return;
+    const patch = normalizeBaseCardEdit(selectedBase, draft);
+    if (JSON.stringify(patch) === JSON.stringify(edits[selectedId] || {})) return;
     socket.emit('updateRoomBaseCard', {
       roomName,
       cardId: selectedId,
-      patch: { name: draft.name, description: draft.description, imageUrl: draft.imageUrl || '' },
+      patch,
     });
   }, [draft, edits, ownsLock, roomName, selectedBase, selectedId, socket]);
 
@@ -127,7 +129,11 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
                 <span className="room-card-summary">
                   <span className="card-list-name">
                     {edits[card.id]?.name || card.name}
-                    {edits[card.id] && <span className="edited-card-badge">編集済み</span>}
+                    {edits[card.id] && (
+                      <span className={hasEffectChanges(edits[card.id]) ? 'effect-edit-badge' : 'edited-card-badge'}>
+                        {hasEffectChanges(edits[card.id]) ? '編集済み（効果変更有）' : '編集済み'}
+                      </span>
+                    )}
                   </span>
                   <small>{lock ? `${lock.ownerName} が編集中` : labels[card.category]}</small>
                 </span>
@@ -139,6 +145,7 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
           {draft ? (
             <>
               <div className="lock-status">{ownsLock ? '編集中・変更は自動保存されます' : locks[selectedId] ? `${locks[selectedId].ownerName} が編集中です` : '編集権を取得中…'}</div>
+              {hasEffectChanges(edits[selectedId]) && <div className="effect-change-banner">編集済み（効果変更有）</div>}
               <label className="room-name-field">
                 <span>名前</span>
                 <input className="input-field" value={draft.name} disabled={!ownsLock} onChange={event => setDraft(card => ({ ...card, name: event.target.value }))} />
@@ -150,6 +157,12 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
                 {draft.imageUrl ? <img src={draft.imageUrl} alt={`${draft.name} preview`} /> : <span>画像未設定</span>}
               </div>
               <label>説明<textarea className="input-field" rows="4" value={draft.description || ''} disabled={!ownsLock} onChange={event => setDraft(card => ({ ...card, description: event.target.value }))} /></label>
+              <BaseCardEffectEditor
+                baseCard={selectedBase}
+                card={draft}
+                disabled={!ownsLock}
+                onChange={setDraft}
+              />
             </>
           ) : <p>左からカードを選択してください。</p>}
           <div className="room-code-panel">

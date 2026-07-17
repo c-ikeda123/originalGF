@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import BaseCardEffectEditor from '../components/BaseCardEffectEditor';
 import { GF_BASE_CARDS, getBaseCardsWithEdits } from '../data/baseCards';
-import { normalizeBaseCardEdit, normalizeBaseCardEdits } from '../data/baseCardEdits';
+import { hasEffectChanges, normalizeBaseCardEdit, normalizeBaseCardEdits } from '../data/baseCardEdits';
 
 const CATEGORY_LABELS = {
   all: 'すべて', weapon: '武器', armor: '防具', ring: '指輪',
@@ -34,7 +35,8 @@ export default function BaseEditor() {
   const [dirty, setDirty] = useState(false);
   const [settingCode, setSettingCode] = useState('');
   const [codeMessage, setCodeMessage] = useState('');
-  const [editedIds, setEditedIds] = useState(() => new Set(Object.keys(getSavedEdits())));
+  const [savedEdits, setSavedEdits] = useState(getSavedEdits);
+  const editedIds = new Set(Object.keys(savedEdits));
 
   useEffect(() => {
     setCards(getBaseCardsWithEdits());
@@ -78,15 +80,11 @@ export default function BaseEditor() {
     if (!dirty || !currentCard) return;
     const edits = getSavedEdits();
     const baseCard = GF_BASE_CARDS.find(card => card.id === currentCard.id);
-    const normalized = normalizeBaseCardEdit(baseCard, {
-      name: currentCard.name,
-      imageUrl: currentCard.imageUrl,
-      description: currentCard.description
-    });
+    const normalized = normalizeBaseCardEdit(baseCard, currentCard);
     if (Object.keys(normalized).length > 0) edits[currentCard.id] = normalized;
     else delete edits[currentCard.id];
     localStorage.setItem('gf_base_cards_edits', JSON.stringify(edits));
-    setEditedIds(new Set(Object.keys(edits)));
+    setSavedEdits(edits);
     setCards(getBaseCardsWithEdits());
     setDirty(false);
   }, [currentCard, dirty]);
@@ -109,7 +107,7 @@ export default function BaseEditor() {
       if (!decoded || Array.isArray(decoded) || typeof decoded !== 'object') throw new Error('invalid');
       const edits = normalizeBaseCardEdits(GF_BASE_CARDS, decoded);
       localStorage.setItem('gf_base_cards_edits', JSON.stringify(edits));
-      setEditedIds(new Set(Object.keys(edits)));
+      setSavedEdits(edits);
       const nextCards = getBaseCardsWithEdits();
       setCards(nextCards);
       setCurrentCard(current => current ? nextCards.find(card => card.id === current.id) || null : null);
@@ -146,7 +144,11 @@ export default function BaseEditor() {
               >
                 <span className="card-list-name">
                   {card.name}
-                  {editedIds.has(card.id) && <span className="edited-card-badge">編集済み</span>}
+                  {editedIds.has(card.id) && (
+                    <span className={hasEffectChanges(savedEdits[card.id]) ? 'effect-edit-badge' : 'edited-card-badge'}>
+                      {hasEffectChanges(savedEdits[card.id]) ? '編集済み（効果変更有）' : '編集済み'}
+                    </span>
+                  )}
                 </span>
                 <span style={{fontSize: '0.7rem', color: '#94a3b8'}}>
                   {CATEGORY_LABELS[card.category] || card.type}{card.copies > 0 ? ` ×${card.copies}` : ''}
@@ -162,8 +164,9 @@ export default function BaseEditor() {
               <div className="glass-panel form-panel">
                 <h3>Edit Details</h3>
                 <p style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem'}}>
-                  ※ 基礎カードは「名前」「画像」「説明文」のみ編集可能です。能力値は本家準拠で固定されています。
+                  ※ 名前・画像・説明文・カード効果を編集できます。変更は自動保存されます。
                 </p>
+                {hasEffectChanges(savedEdits[currentCard.id]) && <div className="effect-change-banner">編集済み（効果変更有）</div>}
                 <div className="form-grid">
                   <div className="form-group-sm">
                     <label>Name (名前)</label>
@@ -184,6 +187,12 @@ export default function BaseEditor() {
                     <textarea name="description" className="input-field" rows="2" value={currentCard.description || ''} onChange={handleChange}></textarea>
                   </div>
                 </div>
+
+                <BaseCardEffectEditor
+                  baseCard={GF_BASE_CARDS.find(card => card.id === currentCard.id)}
+                  card={currentCard}
+                  onChange={card => { setCurrentCard(card); setDirty(true); }}
+                />
 
                 <div className="autosave-status">{dirty ? '自動保存中…' : '変更は自動保存されます'}</div>
 
