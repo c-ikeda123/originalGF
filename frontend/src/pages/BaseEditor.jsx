@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getBaseCardsWithEdits } from '../data/baseCards';
+import { GF_BASE_CARDS, getBaseCardsWithEdits } from '../data/baseCards';
+import { normalizeBaseCardEdit, normalizeBaseCardEdits } from '../data/baseCardEdits';
 
 const CATEGORY_LABELS = {
   all: 'すべて', weapon: '武器', armor: '防具', ring: '指輪',
@@ -20,7 +21,10 @@ const decodeSettingCode = (code) => {
   return JSON.parse(new TextDecoder().decode(bytes));
 };
 
-const getSavedEdits = () => JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}');
+const getSavedEdits = () => normalizeBaseCardEdits(
+  GF_BASE_CARDS,
+  JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}'),
+);
 
 export default function BaseEditor() {
   const navigate = useNavigate();
@@ -73,11 +77,14 @@ export default function BaseEditor() {
   useEffect(() => {
     if (!dirty || !currentCard) return;
     const edits = getSavedEdits();
-    edits[currentCard.id] = {
+    const baseCard = GF_BASE_CARDS.find(card => card.id === currentCard.id);
+    const normalized = normalizeBaseCardEdit(baseCard, {
       name: currentCard.name,
       imageUrl: currentCard.imageUrl,
       description: currentCard.description
-    };
+    });
+    if (Object.keys(normalized).length > 0) edits[currentCard.id] = normalized;
+    else delete edits[currentCard.id];
     localStorage.setItem('gf_base_cards_edits', JSON.stringify(edits));
     setEditedIds(new Set(Object.keys(edits)));
     setCards(getBaseCardsWithEdits());
@@ -98,8 +105,9 @@ export default function BaseEditor() {
 
   const importSettingCode = () => {
     try {
-      const edits = decodeSettingCode(settingCode);
-      if (!edits || Array.isArray(edits) || typeof edits !== 'object') throw new Error('invalid');
+      const decoded = decodeSettingCode(settingCode);
+      if (!decoded || Array.isArray(decoded) || typeof decoded !== 'object') throw new Error('invalid');
+      const edits = normalizeBaseCardEdits(GF_BASE_CARDS, decoded);
       localStorage.setItem('gf_base_cards_edits', JSON.stringify(edits));
       setEditedIds(new Set(Object.keys(edits)));
       const nextCards = getBaseCardsWithEdits();

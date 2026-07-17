@@ -51,6 +51,7 @@ const io = new Server(server, {
 const PORT = process.env.PORT || 3001;
 const GF_BASE_CARDS = require('../shared/baseCards.json');
 const FLASH_SOUNDS = new Set(require('../shared/flashSounds.json'));
+const { normalizeBaseCardEdit, normalizeBaseCardEdits } = require('./baseCardEdits');
 
 // Stores active rooms
 // rooms[roomName] = { players: { socketId: { name, ready, ...gameState } }, state: 'waiting' | 'playing' }
@@ -112,7 +113,7 @@ io.on('connection', (socket) => {
         players: {},
         spectators: {},
         hostId: socket.id,
-        baseCardsEdits: { ...baseCardsEdits },
+        baseCardsEdits: normalizeBaseCardEdits(GF_BASE_CARDS, baseCardsEdits),
         editLocks: {},
         customCards: [...customCards],
         state: 'waiting', // waiting, playing, ended
@@ -284,7 +285,10 @@ io.on('connection', (socket) => {
     for (const key of ['name', 'description', 'imageUrl']) {
       if (typeof patch?.[key] === 'string') allowed[key] = patch[key];
     }
-    room.baseCardsEdits[cardId] = { ...(room.baseCardsEdits[cardId] || {}), ...allowed };
+    const baseCard = GF_BASE_CARDS.find(card => card.id === cardId);
+    const normalized = normalizeBaseCardEdit(baseCard, { ...(room.baseCardsEdits[cardId] || {}), ...allowed });
+    if (Object.keys(normalized).length > 0) room.baseCardsEdits[cardId] = normalized;
+    else delete room.baseCardsEdits[cardId];
     emitBaseEditorState(roomName);
   });
 
@@ -298,7 +302,10 @@ io.on('connection', (socket) => {
       for (const key of ['name', 'description', 'imageUrl']) {
         if (typeof patch?.[key] === 'string') allowed[key] = patch[key];
       }
-      room.baseCardsEdits[cardId] = { ...(room.baseCardsEdits[cardId] || {}), ...allowed };
+      const baseCard = GF_BASE_CARDS.find(card => card.id === cardId);
+      const normalized = normalizeBaseCardEdit(baseCard, { ...(room.baseCardsEdits[cardId] || {}), ...allowed });
+      if (Object.keys(normalized).length > 0) room.baseCardsEdits[cardId] = normalized;
+      else delete room.baseCardsEdits[cardId];
     }
     emitBaseEditorState(roomName);
   });

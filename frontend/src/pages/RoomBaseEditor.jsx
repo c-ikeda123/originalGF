@@ -38,12 +38,14 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
 
   useEffect(() => {
     if (!draft || !selectedId || !ownsLock) return;
+    const savedCard = { ...selectedBase, ...(edits[selectedId] || {}) };
+    if (['name', 'description', 'imageUrl'].every(key => (draft[key] || '') === (savedCard[key] || ''))) return;
     socket.emit('updateRoomBaseCard', {
       roomName,
       cardId: selectedId,
       patch: { name: draft.name, description: draft.description, imageUrl: draft.imageUrl || '' },
     });
-  }, [draft, ownsLock, roomName, selectedId, socket]);
+  }, [draft, edits, ownsLock, roomName, selectedBase, selectedId, socket]);
 
   useEffect(() => {
     if (selectedBase && !ownsLock) setDraft({ ...selectedBase, ...(edits[selectedId] || {}) });
