@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import { Link } from 'react-router-dom';
 import { ArrowLeft, Plus, Trash2 } from 'lucide-react';
+import SquareImageCropper from '../components/SquareImageCropper';
 import '../index.css';
 import './editor.css'; // Add local CSS for editor layout
 
@@ -99,48 +100,6 @@ export default function Editor() {
     setDirty(true);
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        // Resize and compress the image to save localStorage space (160x240 ratio)
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 320;
-        const MAX_HEIGHT = 480;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > MAX_WIDTH) {
-            height *= MAX_WIDTH / width;
-            width = MAX_WIDTH;
-          }
-        } else {
-          if (height > MAX_HEIGHT) {
-            width *= MAX_HEIGHT / height;
-            height = MAX_HEIGHT;
-          }
-        }
-        
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        
-        // Convert to base64 jpeg
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-        setCurrentCard(prev => ({ ...prev, imageUrl: compressedBase64 }));
-        setDirty(true);
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
-
   return (
     <div className="editor-container">
       <div className="header-nav">
@@ -210,12 +169,12 @@ export default function Editor() {
               <div className="form-group-sm" style={{ gridColumn: '1 / -1' }}>
                 <label>Image</label>
                 <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                   <input type="file" accept="image/*" className="input-field" onChange={handleImageUpload} style={{ flex: 1, padding: '0.5rem' }} />
+                   <SquareImageCropper onCrop={imageUrl => { setCurrentCard(prev => ({ ...prev, imageUrl })); setDirty(true); }} />
                    <span style={{color: 'var(--text-muted)'}}>OR</span>
                    <input type="text" name="imageUrl" className="input-field" placeholder="URL (https://...)" value={currentCard.imageUrl || ''} onChange={handleChange} style={{ flex: 1 }} />
                 </div>
                 <div style={{fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px'}}>
-                   アップロードした画像は自動で圧縮されて保存されます。
+                   アップロードした画像は正方形にトリミングし、自動で圧縮して保存します。
                 </div>
               </div>
 

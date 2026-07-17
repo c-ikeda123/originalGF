@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import BaseCardEffectEditor from '../components/BaseCardEffectEditor';
+import SquareImageCropper from '../components/SquareImageCropper';
 import { GF_BASE_CARDS } from '../data/baseCards';
 import { hasEffectChanges, normalizeBaseCardEdit } from '../data/baseCardEdits';
 
@@ -81,25 +82,6 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
     }
   };
 
-  const uploadImage = event => {
-    const file = event.target.files?.[0];
-    if (!file || !ownsLock) return;
-    const reader = new FileReader();
-    reader.onload = loadEvent => {
-      const image = new Image();
-      image.onload = () => {
-        const scale = Math.min(1, 320 / image.width, 480 / image.height);
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(image.width * scale);
-        canvas.height = Math.round(image.height * scale);
-        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-        setDraft(card => ({ ...card, imageUrl: canvas.toDataURL('image/jpeg', 0.7) }));
-      };
-      image.src = loadEvent.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
-
   return (
     <div className="room-base-editor glass-panel">
       <div className="room-editor-toolbar">
@@ -152,7 +134,7 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
                 {edits[selectedId] && <span className="original-card-name">元の名前: {selectedBase.name}</span>}
               </label>
               <label>画像URL<input className="input-field" value={draft.imageUrl || ''} disabled={!ownsLock} onChange={event => setDraft(card => ({ ...card, imageUrl: event.target.value }))} /></label>
-              <label>画像ファイル<input className="input-field" type="file" accept="image/*" disabled={!ownsLock} onChange={uploadImage} /></label>
+              <div className="room-image-file-field"><span>画像ファイル</span><SquareImageCropper disabled={!ownsLock} onCrop={imageUrl => setDraft(card => ({ ...card, imageUrl }))} /></div>
               <div className="room-card-image-preview">
                 {draft.imageUrl ? <img src={draft.imageUrl} alt={`${draft.name} preview`} /> : <span>画像未設定</span>}
               </div>

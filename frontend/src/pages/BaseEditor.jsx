@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import BaseCardEffectEditor from '../components/BaseCardEffectEditor';
+import SquareImageCropper from '../components/SquareImageCropper';
 import { GF_BASE_CARDS, getBaseCardsWithEdits } from '../data/baseCards';
 import { hasEffectChanges, normalizeBaseCardEdit, normalizeBaseCardEdits } from '../data/baseCardEdits';
 
@@ -46,34 +47,6 @@ export default function BaseEditor() {
     const { name, value } = e.target;
     setCurrentCard(prev => ({ ...prev, [name]: value }));
     setDirty(true);
-  };
-
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 320;
-        const MAX_HEIGHT = 480;
-        let width = img.width;
-        let height = img.height;
-        if (width > height) {
-          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-        } else {
-          if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-        }
-        canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        setCurrentCard(prev => ({ ...prev, imageUrl: canvas.toDataURL('image/jpeg', 0.7) }));
-        setDirty(true);
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
   };
 
   useEffect(() => {
@@ -176,7 +149,7 @@ export default function BaseEditor() {
                   <div className="form-group-sm" style={{ gridColumn: '1 / -1' }}>
                     <label>Image (画像)</label>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                       <input type="file" accept="image/*" className="input-field" onChange={handleImageUpload} style={{ flex: 1, padding: '0.5rem' }} />
+                       <SquareImageCropper onCrop={imageUrl => { setCurrentCard(prev => ({ ...prev, imageUrl })); setDirty(true); }} />
                        <span style={{color: 'var(--text-muted)'}}>OR</span>
                        <input type="text" name="imageUrl" className="input-field" placeholder="URL (https://...)" value={currentCard.imageUrl || ''} onChange={handleChange} style={{ flex: 1 }} />
                     </div>
