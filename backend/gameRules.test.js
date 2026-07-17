@@ -5,6 +5,7 @@ const {
   areEnemies,
   combineAttackCards,
   canDefendAttribute,
+  clearFieldIfCurrent,
   createAttackQueue,
   createCounterAttackCard,
   createDyingAttackCard,
@@ -24,6 +25,16 @@ const {
   shouldAssistantLeave,
   validateCardPlay,
 } = require('./gameRules');
+
+test('古い盤面の消去予約は新しい敵攻撃を消さない', () => {
+  const oldField = { attackCard: { name: '前の行動' } };
+  const newField = { attackCard: { name: '敵の攻撃' }, defenderId: 'player' };
+  const room = { field: newField };
+  assert.equal(clearFieldIfCurrent(room, oldField), false);
+  assert.equal(room.field, newField);
+  assert.equal(clearFieldIfCurrent(room, newField), true);
+  assert.equal(room.field, null);
+});
 
 test('冥攻撃は通常ダメージ後の残りHPを追加ダメージにする', () => {
   assert.deepEqual(resolveDamageSequence(20, 6, true), {

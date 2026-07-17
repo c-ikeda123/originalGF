@@ -357,11 +357,18 @@ function resolveDamageSequence(currentHp, damage, isDarkAttack = false) {
   };
 }
 
+function clearFieldIfCurrent(room, scheduledField) {
+  if (!room || !scheduledField || room.field !== scheduledField) return false;
+  room.field = null;
+  return true;
+}
+
 module.exports = {
   applyAilment,
   areEnemies,
   combineAttackCards,
   canDefendAttribute,
+  clearFieldIfCurrent,
   createAttackQueue,
   createCounterAttackCard,
   createDyingAttackCard,

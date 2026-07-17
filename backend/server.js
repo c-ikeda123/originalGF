@@ -8,6 +8,7 @@ const {
   areEnemies,
   combineAttackCards,
   cureAilments,
+  clearFieldIfCurrent,
   createAttackQueue,
   createCounterAttackCard,
   createDyingAttackCard,
@@ -956,10 +957,12 @@ function applyDamageAndClearField(room, player, amount, roomName) {
 }
 
 function clearFieldLater(roomName) {
+  const scheduledField = rooms[roomName]?.field;
+  if (!scheduledField) return;
   setTimeout(() => {
     const room = rooms[roomName];
     if (!room || room.state === 'waiting') return;
-    room.field = null;
+    if (!clearFieldIfCurrent(room, scheduledField)) return;
     emitGameState(roomName);
   }, 2000);
 }
