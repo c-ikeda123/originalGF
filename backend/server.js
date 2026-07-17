@@ -406,20 +406,28 @@ io.on('connection', (socket) => {
          pDamage.defensesUsed = (pDamage.defensesUsed || 0) + cards.length;
          room.field.defenseCards.push(combinedCard);
          if (resolution.action === 'reflect' || resolution.action === 'flick') {
-           const candidates = Object.values(room.players).filter(candidate => candidate.id !== player.id && !candidate.ascended && candidate.hp > 0);
+           const alivePlayers = Object.values(room.players).filter(candidate => !candidate.ascended && candidate.hp > 0);
            const target = resolution.action === 'reflect'
              ? room.players[pDamage.attackerId]
-             : candidates[Math.floor(Math.random() * candidates.length)];
+             : alivePlayers[Math.floor(Math.random() * alivePlayers.length)];
            player.pendingDamage = null;
            if (!target) {
              player.pendingDamage = pDamage;
              applyDamageAndClearField(room, player, 0, roomName);
            } else {
-             target.pendingDamage = { ...pDamage, amount: resolution.amount };
+             target.pendingDamage = {
+               ...pDamage,
+               amount: resolution.amount,
+               attackerId: player.id,
+               source: player.name,
+               defensesUsed: 0,
+             };
              room.turn = target.id;
+             room.field.attackerId = player.id;
              room.field.defenderId = target.id;
              room.field.defenseCards = [];
              room.log.push(`${combinedCard.name} が攻撃を${resolution.action === 'reflect' ? 'はね返した' : '弾き飛ばした'}！`);
+             if (target.id === player.id) applyDamageAndClearField(room, target, resolution.amount, roomName);
            }
          } else if (resolution.action === 'block') {
            room.log.push(`${combinedCard.name} が攻撃を完全に止めた！`);
@@ -570,38 +578,39 @@ io.on('connection', (socket) => {
 function applyDamageAndClearField(room, player, amount, roomName) {
    const pendingDamage = player.pendingDamage;
    const isDarkAttack = pendingDamage?.attribute === 'dark' && amount > 0;
-   let actualDamage = isDarkAttack ? 999 : Math.max(0, amount);
-   if (actualDamage > 0 && player.assistant?.hp > 0) {
-     const absorbed = Math.min(actualDamage, player.assistant.hp);
+   const resolvedDamage = Math.max(0, amount);
+   let hpDamage = isDarkAttack ? 999 : resolvedDamage;
+   if (hpDamage > 0 && player.assistant?.hp > 0) {
+     const absorbed = Math.min(hpDamage, player.assistant.hp);
      player.assistant.hp -= absorbed;
-     actualDamage -= absorbed;
+     hpDamage -= absorbed;
      room.log.push(`${player.name} の守護神が ${absorbed} ダメージを引き受けた。`);
      if (player.assistant.hp <= 0) {
        room.log.push(`${player.name} の守護神は去った。`);
        player.assistant = null;
      }
    }
-   player.hp = Math.max(0, player.hp - actualDamage);
-   if (pendingDamage?.lethalOnDamage && actualDamage > 0) {
+   player.hp = Math.max(0, player.hp - hpDamage);
+   if (pendingDamage?.lethalOnDamage && resolvedDamage > 0) {
      player.hp = 0;
      room.log.push(`${player.name} は即死攻撃を受けた。`);
    }
-   room.log.push(isDarkAttack && actualDamage > 0
+   room.log.push(isDarkAttack && resolvedDamage > 0
      ? `${player.name} took dark damage and ascended!`
-     : `${player.name} took ${actualDamage} damage!`);
-   if (actualDamage > 0) {
+     : `${player.name} took ${hpDamage} damage!`);
+   if (resolvedDamage > 0) {
      for (const ailment of pendingDamage?.ailments || []) {
        const applied = applyAilment(player, ailment);
        room.log.push(`${player.name} は ${applied} になった。`);
      }
      const attacker = room.players[pendingDamage?.attackerId];
      if (attacker && pendingDamage?.absorbHp) {
-       attacker.hp = Math.min(99, attacker.hp + actualDamage);
-       room.log.push(`${attacker.name} はHPを ${actualDamage} 吸収した。`);
+       attacker.hp = Math.min(99, attacker.hp + resolvedDamage);
+       room.log.push(`${attacker.name} はHPを ${resolvedDamage} 吸収した。`);
      }
      if (attacker && pendingDamage?.selfDamage) {
-       attacker.hp -= actualDamage;
-       room.log.push(`${attacker.name} も ${actualDamage} ダメージを受けた。`);
+       attacker.hp -= resolvedDamage;
+       room.log.push(`${attacker.name} も ${resolvedDamage} ダメージを受けた。`);
      }
      for (const defenseCard of room.field?.defenseCards || []) {
        if (attacker && defenseCard.retaliateAilment) {
@@ -610,11 +619,11 @@ function applyDamageAndClearField(room, player, amount, roomName) {
        }
        for (const reactiveEffect of new Set([defenseCard.reactiveEffect, ...(defenseCard.reactiveEffects || [])].filter(Boolean))) {
          if (!attacker) continue;
-         if (reactiveEffect === 'counter_damage_all') attacker.hp -= actualDamage;
-         if (reactiveEffect === 'counter_double_damage') attacker.hp -= actualDamage * 2;
-         if (reactiveEffect === 'recover_double_mp') player.mp = Math.min(99, player.mp + actualDamage * 2);
+         if (reactiveEffect === 'counter_damage_all') attacker.hp -= resolvedDamage;
+         if (reactiveEffect === 'counter_double_damage') attacker.hp -= resolvedDamage * 2;
+         if (reactiveEffect === 'recover_double_mp') player.mp = Math.min(99, player.mp + resolvedDamage * 2);
          if (reactiveEffect === 'absorb_money') {
-           const amountToSteal = Math.min(actualDamage, attacker.money);
+           const amountToSteal = Math.min(resolvedDamage, attacker.money);
            attacker.money -= amountToSteal;
            player.money = Math.min(99, player.money + amountToSteal);
          }
@@ -624,7 +633,7 @@ function applyDamageAndClearField(room, player, amount, roomName) {
    player.pendingDamage = null;
    
    // Store last damage to trigger UI animation
-   room.lastDamage = { amount: actualDamage, targetId: player.id, timestamp: Date.now() };
+   room.lastDamage = { amount: hpDamage, targetId: player.id, timestamp: Date.now() };
 
    checkDeath(room);
    if (room.state === 'ended') {
@@ -708,7 +717,7 @@ function startNextQueuedAttack(room, roomName) {
       source: attacker.name,
       attackerId: attacker.id,
       sourceType: context.card.sourceType || context.card.type,
-      absorbHp: context.card.absorbHp,
+      absorbHp: context.card.absorbHp || context.card.attackEffect === 'absorb_hp',
       selfDamage: context.card.selfDamage,
       lethalOnDamage: context.card.lethalOnDamage,
       nextTurnId: context.nextTurnId,
