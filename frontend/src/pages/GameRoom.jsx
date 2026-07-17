@@ -531,16 +531,16 @@ export default function GameRoom() {
          )}
           <div className="gf-hand-actions">
             {isMyTurn && (phase === 'main' || phase === 'defense') && selectedCards.length > 0 && (
-               <button className="btn" onClick={() => handlePlayCard(selectedCards[0])}>選択カードを使用 ({selectedCards.length})</button>
+               <button className="btn gf-command-button" onClick={() => handlePlayCard(selectedCards[0])}>選択カードを使用 ({selectedCards.length})</button>
             )}
             {isMyTurn && phase === 'defense' && (
-               <button className="btn" onClick={() => socket.emit('finishDefense', { roomName: id })}>ダメージを受ける</button>
+               <button className="btn gf-command-button" onClick={() => socket.emit('finishDefense', { roomName: id })}>ダメージを受ける</button>
             )}
             {isMyTurn && phase === 'main' && (
-               <button className="btn" onClick={() => socket.emit('pray', { roomName: id })} title="手札に武器がない場合のみ可能">祈る (ドロー)</button>
+               <button className="btn gf-fixed-action pray-action" onClick={() => socket.emit('pray', { roomName: id })} title="手札に武器がない場合のみ可能">祈る (ドロー)</button>
             )}
             {isMyTurn && phase === 'main' && selectedCards.length > 0 && (
-               <button className="btn btn-secondary" onClick={() => { socket.emit('discardCards', { roomName: id, cardIndices: selectedCards }); setSelectedCards([]); }}>捨てる ({selectedCards.length})</button>
+               <button className="btn btn-secondary gf-fixed-action discard-action" onClick={() => { socket.emit('discardCards', { roomName: id, cardIndices: selectedCards }); setSelectedCards([]); }}>捨てる ({selectedCards.length})</button>
             )}
           </div>
         </section>

@@ -1408,21 +1408,60 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gf-hand-actions {
-  top: 174px;
-  left: 230px;
-  right: auto;
-  bottom: auto;
-  width: 250px;
-  gap: 2px;
+  position: static;
+  width: auto;
+  display: block;
 }
 
-.gf-hand-actions .btn {
+.gf-hand-actions .gf-command-button {
+  position: absolute;
+  top: -38px;
+  left: 230px;
+  width: 250px;
   min-height: 38px;
   padding: 0 4px;
   background: url('/godfield-flash/ui/game/command/ok_button_up.png') 0 0 / 250px 38px no-repeat;
   border: 0;
   box-shadow: none;
   font-size: 13px;
+}
+
+.gf-hand-actions .gf-fixed-action {
+  position: absolute;
+  top: 82px;
+  width: 80px;
+  height: 80px;
+  min-height: 0;
+  overflow: hidden;
+  color: transparent;
+  border: 0;
+  box-shadow: none;
+  background-position: center;
+  background-size: 80px 80px;
+  background-repeat: no-repeat;
+}
+
+.gf-hand-actions .pray-action {
+  right: 0;
+  background-image: url('/godfield-flash/cards/fixed/inoru.png');
+}
+
+.gf-hand-actions .discard-action {
+  right: 80px;
+  background-image: url('/godfield-flash/cards/fixed/suteru.png');
+}
+
+.gf-combat-totals {
+  right: auto;
+  bottom: 304px;
+  left: 0;
+  width: 667px;
+  height: 38px;
+  box-sizing: border-box;
+  align-items: center;
+  padding: 0 8px;
+  border: 0;
+  background: url('/godfield-flash/ui/game/time_gauge/cover.png') left bottom / 667px 20px no-repeat;
 }
 
 .gf-field-cards {
