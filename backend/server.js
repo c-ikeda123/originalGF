@@ -19,6 +19,7 @@ const {
   getWinningSide,
   isDefenseCard,
   processEndOfTurnAilments,
+  resolveDamageSequence,
   resolveDefenseCard,
   rollAttack,
   shouldAssistantAct,
@@ -785,7 +786,7 @@ function applyDamageAndClearField(room, player, amount, roomName) {
    const pendingDamage = player.pendingDamage;
    const isDarkAttack = pendingDamage?.attribute === 'dark' && amount > 0;
    const resolvedDamage = Math.max(0, amount);
-   let hpDamage = isDarkAttack ? 999 : resolvedDamage;
+   let hpDamage = resolvedDamage;
    if (hpDamage > 0 && player.assistant?.hp > 0) {
      const assistant = player.assistant;
      const absorbed = Math.min(hpDamage, assistant.hp);
@@ -802,16 +803,19 @@ function applyDamageAndClearField(room, player, amount, roomName) {
        player.assistant = null;
      }
    }
-   player.hp = Math.max(0, player.hp - hpDamage);
+   const damageSequence = resolveDamageSequence(player.hp, hpDamage, isDarkAttack);
+   player.hp = damageSequence.remainingHp;
    if (pendingDamage?.lethalOnDamage && resolvedDamage > 0) {
      player.hp = 0;
      room.log.push(`${player.name} は即死攻撃を受けた。`);
    }
-   room.log.push(isDarkAttack && resolvedDamage > 0
-     ? `${player.name} took dark damage and ascended!`
-     : `${player.name} took ${hpDamage} damage!`);
+   room.log.push(`${player.name} は ${damageSequence.primaryDamage} ダメージを受けた。`);
+   if (damageSequence.darkDamage > 0) {
+     room.log.push(`${player.name} は続けて残りHP分の冥ダメージ ${damageSequence.darkDamage} を受けた。`);
+   }
    if (resolvedDamage > 0) {
-     addSoundEvent(room, isDarkAttack ? 'damage_dark' : 'damage');
+     addSoundEvent(room, 'damage');
+     if (damageSequence.darkDamage > 0) addSoundEvent(room, 'damage_dark', { delayMs: 650 });
      for (const ailment of pendingDamage?.ailments || []) {
        const applied = applyAilment(player, ailment);
        addSoundEvent(room, ailment === 'dream' ? 'illusion_item' : 'disease');
@@ -862,7 +866,13 @@ function applyDamageAndClearField(room, player, amount, roomName) {
    player.pendingDamage = null;
    
    // Store last damage to trigger UI animation
-   room.lastDamage = { amount: hpDamage, targetId: player.id, isDark: isDarkAttack, timestamp: Date.now() };
+   room.lastDamage = {
+     amount: damageSequence.primaryDamage,
+     followUpAmount: damageSequence.darkDamage,
+     targetId: player.id,
+     isDark: isDarkAttack,
+     timestamp: Date.now(),
+   };
 
    checkDeath(room);
    if (room.state === 'ended') {

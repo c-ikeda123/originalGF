@@ -17,12 +17,34 @@ const {
   getWinningSide,
   isDefenseCard,
   processEndOfTurnAilments,
+  resolveDamageSequence,
   resolveDefenseCard,
   rollAttack,
   shouldAssistantAct,
   shouldAssistantLeave,
   validateCardPlay,
 } = require('./gameRules');
+
+test('冥攻撃は通常ダメージ後の残りHPを追加ダメージにする', () => {
+  assert.deepEqual(resolveDamageSequence(20, 6, true), {
+    primaryDamage: 6,
+    darkDamage: 14,
+    remainingHp: 0,
+  });
+});
+
+test('通常攻撃と致死済みの冥攻撃には余分な追加ダメージを出さない', () => {
+  assert.deepEqual(resolveDamageSequence(20, 6, false), {
+    primaryDamage: 6,
+    darkDamage: 0,
+    remainingHp: 14,
+  });
+  assert.deepEqual(resolveDamageSequence(5, 8, true), {
+    primaryDamage: 5,
+    darkDamage: 0,
+    remainingHp: 0,
+  });
+});
 
 test('初期手札は両替と売るを先頭に固定して9枚配る', () => {
   const deck = [

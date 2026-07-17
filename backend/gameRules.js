@@ -346,6 +346,17 @@ function createInitialHand(deck, random = Math.random) {
   return hand;
 }
 
+function resolveDamageSequence(currentHp, damage, isDarkAttack = false) {
+  const primaryDamage = Math.min(Math.max(0, currentHp), Math.max(0, damage));
+  const remainingHp = Math.max(0, currentHp - primaryDamage);
+  const darkDamage = isDarkAttack && damage > 0 ? remainingHp : 0;
+  return {
+    primaryDamage,
+    darkDamage,
+    remainingHp: Math.max(0, remainingHp - darkDamage),
+  };
+}
+
 module.exports = {
   applyAilment,
   areEnemies,
@@ -363,6 +374,7 @@ module.exports = {
   getWinningSide,
   isDefenseCard,
   processEndOfTurnAilments,
+  resolveDamageSequence,
   resolveDefenseCard,
   rollAttack,
   shouldAssistantAct,
