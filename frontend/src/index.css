@@ -2639,6 +2639,10 @@ h1, h2, h3, h4, h5, h6 {
   animation: combatAction 1.4s ease-out forwards;
 }
 
+.gf-hand-dock .miracle-stock-slot.stock-arriving {
+  opacity: 0;
+}
+
 /* Flash版と同様に、判定文字を対象参加者のステータス行へ結び付ける。 */
 .gf-game-screen .damage-overlay,
 .gf-game-screen .combat-action-overlay,
@@ -2769,6 +2773,30 @@ h1, h2, h3, h4, h5, h6 {
   58% { opacity: 1; transform: translateY(-4px) scale(1.04); }
   78% { transform: translateY(2px) scale(0.99); }
   100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.miracle-stock-flight {
+  position: absolute;
+  top: 35px;
+  left: 5px;
+  z-index: 145;
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+  animation: gfMiracleToStock 650ms cubic-bezier(0.25, 0.78, 0.28, 1) both;
+}
+
+.miracle-stock-flight img {
+  display: block;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+}
+
+@keyframes gfMiracleToStock {
+  0%, 18% { opacity: 1; transform: translate(0, 0) scale(1.08); }
+  82% { opacity: 1; transform: translate(calc(1px + var(--miracle-slot-index) * 83px), 633px) scale(1); }
+  100% { opacity: 0; transform: translate(calc(1px + var(--miracle-slot-index) * 83px), 633px) scale(0.94); }
 }
 
 .card-enter-active .gf-combat-totals span {

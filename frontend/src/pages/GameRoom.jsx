@@ -56,6 +56,7 @@ export default function GameRoom() {
   const [fieldClearing, setFieldClearing] = useState(false);
   const [visibleField, setVisibleField] = useState(null);
   const [handRefillAnim, setHandRefillAnim] = useState(null);
+  const [miracleStockAnim, setMiracleStockAnim] = useState(null);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [hoveredMiracleIndex, setHoveredMiracleIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
@@ -93,6 +94,7 @@ export default function GameRoom() {
       setTurnAnim(null);
       setFieldClearing(false);
       setHandRefillAnim(null);
+      setMiracleStockAnim(null);
     };
     const playPresentationSound = event => {
       if (event.type === 'game_start') playSound('game_start');
@@ -140,6 +142,7 @@ export default function GameRoom() {
       if (event.type === 'ascension') setAscensionAnim(event);
       if (event.type === 'field_clear') setFieldClearing(true);
       if (event.type === 'hand_refill') setHandRefillAnim(event);
+      if (event.type === 'miracle_stock') setMiracleStockAnim(event);
       if (event.type === 'turn_start') setTurnAnim(event);
       clearTimeout(presentationTimer.current);
       presentationTimer.current = setTimeout(() => {
@@ -419,6 +422,12 @@ export default function GameRoom() {
     ...(field?.defenseCards || []),
     ...selectedDefenseCards,
   ]);
+  const selectedAttackCards = selectedCards.map(index => getDisplayedCard(me.hand[index], index)).filter(Boolean);
+  let selectedAttackTotal = selectedAttackCards.reduce((sum, card) => sum + (card.additive ? (card.attackBonus || card.attack || card.supportValue || 0) : (card.attack || 0)), 0);
+  if (selectedAttackCards.some(card => card.supportEffect === 'double_attack')) selectedAttackTotal *= 2;
+  const commandLabel = phase === 'defense'
+    ? `守${displayedDefenseTotal}`
+    : (selectedAttackTotal > 0 ? `攻${selectedAttackTotal}` : '使う');
 
   const handlePlayCard = (cardIndex) => {
     if (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex)) return;
@@ -733,6 +742,12 @@ export default function GameRoom() {
           </div>
         )}
 
+        {miracleStockAnim && miracleStockAnim.playerId === me.id && (
+          <div className="miracle-stock-flight" style={{ '--miracle-slot-index': miracleStockAnim.slotIndex }}>
+            <img src={miracleStockAnim.card.imageUrl} alt={miracleStockAnim.card.name} />
+          </div>
+        )}
+
         <main className="gf-battle-stage">
           <div className="gf-field-cards">
             {field && (
@@ -810,7 +825,7 @@ export default function GameRoom() {
                <button
                   type="button"
                  key={`${miracle.id}-${index}`}
-                  className="miracle-stock-slot"
+                  className={`miracle-stock-slot ${miracleStockAnim?.playerId === me.id && miracleStockAnim.slotIndex === index ? 'stock-arriving' : ''}`}
                   disabled={disabled}
                   aria-label={`${miracle.name}を使用（MP${miracle.costMp || 0}）`}
                   title={`${miracle.name}（MP${miracle.costMp || 0}）`}
@@ -832,10 +847,10 @@ export default function GameRoom() {
           </div>
           <div className="gf-hand-actions">
             {isMyTurn && selectedCards.length > 0 && (phase === 'main' || (phase === 'defense' && hasSelectedDefense)) && (
-               <button className="btn gf-command-button" aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>使用する</button>
+               <button className="btn gf-command-button" aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>{commandLabel}</button>
             )}
             {isMyTurn && phase === 'defense' && selectedCards.length === 0 && (
-               <button className="btn gf-command-button" aria-label="防御せずダメージを受ける" onClick={() => socket.emit('finishDefense', { roomName: id })}>防御しない</button>
+               <button className="btn gf-command-button forgive-command" aria-label="防御せずダメージを受ける" onClick={() => socket.emit('finishDefense', { roomName: id })}>許す</button>
             )}
             {isMyTurn && phase === 'main' && (
                <button

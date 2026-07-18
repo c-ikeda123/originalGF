@@ -582,12 +582,14 @@ io.on('connection', (socket) => {
     announceDreamResolution(room, player, dreamResolutions);
 
     // A miracle leaves the hand on first use and becomes reusable as a learned miracle.
+    const newlyLearnedMiracles = [];
     cards.filter(c => !isSell && c.type === 'miracle' && !c._learnedCast).forEach(miracle => {
       if (!player.learnedMiracles.some(m => m.id === miracle.id)) {
         const learned = { ...miracle };
         delete learned.instanceId;
         player.learnedMiracles.push(learned);
         if (player.learnedMiracles.length > 6) player.learnedMiracles.shift();
+        newlyLearnedMiracles.push({ card: learned, slotIndex: player.learnedMiracles.findIndex(entry => entry.id === learned.id) });
       }
     });
     const consumedIndices = [...requestedIndices];
@@ -620,6 +622,14 @@ io.on('connection', (socket) => {
         attribute: usedCard.attribute || 'none',
         description: usedCard.description || '',
       })),
+    });
+    newlyLearnedMiracles.forEach(({ card: learnedCard, slotIndex }) => {
+      addPresentationEvent(room, 'miracle_stock', {
+        playerId: player.id,
+        playerName: player.name,
+        card: learnedCard,
+        slotIndex,
+      });
     });
 
     applyImmediateCardEffects(room, player, getActivatedCards(cards, isSell));
