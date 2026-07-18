@@ -930,7 +930,7 @@ export default function GameRoom() {
         </div>
       )}
 
-      {gameState.gameStateStr === 'ended' && !ascensionAnim && (
+      {gameState.gameStateStr === 'ended' && !presentationBusy && !ascensionAnim && (
         <div className="game-end-overlay">
           <div className="glass-panel game-end-panel">
             <img

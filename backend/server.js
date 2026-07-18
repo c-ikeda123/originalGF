@@ -1220,6 +1220,17 @@ function flushReplacementDraws(room) {
 }
 
 function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, options = {}) {
+  if (options.presentCard || options.assistantAction) {
+    addPresentationEvent(room, 'card_enter', {
+      playerId: attacker.id,
+      playerName: attacker.name,
+      targetId: card.forcedTargetId || null,
+      phase: 'main',
+      handIndices: [],
+      cards: [card],
+    });
+    room.actionLockedUntil = Math.max(room.actionLockedUntil || 0, Date.now() + getCardPresentationLockMs(1));
+  }
   const targets = card.target === 'all'
     ? Object.values(room.players).filter(player => areEnemies(attacker, player) && !player.ascended && player.hp > 0)
     : [room.players[card.forcedTargetId || nextTurnId]].filter(Boolean);
@@ -1237,7 +1248,12 @@ function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, 
 }
 
 function queueFollowUpAttack(room, attackerId, nextTurnId, card, options = {}) {
-  room.followUpAttacks = [...(room.followUpAttacks || []), { attackerId, nextTurnId, card, options }];
+  room.followUpAttacks = [...(room.followUpAttacks || []), {
+    attackerId,
+    nextTurnId,
+    card,
+    options: { presentCard: true, ...options },
+  }];
 }
 
 function startNextFollowUpAttack(room, roomName) {
@@ -1476,14 +1492,14 @@ function resolveMystery(room, actor, nextTurnId, roomName) {
       id: 'mystery_uranus', name: 'URANUS', type: 'item', sourceType: 'item',
       attack: 60, hitRate: 100, attribute: 'light', target: 'single', forcedTargetId: target.id,
     };
-    queueAttackSequence(room, actor, nextTurnId, card, [card], roomName);
+    queueAttackSequence(room, actor, nextTurnId, card, [card], roomName, { presentCard: true });
   }
   if (type === 'pluto') {
     const card = {
       id: 'mystery_pluto', name: 'PLUTO', type: 'item', sourceType: 'item',
       attack: 30, hitRate: 75, attribute: 'dark', target: 'all',
     };
-    queueAttackSequence(room, actor, nextTurnId, card, [card], roomName);
+    queueAttackSequence(room, actor, nextTurnId, card, [card], roomName, { presentCard: true });
   }
   if (type === 'neptune') actor.hp = Math.min(99, actor.hp + 60);
   if (type === 'venus') players.forEach(player => { player.money = 99; });
