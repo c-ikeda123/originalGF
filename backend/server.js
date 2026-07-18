@@ -141,12 +141,14 @@ function announceDefenseResolution(room, player, action) {
     reflect: { sound: 'reflect', effect: 'reflect' },
     flick: { sound: 'flick', effect: 'flick' },
     block: { sound: 'block', effect: 'block' },
-    reduce: { sound: 'block', effect: 'block' },
+    reduce: { sound: 'block' },
     remove_attribute: { sound: 'defense_harm', effect: 'harm_remove', label: '属性解除' },
   }[action];
   if (!presentation) return;
   addSoundEvent(room, presentation.sound);
-  addEffectEvent(room, presentation.effect, player, 0, { label: presentation.label || '' });
+  if (presentation.effect) {
+    addEffectEvent(room, presentation.effect, player, 0, { label: presentation.label || '' });
+  }
 }
 
 function resolveDreamCardsForUse(room, player, cards, phase, isSell = false) {
