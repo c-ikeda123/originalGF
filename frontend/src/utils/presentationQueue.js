@@ -7,6 +7,7 @@ const EVENT_DURATIONS = {
   effect: 1150,
   ascension: 1900,
   field_clear: 350,
+  hand_refill: 550,
   turn_start: 850,
 };
 

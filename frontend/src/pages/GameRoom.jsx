@@ -41,6 +41,7 @@ export default function GameRoom() {
   const [turnAnim, setTurnAnim] = useState(null);
   const [fieldClearing, setFieldClearing] = useState(false);
   const [visibleField, setVisibleField] = useState(null);
+  const [handRefillAnim, setHandRefillAnim] = useState(null);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [hoveredMiracleIndex, setHoveredMiracleIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
@@ -77,6 +78,7 @@ export default function GameRoom() {
       setCardEnterAnim(null);
       setTurnAnim(null);
       setFieldClearing(false);
+      setHandRefillAnim(null);
     };
     const playNextPresentation = () => {
       const event = presentationQueue.current.shift();
@@ -103,6 +105,7 @@ export default function GameRoom() {
       if (event.type === 'effect') setEffectAnim({ ...event, type: event.effectType });
       if (event.type === 'ascension') setAscensionAnim(event);
       if (event.type === 'field_clear') setFieldClearing(true);
+      if (event.type === 'hand_refill') setHandRefillAnim(event);
       if (event.type === 'turn_start') setTurnAnim(event);
       clearTimeout(presentationTimer.current);
       presentationTimer.current = setTimeout(() => {
@@ -420,7 +423,7 @@ export default function GameRoom() {
     return (
       <div 
          key={realCard.instanceId} 
-         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${dreamAffected ? 'dream-affected' : ''} ${usable ? '' : 'disabled'}`}
+         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${dreamAffected ? 'dream-affected' : ''} ${handRefillAnim?.playerId === me.id && index >= me.hand.length - handRefillAnim.count ? 'refill-new' : ''} ${usable ? '' : 'disabled'}`}
          aria-disabled={!usable}
          title={dreamAffected ? `${card.name}（夢の影響中）` : (usable ? card.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません'))}
          onClick={() => toggleCard(index)}
@@ -552,7 +555,7 @@ export default function GameRoom() {
         <button type="button">教典</button>
       </div>
 
-        <div className={`gf-battle-shell ${fieldClearing ? 'field-clearing' : ''} ${cardEnterAnim ? 'card-enter-active' : ''}`}>
+        <div className={`gf-battle-shell ${fieldClearing ? 'field-clearing' : ''} ${cardEnterAnim ? 'card-enter-active' : ''} ${handRefillAnim ? 'hand-refill-active' : ''}`}>
         {ascensionAnim && (
           <div key={ascensionAnim.id} className="ascension-overlay" style={presentationTargetStyle(ascensionAnim.playerId)} role="status" aria-label={`${ascensionAnim.playerName}が昇天`}>
             <div className="ascension-screen-flash" />
@@ -643,7 +646,7 @@ export default function GameRoom() {
 
         {startAnim && <img className="gf-game-start-effect" src="/godfield-flash/ui/game-ja/effect/game_start.png" alt="ゲーム開始" />}
 
-        {actionAnim && !damageAnim && actionAnim.outcome === 'use' && (
+        {actionAnim && !damageAnim && actionAnim.outcome === 'use' && actionAnim.type !== 'card' && (
           <div
             className={`activity-action-overlay ${actionAnim.attackerId === me.id ? 'actor-me' : 'actor-opponent'}`}
             style={presentationTargetStyle(actionAnim.attackerId)}

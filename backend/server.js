@@ -913,6 +913,14 @@ io.on('connection', (socket) => {
     queueReplacementDraws(player, discarded.length);
     if (discarded.length) addSoundEvent(room, 'item_remove');
     if (discarded.length) {
+      addPresentationEvent(room, 'card_enter', {
+        playerId: player.id,
+        playerName: player.name,
+        targetId: null,
+        phase: 'main',
+        handIndices: indices,
+        cards: discarded,
+      });
       room.lastAction = createActionEvent(room, player, null, discarded[0], 'use', {
         type: 'discard',
         label: `${discarded[0].name}を捨てる`,
@@ -940,15 +948,30 @@ io.on('connection', (socket) => {
     }
 
     // Pray: draw 1 card if below max
+    let prayedDraw = false;
     if (room.deck.length > 0 && player.hand.length < 18) {
        player.hand.push(drawArtifact(room));
+       prayedDraw = true;
        room.log.push(`${player.name} は祈った... (カードを1枚ドロー)`);
     } else {
        room.log.push(`${player.name} は祈った... (しかし何も起きなかった)`);
     }
+    addPresentationEvent(room, 'card_enter', {
+      playerId: player.id,
+      playerName: player.name,
+      targetId: null,
+      phase: 'main',
+      handIndices: [],
+      cards: [{ id: 'pray', name: '祈る', type: 'fixed', imageUrl: '/godfield-flash/cards/fixed/inoru.png' }],
+    });
     room.lastAction = createActionEvent(room, player, null, null, 'use', {
       type: 'pray',
       label: '祈る',
+    });
+    if (prayedDraw) addPresentationEvent(room, 'hand_refill', {
+      playerId: player.id,
+      playerName: player.name,
+      count: 1,
     });
     addSoundEvent(room, 'game_draw');
 
@@ -1160,10 +1183,17 @@ function queueReplacementDraws(player, count) {
 
 function flushReplacementDraws(room) {
   for (const player of Object.values(room.players)) {
+    const handSizeBeforeDraw = player.hand.length;
     while ((player.pendingDraws || 0) > 0 && player.hand.length < 18 && room.deck.length > 0 && !player.ascended) {
       player.hand.push(drawArtifact(room));
       player.pendingDraws -= 1;
     }
+    const drawnCount = player.hand.length - handSizeBeforeDraw;
+    if (drawnCount > 0) addPresentationEvent(room, 'hand_refill', {
+      playerId: player.id,
+      playerName: player.name,
+      count: drawnCount,
+    });
     player.pendingDraws = 0;
   }
 }
