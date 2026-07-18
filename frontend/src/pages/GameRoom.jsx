@@ -398,12 +398,9 @@ export default function GameRoom() {
   const playerNameById = playerId => playerId === me.id
     ? me.name
     : opponents.find(player => player.id === playerId)?.name;
-  const presentationTargetStyle = playerId => {
-    const playerIndex = playerId === me.id
-      ? opponents.length
-      : Math.max(0, opponents.findIndex(player => player.id === playerId));
-    return { '--presentation-target-y': `${8 + playerIndex * 41}px` };
-  };
+  const presentationFieldStyle = playerId => ({
+    '--presentation-column-left': field?.defenderId === playerId ? '308px' : '0px',
+  });
   const isResolvingDamage = (gameState.actionLockedUntil || 0) > now;
   const isMyTurn = turn === me.id && !isResolvingDamage && !presentationBusy;
   const remainingSeconds = gameState.turnDeadline
@@ -591,11 +588,6 @@ export default function GameRoom() {
   );
 
   const actionEffect = actionAnim?.outcome === 'evade' ? 'miss' : 'hit';
-  const currentPresentationTargetId = damageAnim?.targetId
-    || effectAnim?.playerId
-    || ascensionAnim?.playerId
-    || (actionAnim?.outcome === 'use' ? actionAnim?.attackerId : actionAnim?.defenderId)
-    || null;
   const renderDamageNumber = (amount, isDark = false) => String(Math.max(0, amount)).split('').map((digit, index) => (
     <img
       key={`${digit}-${index}`}
@@ -626,13 +618,8 @@ export default function GameRoom() {
       </div>
 
         <div className={`gf-battle-shell ${fieldClearing ? 'field-clearing' : ''} ${cardEnterAnim ? 'card-enter-active' : ''} ${handRefillAnim ? 'hand-refill-active' : ''}`}>
-        {currentPresentationTargetId && (
-          <div className="presentation-target-anchor" style={presentationTargetStyle(currentPresentationTargetId)}>
-            <span>←</span>{playerNameById(currentPresentationTargetId)}
-          </div>
-        )}
         {ascensionAnim && (
-          <div key={ascensionAnim.id} className="ascension-overlay" style={presentationTargetStyle(ascensionAnim.playerId)} role="status" aria-label={`${ascensionAnim.playerName}が昇天`}>
+          <div key={ascensionAnim.id} className="ascension-overlay" role="status" aria-label={`${ascensionAnim.playerName}が昇天`}>
             <div className="ascension-screen-flash" />
             <div className="ascension-light-column" />
             <div className="ascension-soul" />
@@ -645,7 +632,7 @@ export default function GameRoom() {
             <div
               key={effectAnim.id}
               className={`dream-reveal-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
-              style={presentationTargetStyle(effectAnim.playerId)}
+              style={presentationFieldStyle(effectAnim.playerId)}
               role="status"
               aria-label={effectAnim.changed ? '夢の影響で神器が変化' : '夢の影響を受けたが神器はそのまま'}
             >
@@ -671,8 +658,8 @@ export default function GameRoom() {
           ) : RESOURCE_EFFECT_TYPES.has(effectAnim.type) ? (
             <div
               key={effectAnim.id}
-              className={`resource-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
-              style={presentationTargetStyle(effectAnim.playerId)}
+              className={`resource-effect-overlay ${effectAnim.type} ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              style={presentationFieldStyle(effectAnim.playerId)}
               role="status"
               aria-label={`${effectAnim.playerName}の${effectAnim.type}が${effectAnim.amount}増加`}
             >
@@ -684,7 +671,7 @@ export default function GameRoom() {
             <div
               key={effectAnim.id}
               className={`assistant-effect-overlay ${effectAnim.type} ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
-              style={presentationTargetStyle(effectAnim.playerId)}
+              style={presentationFieldStyle(effectAnim.playerId)}
               role="status"
               aria-label={`${effectAnim.playerName}の${EFFECT_LABELS[effectAnim.type]}`}
             >
@@ -696,7 +683,7 @@ export default function GameRoom() {
             <div
               key={effectAnim.id}
               className={`status-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
-              style={presentationTargetStyle(effectAnim.playerId)}
+              style={presentationFieldStyle(effectAnim.playerId)}
               role="status"
               aria-label={`${effectAnim.playerName}に${EFFECT_LABELS[effectAnim.type] || effectAnim.type}`}
             >
@@ -709,7 +696,7 @@ export default function GameRoom() {
           <div
             key={`${damageAnim.timestamp}-${damageAnim.isDarkFollowUp ? 'dark' : 'normal'}`}
             className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'} ${damageAnim.isDarkFollowUp ? 'dark-follow-up' : ''}`}
-            style={presentationTargetStyle(damageAnim.targetId)}
+            style={presentationFieldStyle(damageAnim.targetId)}
             aria-label={`${playerNameById(damageAnim.targetId)}に${damageAnim.amount}ダメージ`}
           >
             <div className="gf-damage-number">{renderDamageNumber(damageAnim.amount, damageAnim.isDarkFollowUp)}</div>
@@ -722,7 +709,7 @@ export default function GameRoom() {
         {actionAnim && !damageAnim && actionAnim.outcome === 'use' && actionAnim.type !== 'card' && (
           <div
             className={`activity-action-overlay ${actionAnim.attackerId === me.id ? 'actor-me' : 'actor-opponent'}`}
-            style={presentationTargetStyle(actionAnim.attackerId)}
+            style={presentationFieldStyle(actionAnim.attackerId)}
             role="status"
             aria-label={`${actionAnim.attackerName || playerNameById(actionAnim.attackerId)}が${actionAnim.label || `${actionAnim.card?.name}を使用`}`}
           >
@@ -739,13 +726,13 @@ export default function GameRoom() {
         )}
 
         {actionAnim && !damageAnim && actionAnim.outcome !== 'use' && (
-          <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`} style={presentationTargetStyle(actionAnim.defenderId)}>
+          <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`} style={presentationFieldStyle(actionAnim.defenderId)}>
             <img src={`/godfield-flash/ui/game-ja/effect/${actionEffect}.png`} alt={actionEffect === 'miss' ? '回避' : '命中'} />
           </div>
         )}
 
         {turnAnim && (
-          <div className="turn-start-overlay" style={presentationTargetStyle(turnAnim.playerId)} role="status">
+          <div className="turn-start-overlay" style={presentationFieldStyle(turnAnim.playerId)} role="status">
             <span>{turnAnim.playerId === me.id ? 'あなたの番' : `${turnAnim.playerName}の番`}</span>
           </div>
         )}
