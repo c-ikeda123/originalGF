@@ -430,9 +430,15 @@ export default function GameRoom() {
   const { me, opponent: firstOpponent, turn, phase, field: serverField } = gameState;
   const field = visibleField || serverField;
   const opponents = gameState.opponents?.length ? gameState.opponents : [firstOpponent].filter(Boolean);
-  const targetableOpponents = opponents.filter(player => !(me.team && player.team === me.team));
-  const opponent = targetableOpponents.find(player => player.id === selectedTargetId && !player.ascended && player.hp > 0)
-    || targetableOpponents.find(player => !player.ascended && player.hp > 0)
+  const selectedRealCards = selectedCards.map(index => me.hand[index]).filter(Boolean);
+  const selfTargetBlocked = selectedRealCards.some(card => card.effect === 'sell')
+    || (selectedRealCards.length === 1 && selectedRealCards[0].type === 'trade' && selectedRealCards[0].effect === 'buy');
+  const targetablePlayers = [...opponents, me].filter(player => (
+    !player.ascended && player.hp > 0 && (!selfTargetBlocked || player.id !== me.id)
+  ));
+  const opponent = targetablePlayers.find(player => player.id === selectedTargetId)
+    || targetablePlayers.find(player => player.id !== me.id)
+    || targetablePlayers[0]
     || firstOpponent;
   const displayHandOrder = mergeHandOrder(handOrder, me.hand);
   const orderedHandEntries = displayHandOrder.map(instanceId => {
@@ -683,12 +689,19 @@ export default function GameRoom() {
 
   const renderPlayerStatus = (player, isSelf = false) => player && (
     <div
-      className={`battle-player ${isSelf ? 'self' : 'opponent'} team-${player.team || 'single'} ${isMyTurn && phase === 'main' && targetableOpponents.length > 1 && opponent?.id === player.id ? 'selected-target' : ''} ${turn === player.id && !isResolvingDamage ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}
-      role={!isSelf && targetableOpponents.length > 1 ? 'button' : undefined}
-      tabIndex={!isSelf && targetableOpponents.length > 1 ? 0 : undefined}
-      onClick={() => !isSelf && targetableOpponents.length > 1 && player.hp > 0 && !player.ascended && setSelectedTargetId(player.id)}
+      className={`battle-player ${isSelf ? 'self' : 'opponent'} team-${player.team || 'single'} ${isMyTurn && phase === 'main' && opponent?.id === player.id ? 'selected-target' : ''} ${turn === player.id && !isResolvingDamage ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}
+      role={isMyTurn && phase === 'main' && targetablePlayers.some(target => target.id === player.id) ? 'button' : undefined}
+      tabIndex={isMyTurn && phase === 'main' && targetablePlayers.some(target => target.id === player.id) ? 0 : undefined}
+      onClick={() => {
+        if (isMyTurn && phase === 'main' && targetablePlayers.some(target => target.id === player.id)) {
+          setSelectedTargetId(player.id);
+        }
+      }}
       onKeyDown={event => {
-        if ((event.key === 'Enter' || event.key === ' ') && !isSelf && targetableOpponents.length > 1 && player.hp > 0 && !player.ascended) {
+        if ((event.key === 'Enter' || event.key === ' ')
+          && isMyTurn
+          && phase === 'main'
+          && targetablePlayers.some(target => target.id === player.id)) {
           setSelectedTargetId(player.id);
         }
       }}
@@ -908,12 +921,20 @@ export default function GameRoom() {
               </section>
             )}
             {!field && selectedCards.length > 0 && (
-              <div className="selected-field-preview">
-                <div className="selected-field-title">選択中 ({selectedCards.length})</div>
-                <div className="selected-field-cards">
-                  {selectedCards.map(index => renderSelectedCard(index))}
-                </div>
-              </div>
+              <>
+                <section className="gf-field-group attacker selection-preview">
+                  <div className="gf-field-owner">{me.name}</div>
+                  {selectedCards.map(index => renderSelectedCard(index, 'pending-selection-card'))}
+                </section>
+                {opponent && (
+                  <img className="gf-field-target-arrow" src="/godfield-flash/ui/game/commander/target_arrow_right.png" alt="攻撃対象" />
+                )}
+                {opponent && (
+                  <section className="gf-field-group defender selection-preview target-only">
+                    <div className="gf-field-owner">{opponent.name}</div>
+                  </section>
+                )}
+              </>
             )}
           </div>
           {field?.defenderId && (

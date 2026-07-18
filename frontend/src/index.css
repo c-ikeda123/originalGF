@@ -2097,6 +2097,14 @@ h1, h2, h3, h4, h5, h6 {
   margin: 0;
 }
 
+.gf-field-group.selection-preview.target-only {
+  min-height: 30px;
+}
+
+.pending-selection-card {
+  margin: 0;
+}
+
 .gf-field-owner {
   width: 240px;
   height: 30px;
