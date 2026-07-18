@@ -102,4 +102,8 @@ test('準備・チームチャット・観戦・途中参加拒否を実サー�
   }
   const afterBot = await waitFor(botHost, 'gameState', state => !(state.turn === botId && state.phase === 'main'));
   assert.equal(afterBot.gameStateStr, 'playing');
+  const botCardEnter = afterBot.presentationEvents.find(event => (
+    event.type === 'card_enter' && event.playerId === botId
+  ));
+  assert.ok(botCardEnter, 'Botの神器登場イベントが通知される');
 });

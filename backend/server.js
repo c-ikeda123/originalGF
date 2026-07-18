@@ -1797,6 +1797,18 @@ function performBotTurn(roomName) {
       const card = dreamResolution.card;
       queueReplacementDraws(bot, 1);
       announceDreamResolution(room, bot, [dreamResolution]);
+      addPresentationEvent(room, 'card_enter', {
+        playerId: bot.id,
+        playerName: bot.name,
+        targetId: bot.pendingDamage?.attackerId || null,
+        phase: 'defense',
+        handIndices: [],
+        cards: [card],
+      });
+      room.actionLockedUntil = Math.max(
+        room.actionLockedUntil || 0,
+        Date.now() + getCardPresentationLockMs(1),
+      );
       applyImmediateCardEffects(room, bot, [card]);
       const resolution = resolveDefenseCard(bot.pendingDamage, card);
       room.field.defenseCards.push(card);
@@ -1834,12 +1846,31 @@ function performBotTurn(roomName) {
     card.forcedTargetId = target.id;
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, bot.id);
     room.log.push(`${bot.name}は${card.name}を使用した。`);
-    queueAttackSequence(room, bot, nextTurnId, card, [card], roomName);
+    queueAttackSequence(room, bot, nextTurnId, card, [card], roomName, { presentCard: true });
     emitGameState(roomName);
     return;
   }
 
-  if (canPlayerPray(bot) && bot.hand.length < 18) bot.hand.push(drawArtifact(room));
+  if (canPlayerPray(bot) && bot.hand.length < 18) {
+    bot.hand.push(drawArtifact(room));
+    addPresentationEvent(room, 'card_enter', {
+      playerId: bot.id,
+      playerName: bot.name,
+      targetId: null,
+      phase: 'main',
+      handIndices: [],
+      cards: [{ id: 'pray', name: '祈る', type: 'fixed', imageUrl: '/godfield-flash/cards/fixed/inoru.png' }],
+    });
+    addPresentationEvent(room, 'hand_refill', {
+      playerId: bot.id,
+      playerName: bot.name,
+      count: 1,
+    });
+    room.actionLockedUntil = Math.max(
+      room.actionLockedUntil || 0,
+      Date.now() + getCardPresentationLockMs(1),
+    );
+  }
   const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, bot.id);
   endTurnInternal(room, nextTurnId);
   emitGameState(roomName);
