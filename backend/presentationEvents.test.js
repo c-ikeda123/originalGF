@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const {
   MAX_PRESENTATION_EVENTS,
   addPresentationEvent,
+  getCardPresentationLockMs,
   resetPresentationEvents,
 } = require('./presentationEvents');
 
@@ -15,6 +16,11 @@ test('演出イベントには部屋内で単調増加する順序番号が付�
   assert.equal(first.id, 1);
   assert.equal(second.id, 2);
   assert.deepEqual(room.presentationEvents.map(event => event.type), ['card_enter', 'damage']);
+});
+
+test('神器登場と命中表示が終わるまで操作をロックする', () => {
+  assert.ok(getCardPresentationLockMs(2) > getCardPresentationLockMs(1));
+  assert.equal(getCardPresentationLockMs(1, 1) - getCardPresentationLockMs(1), 650);
 });
 
 test('演出イベントは再接続用の上限を超えて蓄積しない', () => {

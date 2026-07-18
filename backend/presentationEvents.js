@@ -17,8 +17,15 @@ function resetPresentationEvents(room) {
   room.presentationEvents = [];
 }
 
+function getCardPresentationLockMs(cardCount, miracleStockCount = 0) {
+  return Math.max(500, Math.max(1, cardCount) * 260 + 260)
+    + Math.max(0, miracleStockCount) * 650
+    + 850;
+}
+
 module.exports = {
   MAX_PRESENTATION_EVENTS,
   addPresentationEvent,
+  getCardPresentationLockMs,
   resetPresentationEvents,
 };

@@ -57,6 +57,8 @@ export default function GameRoom() {
   const [visibleField, setVisibleField] = useState(null);
   const [handRefillAnim, setHandRefillAnim] = useState(null);
   const [miracleStockAnim, setMiracleStockAnim] = useState(null);
+  const [presentationBusy, setPresentationBusy] = useState(false);
+  const [pendingMiracleIds, setPendingMiracleIds] = useState([]);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [hoveredMiracleIndex, setHoveredMiracleIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
@@ -119,10 +121,12 @@ export default function GameRoom() {
       const event = presentationQueue.current.shift();
       if (!event) {
         presentationActive.current = false;
+        setPresentationBusy(false);
         clearPresentation();
         return;
       }
       presentationActive.current = true;
+      setPresentationBusy(true);
       clearPresentation();
       playPresentationSound(event);
       if (event.type === 'game_start') setStartAnim(true);
@@ -147,6 +151,9 @@ export default function GameRoom() {
       clearTimeout(presentationTimer.current);
       presentationTimer.current = setTimeout(() => {
         if (event.type === 'field_clear') setVisibleField(null);
+        if (event.type === 'miracle_stock') {
+          setPendingMiracleIds(current => current.filter(cardId => cardId !== event.card?.id));
+        }
         playNextPresentation();
       }, getPresentationDuration(event));
     };
@@ -180,12 +187,15 @@ export default function GameRoom() {
         lastPresentationEventId.current = getLatestPresentationId(presentationEvents);
         const recentEvents = presentationEvents.filter(event => Date.now() - event.timestamp < 5000);
         if (recentEvents.length) {
+          setPendingMiracleIds(recentEvents.filter(event => event.type === 'miracle_stock').map(event => event.card?.id).filter(Boolean));
           presentationQueue.current.push(...recentEvents);
           playNextPresentation();
         }
       } else {
         const newPresentationEvents = getNewPresentationEvents(presentationEvents, lastPresentationEventId.current);
         if (newPresentationEvents.length) {
+          const pendingIds = newPresentationEvents.filter(event => event.type === 'miracle_stock').map(event => event.card?.id).filter(Boolean);
+          if (pendingIds.length) setPendingMiracleIds(current => [...new Set([...current, ...pendingIds])]);
           lastPresentationEventId.current = getLatestPresentationId(newPresentationEvents, lastPresentationEventId.current);
           presentationQueue.current.push(...newPresentationEvents);
           if (!presentationActive.current) playNextPresentation();
@@ -219,6 +229,8 @@ export default function GameRoom() {
       hasReceivedPresentationState.current = false;
       presentationQueue.current = [];
       presentationActive.current = false;
+      setPresentationBusy(false);
+      setPendingMiracleIds([]);
       clearTimeout(presentationTimer.current);
       clearPresentation();
       setVisibleField(null);
@@ -384,7 +396,7 @@ export default function GameRoom() {
     return { '--presentation-target-y': `${8 + playerIndex * 41}px` };
   };
   const isResolvingDamage = (gameState.actionLockedUntil || 0) > now;
-  const isMyTurn = turn === me.id && !isResolvingDamage;
+  const isMyTurn = turn === me.id && !isResolvingDamage && !presentationBusy;
   const remainingSeconds = gameState.turnDeadline
     ? Math.max(0, Math.ceil((gameState.turnDeadline - now) / 1000))
     : null;
@@ -825,7 +837,7 @@ export default function GameRoom() {
                <button
                   type="button"
                  key={`${miracle.id}-${index}`}
-                  className={`miracle-stock-slot ${miracleStockAnim?.playerId === me.id && miracleStockAnim.slotIndex === index ? 'stock-arriving' : ''}`}
+                  className={`miracle-stock-slot ${pendingMiracleIds.includes(miracle.id) ? 'stock-arriving' : ''}`}
                   disabled={disabled}
                   aria-label={`${miracle.name}を使用（MP${miracle.costMp || 0}）`}
                   title={`${miracle.name}（MP${miracle.costMp || 0}）`}

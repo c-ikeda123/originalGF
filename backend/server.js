@@ -69,7 +69,7 @@ const GF_BASE_CARDS = require('../shared/baseCards.json');
 const FLASH_SOUNDS = new Set(require('../shared/flashSounds.json'));
 const { resolveDreamCard } = require('../shared/dreamRules.cjs');
 const { normalizeBaseCardEdit, normalizeBaseCardEdits } = require('./baseCardEdits');
-const { addPresentationEvent, resetPresentationEvents } = require('./presentationEvents');
+const { addPresentationEvent, getCardPresentationLockMs, resetPresentationEvents } = require('./presentationEvents');
 
 // Stores active rooms
 // rooms[roomName] = { players: { socketId: { name, ready, ...gameState } }, state: 'waiting' | 'playing' }
@@ -631,6 +631,10 @@ io.on('connection', (socket) => {
         slotIndex,
       });
     });
+    room.actionLockedUntil = Math.max(
+      room.actionLockedUntil || 0,
+      Date.now() + getCardPresentationLockMs(cards.length, newlyLearnedMiracles.length),
+    );
 
     applyImmediateCardEffects(room, player, getActivatedCards(cards, isSell));
 
@@ -1562,7 +1566,9 @@ function createActionEvent(room, attacker, defender, card, outcome, { type = 'at
     } : null,
     timestamp: Date.now(),
   };
-  addPresentationEvent(room, outcome === 'use' ? 'action' : 'hit_result', { ...event, actionType: event.type });
+  if (outcome !== 'use' || type !== 'card') {
+    addPresentationEvent(room, outcome === 'use' ? 'action' : 'hit_result', { ...event, actionType: event.type });
+  }
   return event;
 }
 
