@@ -581,6 +581,11 @@ export default function GameRoom() {
   );
 
   const actionEffect = actionAnim?.outcome === 'evade' ? 'miss' : 'hit';
+  const currentPresentationTargetId = damageAnim?.targetId
+    || effectAnim?.playerId
+    || ascensionAnim?.playerId
+    || (actionAnim?.outcome === 'use' ? actionAnim?.attackerId : actionAnim?.defenderId)
+    || null;
   const renderDamageNumber = (amount, isDark = false) => String(Math.max(0, amount)).split('').map((digit, index) => (
     <img
       key={`${digit}-${index}`}
@@ -611,6 +616,11 @@ export default function GameRoom() {
       </div>
 
         <div className={`gf-battle-shell ${fieldClearing ? 'field-clearing' : ''} ${cardEnterAnim ? 'card-enter-active' : ''} ${handRefillAnim ? 'hand-refill-active' : ''}`}>
+        {currentPresentationTargetId && (
+          <div className="presentation-target-anchor" style={presentationTargetStyle(currentPresentationTargetId)}>
+            <span>←</span>{playerNameById(currentPresentationTargetId)}
+          </div>
+        )}
         {ascensionAnim && (
           <div key={ascensionAnim.id} className="ascension-overlay" style={presentationTargetStyle(ascensionAnim.playerId)} role="status" aria-label={`${ascensionAnim.playerName}が昇天`}>
             <div className="ascension-screen-flash" />
@@ -656,7 +666,6 @@ export default function GameRoom() {
               role="status"
               aria-label={`${effectAnim.playerName}の${effectAnim.type}が${effectAnim.amount}増加`}
             >
-              <span className="presentation-target-name">{effectAnim.playerName}</span>
               <img className="resource-effect-label" src={`/godfield-flash/ui/game/effect/${effectAnim.type}.png`} alt="" />
               <div className="resource-effect-number">{renderEffectNumber(effectAnim.type, effectAnim.amount)}</div>
               {effectAnim.revived && <span className="revive-effect-label">復活</span>}
@@ -693,7 +702,6 @@ export default function GameRoom() {
             style={presentationTargetStyle(damageAnim.targetId)}
             aria-label={`${playerNameById(damageAnim.targetId)}に${damageAnim.amount}ダメージ`}
           >
-            <span className="presentation-target-name">{playerNameById(damageAnim.targetId)}</span>
             <div className="gf-damage-number">{renderDamageNumber(damageAnim.amount, damageAnim.isDarkFollowUp)}</div>
             <img className="gf-damage-label" src={`/godfield-flash/ui/game-ja/effect/${damageAnim.isDarkFollowUp ? 'damage_dark' : 'damage'}.png`} alt={damageAnim.isDarkFollowUp ? '冥ダメージ' : 'ダメージ'} />
           </div>
@@ -722,7 +730,6 @@ export default function GameRoom() {
 
         {actionAnim && !damageAnim && actionAnim.outcome !== 'use' && (
           <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`} style={presentationTargetStyle(actionAnim.defenderId)}>
-            <span className="presentation-target-name">{playerNameById(actionAnim.defenderId)}</span>
             <img src={`/godfield-flash/ui/game-ja/effect/${actionEffect}.png`} alt={actionEffect === 'miss' ? '回避' : '命中'} />
           </div>
         )}

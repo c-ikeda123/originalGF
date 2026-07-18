@@ -2650,15 +2650,16 @@ h1, h2, h3, h4, h5, h6 {
 .status-effect-overlay,
 .dream-reveal-overlay,
 .assistant-effect-overlay {
-  top: calc(var(--presentation-target-y, 8px) + 20px) !important;
+  top: 190px !important;
   right: 365px;
   left: auto !important;
 }
 
-.presentation-target-name {
+.presentation-target-anchor {
   position: absolute;
-  top: 50%;
-  right: -350px;
+  top: var(--presentation-target-y, 8px);
+  right: 365px;
+  z-index: 180;
   width: 170px;
   height: 24px;
   box-sizing: border-box;
@@ -2668,15 +2669,20 @@ h1, h2, h3, h4, h5, h6 {
   font: bold 13px/24px Arial, sans-serif;
   text-align: right;
   white-space: nowrap;
-  transform: translateY(-50%);
+  pointer-events: none;
+  animation: gfTargetAnchor 900ms ease-out both;
 }
 
-.presentation-target-name::before {
-  content: '←';
-  position: absolute;
-  left: 5px;
+.presentation-target-anchor span {
+  float: left;
   color: #e75b87;
   font-size: 19px;
+}
+
+@keyframes gfTargetAnchor {
+  0% { opacity: 0; transform: translateX(-20px); }
+  20%, 78% { opacity: 1; transform: translateX(0); }
+  100% { opacity: 0; transform: translateX(5px); }
 }
 
 .turn-start-overlay {
