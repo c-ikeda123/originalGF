@@ -23,4 +23,5 @@ test('複数神器は一枚ずつ置く時間を確保する', () => {
 
   assert.ok(triple > single);
   assert.equal(getPresentationDuration({ type: 'damage' }), 1200);
+  assert.ok(getPresentationDuration({ type: 'initial_deal', cardCount: 9 }) > 900);
 });

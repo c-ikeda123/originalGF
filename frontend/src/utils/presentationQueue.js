@@ -1,5 +1,6 @@
 const EVENT_DURATIONS = {
   game_start: 1400,
+  initial_deal: 900,
   card_enter: 500,
   action: 900,
   hit_result: 850,
@@ -17,6 +18,7 @@ export function getPresentationDuration(event) {
   if (event.type === 'card_enter') {
     return Math.max(EVENT_DURATIONS.card_enter, (event.cards?.length || 1) * 260 + 260);
   }
+  if (event.type === 'initial_deal') return Math.max(900, (event.cardCount || 1) * 90 + 300);
   return EVENT_DURATIONS[event.type] || 800;
 }
 

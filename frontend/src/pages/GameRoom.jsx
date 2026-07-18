@@ -59,6 +59,7 @@ export default function GameRoom() {
   const [miracleStockAnim, setMiracleStockAnim] = useState(null);
   const [presentationBusy, setPresentationBusy] = useState(false);
   const [pendingMiracleIds, setPendingMiracleIds] = useState([]);
+  const [initialDealAnim, setInitialDealAnim] = useState(null);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [hoveredMiracleIndex, setHoveredMiracleIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
@@ -97,6 +98,7 @@ export default function GameRoom() {
       setFieldClearing(false);
       setHandRefillAnim(null);
       setMiracleStockAnim(null);
+      setInitialDealAnim(null);
     };
     const playPresentationSound = event => {
       if (event.type === 'game_start') playSound('game_start');
@@ -104,6 +106,12 @@ export default function GameRoom() {
         const soundCount = Math.max(2, event.cards?.length || 1);
         for (let index = 0; index < soundCount; index += 1) {
           const timer = setTimeout(() => playSound('card'), index * 140);
+          activeSoundTimers.push(timer);
+        }
+      }
+      if (event.type === 'initial_deal') {
+        for (let index = 0; index < (event.cardCount || 0); index += 1) {
+          const timer = setTimeout(() => playSound('card'), index * 90);
           activeSoundTimers.push(timer);
         }
       }
@@ -130,6 +138,7 @@ export default function GameRoom() {
       clearPresentation();
       playPresentationSound(event);
       if (event.type === 'game_start') setStartAnim(true);
+      if (event.type === 'initial_deal') setInitialDealAnim(event);
       if (event.type === 'card_enter') setCardEnterAnim(event);
       if (event.type === 'action' || event.type === 'hit_result') setActionAnim({
         ...event,
@@ -478,7 +487,8 @@ export default function GameRoom() {
     return (
       <div 
          key={realCard.instanceId} 
-         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${dreamAffected ? 'dream-affected' : ''} ${handRefillAnim?.playerId === me.id && index >= me.hand.length - handRefillAnim.count ? 'refill-new' : ''} ${usable ? '' : 'disabled'}`}
+         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${dreamAffected ? 'dream-affected' : ''} ${initialDealAnim?.playerIds?.includes(me.id) ? 'initial-deal-card' : ''} ${handRefillAnim?.playerId === me.id && index >= me.hand.length - handRefillAnim.count ? 'refill-new' : ''} ${usable ? '' : 'disabled'}`}
+         style={{ '--deal-index': index }}
          aria-disabled={!usable}
          title={dreamAffected ? `${card.name}（夢の影響中）` : (usable ? card.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません'))}
          onClick={() => toggleCard(index)}

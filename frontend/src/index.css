@@ -2781,6 +2781,18 @@ h1, h2, h3, h4, h5, h6 {
   100% { opacity: 1; transform: translateY(0) scale(1); }
 }
 
+.gf-hand-dock .gf-card-square.initial-deal-card {
+  opacity: 0;
+  animation: gfInitialDeal 430ms cubic-bezier(0.2, 0.82, 0.28, 1.18) both;
+  animation-delay: calc(var(--deal-index) * 90ms);
+}
+
+@keyframes gfInitialDeal {
+  0% { opacity: 0; transform: translate(38px, -120px) scale(0.35) rotate(8deg); }
+  62% { opacity: 1; transform: translate(-3px, 2px) scale(1.04) rotate(-1deg); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0); }
+}
+
 .miracle-stock-flight {
   position: absolute;
   top: 35px;

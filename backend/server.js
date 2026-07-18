@@ -1710,6 +1710,10 @@ function startGame(roomName) {
   addSoundEvent(room, 'game_start', { delayMs: 550 });
   addSoundEvent(room, 'client_turn', { targetId: startingPlayer, delayMs: 900 });
   addPresentationEvent(room, 'game_start', { playerId: startingPlayer, playerName: room.players[startingPlayer].name });
+  addPresentationEvent(room, 'initial_deal', {
+    playerIds,
+    cardCount: Math.max(0, ...playerIds.map(playerId => room.players[playerId].hand.length)),
+  });
   addPresentationEvent(room, 'turn_start', { playerId: startingPlayer, playerName: room.players[startingPlayer].name });
   
   console.log(`Game started in room ${roomName}. Turn: ${startingPlayer}`);
