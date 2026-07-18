@@ -620,7 +620,7 @@ export default function GameRoom() {
         <button type="button" onClick={() => navigate('/')}>修行</button>
         <span>部屋 {id}</span>
         <strong className="gf-battle-title">God Field</strong>
-        {isResolvingDamage && <span>ダメージ処理中</span>}
+        {phase === 'resolving' && <span>ダメージ処理中</span>}
         {remainingSeconds !== null && <span className={remainingSeconds <= 10 ? 'timer-warning' : ''}>残り {remainingSeconds}秒</span>}
         <button type="button">教典</button>
       </div>

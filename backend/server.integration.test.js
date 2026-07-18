@@ -66,7 +66,8 @@ test('準備・チームチャット・観戦・途中参加拒否を実サー�
   const watched = await spectatorGame;
   assert.equal(watched.opponents.length, 2);
   assert.deepEqual(watched.effectEvents, []);
-  assert.equal(watched.actionLockedUntil, 0);
+  assert.ok(watched.actionLockedUntil > Date.now());
+  assert.deepEqual(watched.presentationEvents.map(event => event.type), ['game_start', 'initial_deal', 'turn_start']);
   assert.deepEqual(watched.usableDefenseInstanceIds, []);
   assert.deepEqual(watched.usableDefenseMiracleIndices, []);
   assert.deepEqual(watched.selectableDefenseSupportInstanceIds, []);
@@ -92,6 +93,7 @@ test('準備・チームチャット・観戦・途中参加拒否を実サー�
   await waitFor(botHost, 'roomUpdate', state => state.players.every(player => player.ready));
   botHost.emit('startGame', { roomName: botRoom });
   const initialBotGame = await waitFor(botHost, 'gameState', state => state.gameStateStr === 'playing');
+  await new Promise(resolve => setTimeout(resolve, Math.max(0, initialBotGame.actionLockedUntil - Date.now()) + 30));
   if (initialBotGame.turn !== botId) {
     const discardIndex = initialBotGame.me.hand.findIndex(card => !card.mortar);
     assert.notEqual(discardIndex, -1);

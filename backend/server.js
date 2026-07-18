@@ -72,6 +72,7 @@ const { normalizeBaseCardEdit, normalizeBaseCardEdits } = require('./baseCardEdi
 const {
   addPresentationEvent,
   getCardPresentationLockMs,
+  getInitialPresentationLockMs,
   resetPresentationEvents,
   shouldPresentDamage,
 } = require('./presentationEvents');
@@ -1715,6 +1716,9 @@ function startGame(roomName) {
     cardCount: Math.max(0, ...playerIds.map(playerId => room.players[playerId].hand.length)),
   });
   addPresentationEvent(room, 'turn_start', { playerId: startingPlayer, playerName: room.players[startingPlayer].name });
+  room.actionLockedUntil = Date.now() + getInitialPresentationLockMs(
+    Math.max(0, ...playerIds.map(playerId => room.players[playerId].hand.length)),
+  );
   
   console.log(`Game started in room ${roomName}. Turn: ${startingPlayer}`);
   

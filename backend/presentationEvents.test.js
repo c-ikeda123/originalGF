@@ -4,6 +4,7 @@ const {
   MAX_PRESENTATION_EVENTS,
   addPresentationEvent,
   getCardPresentationLockMs,
+  getInitialPresentationLockMs,
   resetPresentationEvents,
   shouldPresentDamage,
 } = require('./presentationEvents');
@@ -27,6 +28,11 @@ test('完全防御時は0ダメージ文字を表示しない', () => {
 test('神器登場と命中表示が終わるまで操作をロックする', () => {
   assert.ok(getCardPresentationLockMs(2) > getCardPresentationLockMs(1));
   assert.equal(getCardPresentationLockMs(1, 1) - getCardPresentationLockMs(1), 650);
+});
+
+test('開始文字と初期配布と最初の手番表示が終わるまで操作をロックする', () => {
+  assert.equal(getInitialPresentationLockMs(9), 3360);
+  assert.ok(getInitialPresentationLockMs(18) > getInitialPresentationLockMs(9));
 });
 
 test('演出イベントは再接続用の上限を超えて蓄積しない', () => {

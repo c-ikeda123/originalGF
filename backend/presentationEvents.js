@@ -27,10 +27,16 @@ function shouldPresentDamage(amount) {
   return Number(amount) > 0;
 }
 
+function getInitialPresentationLockMs(cardCount) {
+  const dealDuration = Math.max(900, Math.max(1, cardCount) * 90 + 300);
+  return 1400 + dealDuration + 850;
+}
+
 module.exports = {
   MAX_PRESENTATION_EVENTS,
   addPresentationEvent,
   getCardPresentationLockMs,
+  getInitialPresentationLockMs,
   resetPresentationEvents,
   shouldPresentDamage,
 };
