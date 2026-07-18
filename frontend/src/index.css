@@ -1934,6 +1934,29 @@ h1, h2, h3, h4, h5, h6 {
   box-sizing: border-box;
   border: 0;
   box-shadow: none;
+  cursor: grab;
+  transition: filter 100ms ease, opacity 100ms ease, transform 100ms ease;
+}
+
+.gf-hand-cards.reordering,
+.gf-hand-cards.reordering .gf-card-square {
+  cursor: grabbing;
+}
+
+.gf-hand-dock .gf-card-square.dragging {
+  z-index: 6;
+  opacity: 0.58;
+  filter: brightness(1.16);
+  transform: scale(0.94);
+}
+
+.gf-hand-cards.reordering .gf-card-square:not(.dragging) {
+  animation: gfHandReorder 130ms ease-out;
+}
+
+@keyframes gfHandReorder {
+  from { transform: scale(0.96); }
+  to { transform: scale(1); }
 }
 
 .gf-hand-dock .gf-card-square .stat-bar {
@@ -1955,6 +1978,11 @@ h1, h2, h3, h4, h5, h6 {
 .gf-hand-dock .gf-card-square:hover,
 .gf-hand-dock .gf-card-square.selected {
   transform: none;
+}
+
+.gf-hand-dock .gf-card-square.dragging,
+.gf-hand-dock .gf-card-square.dragging:hover {
+  transform: scale(0.94);
 }
 
 .gf-hand-dock .gf-card-square.selected {

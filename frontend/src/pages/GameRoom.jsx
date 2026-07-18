@@ -6,6 +6,7 @@ import RoomBaseEditor from './RoomBaseEditor';
 import { playSound } from '../soundEffects';
 import { getDefenseTotal, getNextCardSelection } from '../utils/cardSelection';
 import { getDreamDisplayedCard, isDreamAffectedCard } from '../utils/dreamCards';
+import { mergeHandOrder, moveHandCard } from '../utils/handOrder';
 import {
   getLatestFieldPresentationId,
   getLatestPresentationId,
@@ -70,6 +71,8 @@ export default function GameRoom() {
   const [hoveredMiracleIndex, setHoveredMiracleIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
   const [playPending, setPlayPending] = useState(false);
+  const [handOrder, setHandOrder] = useState([]);
+  const [draggedCardId, setDraggedCardId] = useState(null);
   const [selectedTargetId, setSelectedTargetId] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatText, setChatText] = useState('');
@@ -86,6 +89,8 @@ export default function GameRoom() {
   const presentationActive = useRef(false);
   const presentationTimer = useRef(null);
   const soundTimers = useRef([]);
+  const handOrderRef = useRef([]);
+  const suppressCardClick = useRef(false);
   const chatMessagesRef = useRef(null);
   useEffect(() => {
     const updateBattleScale = () => setBattleScale(Math.min(window.innerWidth / 1024, window.innerHeight / 768));
@@ -307,6 +312,15 @@ export default function GameRoom() {
   }, [gameState?.turn, gameState?.phase, gameState?.actionLockedUntil, handInstanceKey]);
 
   useEffect(() => {
+    const hand = gameState?.me?.hand || [];
+    setHandOrder(current => {
+      const nextOrder = mergeHandOrder(current, hand);
+      handOrderRef.current = nextOrder;
+      return nextOrder;
+    });
+  }, [handInstanceKey, gameState?.me?.hand]);
+
+  useEffect(() => {
     const chatElement = chatMessagesRef.current;
     if (chatElement) chatElement.scrollTop = chatElement.scrollHeight;
   }, [chatMessages]);
@@ -420,6 +434,11 @@ export default function GameRoom() {
   const opponent = targetableOpponents.find(player => player.id === selectedTargetId && !player.ascended && player.hp > 0)
     || targetableOpponents.find(player => !player.ascended && player.hp > 0)
     || firstOpponent;
+  const displayHandOrder = mergeHandOrder(handOrder, me.hand);
+  const orderedHandEntries = displayHandOrder.map(instanceId => {
+    const serverIndex = me.hand.findIndex(card => card.instanceId === instanceId);
+    return { card: me.hand[serverIndex], serverIndex };
+  }).filter(entry => entry.card);
   const playerNameById = playerId => playerId === me.id
     ? me.name
     : opponents.find(player => player.id === playerId)?.name;
@@ -504,8 +523,47 @@ export default function GameRoom() {
     ));
   };
 
+  const updateHandOrder = updater => {
+    setHandOrder(current => {
+      const nextOrder = updater(current);
+      handOrderRef.current = nextOrder;
+      return nextOrder;
+    });
+  };
+
+  const handleCardDragStart = (event, instanceId) => {
+    if (selectedCards.length > 0 || playPending) {
+      event.preventDefault();
+      return;
+    }
+    suppressCardClick.current = true;
+    setDraggedCardId(instanceId);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', instanceId);
+  };
+
+  const handleCardDragEnter = targetId => {
+    if (!draggedCardId || draggedCardId === targetId) return;
+    updateHandOrder(current => moveHandCard(mergeHandOrder(current, me.hand), draggedCardId, targetId));
+  };
+
+  const handleCardDragEnd = () => {
+    const instanceIds = mergeHandOrder(handOrderRef.current, me.hand);
+    setDraggedCardId(null);
+    setTimeout(() => { suppressCardClick.current = false; }, 0);
+    socket.timeout(4000).emit('reorderHand', { roomName: id, instanceIds }, (timeoutError, response) => {
+      if (!timeoutError && response?.ok) return;
+      const serverOrder = me.hand.map(card => card.instanceId);
+      handOrderRef.current = serverOrder;
+      setHandOrder(serverOrder);
+      const message = timeoutError ? '並び替えを保存できませんでした。' : '手札が更新されたため並び替えを戻しました。';
+      setError(message);
+      setTimeout(() => setError(current => current === message ? '' : current), 3000);
+    });
+  };
+
   // Render a small square card for the hand
-  const renderSquareCard = (realCard, index) => {
+  const renderSquareCard = (realCard, index, displayIndex = index) => {
     const usable = isCardUsable(realCard) || (isMyTurn && phase === 'main') || selectedCards.includes(index);
     const card = getDisplayedCard(realCard, index);
     const dreamAffected = isDreamAffectedCard(realCard, hasDream);
@@ -522,12 +580,20 @@ export default function GameRoom() {
     return (
       <div 
          key={realCard.instanceId} 
-         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${dreamAffected ? 'dream-affected' : ''} ${initialDealAnim?.playerIds?.includes(me.id) ? 'initial-deal-card' : ''} ${handRefillAnim?.playerId === me.id && index >= me.hand.length - handRefillAnim.count ? 'refill-new' : ''} ${usable ? '' : 'disabled'}`}
-         style={{ '--deal-index': index }}
+         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${draggedCardId === realCard.instanceId ? 'dragging' : ''} ${dreamAffected ? 'dream-affected' : ''} ${initialDealAnim?.playerIds?.includes(me.id) ? 'initial-deal-card' : ''} ${handRefillAnim?.playerId === me.id && index >= me.hand.length - handRefillAnim.count ? 'refill-new' : ''} ${usable ? '' : 'disabled'}`}
+         style={{ '--deal-index': displayIndex }}
          aria-disabled={!usable}
+         aria-grabbed={draggedCardId === realCard.instanceId}
+         draggable={selectedCards.length === 0 && !playPending}
          title={dreamAffected ? `${card.name}（夢の影響中）` : (usable ? card.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません'))}
-         onClick={() => toggleCard(index)}
+         onClick={() => {
+           if (!suppressCardClick.current) toggleCard(index);
+         }}
          onDoubleClick={() => usable && handlePlayCard(index)}
+         onDragStart={event => handleCardDragStart(event, realCard.instanceId)}
+         onDragEnter={() => handleCardDragEnter(realCard.instanceId)}
+         onDragOver={event => event.preventDefault()}
+         onDragEnd={handleCardDragEnd}
          onMouseEnter={() => {
            setHoveredMiracleIndex(null);
            setHoveredCardIndex(index);
@@ -857,7 +923,7 @@ export default function GameRoom() {
         <section className="gf-hand-dock">
           {error && <div className="battle-error-toast">{error}</div>}
           {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
-            <div className="hovered-card-detail" style={{ left: `${(hoveredCardIndex % 8) * 83}px` }}>
+            <div className="hovered-card-detail" style={{ left: `${Math.max(0, orderedHandEntries.findIndex(entry => entry.serverIndex === hoveredCardIndex)) * 83}px` }}>
               {renderFieldCard(getDisplayedCard(me.hand[hoveredCardIndex], hoveredCardIndex))}
             </div>
           )}
@@ -866,7 +932,9 @@ export default function GameRoom() {
               {renderFieldCard(me.learnedMiracles[hoveredMiracleIndex])}
             </div>
           )}
-          <div className="gf-hand-cards">{me.hand.map((card, index) => renderSquareCard(card, index))}</div>
+          <div className={`gf-hand-cards ${draggedCardId ? 'reordering' : ''}`}>
+            {orderedHandEntries.map(({ card, serverIndex }, displayIndex) => renderSquareCard(card, serverIndex, displayIndex))}
+          </div>
           <div className="learned-miracles" aria-label="使用済み奇跡ストック">
             {Array.from({ length: 6 }, (_, index) => {
               const miracle = me.learnedMiracles?.[index];
