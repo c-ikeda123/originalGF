@@ -109,3 +109,13 @@ test('人間とBotの防御は同じ効果音演出を通る', () => {
   const serverSource = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
   assert.equal((serverSource.match(/announceDefenseResolution\(room, (?:player|bot), resolution\.action\)/g) || []).length, 2);
 });
+
+test('Botが祈ったときも祈りの表示と効果音を送る', () => {
+  const serverSource = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
+  const botTurnSource = serverSource.slice(
+    serverSource.indexOf('function performBotTurn'),
+    serverSource.indexOf('function emitGameState'),
+  );
+  assert.match(botTurnSource, /createActionEvent\(room, bot, null, null, 'use', \{\s*type: 'pray'/);
+  assert.match(botTurnSource, /addSoundEvent\(room, 'game_draw'\)/);
+});

@@ -1894,6 +1894,10 @@ function performBotTurn(roomName) {
       handIndices: [],
       cards: [{ id: 'pray', name: '祈る', type: 'fixed', imageUrl: '/godfield-flash/cards/fixed/inoru.png' }],
     });
+    room.lastAction = createActionEvent(room, bot, null, null, 'use', {
+      type: 'pray',
+      label: '祈る',
+    });
     addPresentationEvent(room, 'hand_refill', {
       playerId: bot.id,
       playerName: bot.name,
@@ -1903,6 +1907,7 @@ function performBotTurn(roomName) {
       room.actionLockedUntil || 0,
       Date.now() + getCardPresentationLockMs(1),
     );
+    addSoundEvent(room, 'game_draw');
   }
   const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, bot.id);
   endTurnInternal(room, nextTurnId);
