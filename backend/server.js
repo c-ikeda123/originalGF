@@ -1511,7 +1511,7 @@ function createActionEvent(room, attacker, defender, card, outcome, { type = 'at
     } : null,
     timestamp: Date.now(),
   };
-  addPresentationEvent(room, outcome === 'use' ? 'action' : 'hit_result', event);
+  addPresentationEvent(room, outcome === 'use' ? 'action' : 'hit_result', { ...event, actionType: event.type });
   return event;
 }
 

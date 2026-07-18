@@ -6,6 +6,7 @@ import RoomBaseEditor from './RoomBaseEditor';
 import { playSound } from '../soundEffects';
 import { getDefenseTotal, getNextCardSelection } from '../utils/cardSelection';
 import { getDreamDisplayedCard, isDreamAffectedCard } from '../utils/dreamCards';
+import { getLatestPresentationId, getNewPresentationEvents, getPresentationDuration } from '../utils/presentationQueue';
 
 let socket;
 const serverUrl = import.meta.env.VITE_SERVER_URL
@@ -36,6 +37,10 @@ export default function GameRoom() {
   const [startAnim, setStartAnim] = useState(false);
   const [ascensionAnim, setAscensionAnim] = useState(null);
   const [effectAnim, setEffectAnim] = useState(null);
+  const [cardEnterAnim, setCardEnterAnim] = useState(null);
+  const [turnAnim, setTurnAnim] = useState(null);
+  const [fieldClearing, setFieldClearing] = useState(false);
+  const [visibleField, setVisibleField] = useState(null);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [hoveredMiracleIndex, setHoveredMiracleIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
@@ -47,22 +52,13 @@ export default function GameRoom() {
   const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
   const [battleScale, setBattleScale] = useState(() => Math.min(window.innerWidth / 1024, window.innerHeight / 768));
   const handInstanceKey = gameState?.me?.hand.map(card => card.instanceId).join('|') || '';
-  const lastDamageTimestamp = useRef(null);
-  const lastActionId = useRef(null);
   const lastSoundEventId = useRef(0);
-  const lastAscensionEventId = useRef(0);
-  const hasReceivedGameState = useRef(false);
-  const ascensionQueue = useRef([]);
-  const ascensionActive = useRef(false);
-  const ascensionTimer = useRef(null);
-  const lastEffectEventId = useRef(0);
-  const hasReceivedEffectState = useRef(false);
-  const effectQueue = useRef([]);
-  const effectActive = useRef(false);
-  const effectTimer = useRef(null);
+  const lastPresentationEventId = useRef(0);
+  const hasReceivedPresentationState = useRef(false);
+  const presentationQueue = useRef([]);
+  const presentationActive = useRef(false);
+  const presentationTimer = useRef(null);
   const soundTimers = useRef([]);
-  const damageTimer = useRef(null);
-  const actionTimer = useRef(null);
   const chatMessagesRef = useRef(null);
   useEffect(() => {
     const updateBattleScale = () => setBattleScale(Math.min(window.innerWidth / 1024, window.innerHeight / 768));
@@ -72,29 +68,47 @@ export default function GameRoom() {
 
   useEffect(() => {
     const activeSoundTimers = soundTimers.current;
-    const playNextAscension = () => {
-      const event = ascensionQueue.current.shift();
-      if (!event) {
-        ascensionActive.current = false;
-        setAscensionAnim(null);
-        return;
-      }
-      ascensionActive.current = true;
-      setAscensionAnim(event);
-      clearTimeout(ascensionTimer.current);
-      ascensionTimer.current = setTimeout(playNextAscension, 1900);
+    const clearPresentation = () => {
+      setDamageAnim(null);
+      setActionAnim(null);
+      setStartAnim(false);
+      setAscensionAnim(null);
+      setEffectAnim(null);
+      setCardEnterAnim(null);
+      setTurnAnim(null);
+      setFieldClearing(false);
     };
-    const playNextEffect = () => {
-      const event = effectQueue.current.shift();
+    const playNextPresentation = () => {
+      const event = presentationQueue.current.shift();
       if (!event) {
-        effectActive.current = false;
-        setEffectAnim(null);
+        presentationActive.current = false;
+        clearPresentation();
         return;
       }
-      effectActive.current = true;
-      setEffectAnim(event);
-      clearTimeout(effectTimer.current);
-      effectTimer.current = setTimeout(playNextEffect, 1250);
+      presentationActive.current = true;
+      clearPresentation();
+      if (event.type === 'game_start') setStartAnim(true);
+      if (event.type === 'card_enter') setCardEnterAnim(event);
+      if (event.type === 'action' || event.type === 'hit_result') setActionAnim({
+        ...event,
+        type: event.actionType || event.type,
+        outcome: event.outcome || 'use',
+      });
+      if (event.type === 'damage') setDamageAnim({
+        ...event,
+        targetId: event.playerId,
+        timestamp: event.id,
+        isDarkFollowUp: Boolean(event.dark),
+      });
+      if (event.type === 'effect') setEffectAnim({ ...event, type: event.effectType });
+      if (event.type === 'ascension') setAscensionAnim(event);
+      if (event.type === 'field_clear') setFieldClearing(true);
+      if (event.type === 'turn_start') setTurnAnim(event);
+      clearTimeout(presentationTimer.current);
+      presentationTimer.current = setTimeout(() => {
+        if (event.type === 'field_clear') setVisibleField(null);
+        playNextPresentation();
+      }, getPresentationDuration(event));
     };
     socket = io(serverUrl);
     socket.on('connect', () => setSocketId(socket.id));
@@ -118,27 +132,24 @@ export default function GameRoom() {
 
     socket.on('gameState', (data) => {
       setGameState(data);
+      if (data.field) setVisibleField(data.field);
       if (data.chatMessages) setChatMessages(data.chatMessages);
-      const damage = data.lastDamage;
-      if (damage && damage.timestamp !== lastDamageTimestamp.current) {
-        lastDamageTimestamp.current = damage.timestamp;
-        setDamageAnim(damage);
-        clearTimeout(damageTimer.current);
-        if (damage.followUpAmount > 0) {
-          damageTimer.current = setTimeout(() => {
-            setDamageAnim({ ...damage, amount: damage.followUpAmount, followUpAmount: 0, isDarkFollowUp: true });
-            damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
-          }, damage.followUpDelayMs || 650);
-        } else {
-          damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
+      const presentationEvents = data.presentationEvents || [];
+      if (!hasReceivedPresentationState.current) {
+        hasReceivedPresentationState.current = true;
+        lastPresentationEventId.current = getLatestPresentationId(presentationEvents);
+        const recentEvents = presentationEvents.filter(event => Date.now() - event.timestamp < 5000);
+        if (recentEvents.length) {
+          presentationQueue.current.push(...recentEvents);
+          playNextPresentation();
         }
-      }
-      const action = data.lastAction;
-      if (action && action.id !== lastActionId.current) {
-        lastActionId.current = action.id;
-        setActionAnim(action);
-        clearTimeout(actionTimer.current);
-        actionTimer.current = setTimeout(() => setActionAnim(null), action.outcome === 'use' ? 2000 : 1400);
+      } else {
+        const newPresentationEvents = getNewPresentationEvents(presentationEvents, lastPresentationEventId.current);
+        if (newPresentationEvents.length) {
+          lastPresentationEventId.current = getLatestPresentationId(newPresentationEvents, lastPresentationEventId.current);
+          presentationQueue.current.push(...newPresentationEvents);
+          if (!presentationActive.current) playNextPresentation();
+        }
       }
       const newSoundEvents = (data.soundEvents || []).filter(event => event.id > lastSoundEventId.current);
       if (newSoundEvents.length) {
@@ -146,37 +157,7 @@ export default function GameRoom() {
         newSoundEvents.forEach(event => {
           const timer = setTimeout(() => playSound(event.name), event.delayMs || 0);
           activeSoundTimers.push(timer);
-          if (event.name === 'game_start') {
-            const showTimer = setTimeout(() => {
-              setStartAnim(true);
-              const hideTimer = setTimeout(() => setStartAnim(false), 1400);
-              activeSoundTimers.push(hideTimer);
-            }, event.delayMs || 0);
-            activeSoundTimers.push(showTimer);
-          }
         });
-      }
-      const ascensionEvents = data.ascensionEvents || [];
-      if (!hasReceivedGameState.current) {
-        hasReceivedGameState.current = true;
-        lastAscensionEventId.current = Math.max(0, ...ascensionEvents.map(event => event.id));
-      }
-      const newAscensions = ascensionEvents.filter(event => event.id > lastAscensionEventId.current);
-      if (newAscensions.length) {
-        lastAscensionEventId.current = Math.max(...newAscensions.map(event => event.id));
-        ascensionQueue.current.push(...newAscensions);
-        if (!ascensionActive.current) playNextAscension();
-      }
-      const effectEvents = data.effectEvents || [];
-      if (!hasReceivedEffectState.current) {
-        hasReceivedEffectState.current = true;
-        lastEffectEventId.current = Math.max(0, ...effectEvents.map(event => event.id));
-      }
-      const newEffects = effectEvents.filter(event => event.id > lastEffectEventId.current);
-      if (newEffects.length) {
-        lastEffectEventId.current = Math.max(...newEffects.map(event => event.id));
-        effectQueue.current.push(...newEffects);
-        if (!effectActive.current) playNextEffect();
       }
     });
 
@@ -193,21 +174,14 @@ export default function GameRoom() {
       setDamageAnim(null);
       setActionAnim(null);
       setStartAnim(false);
-      lastDamageTimestamp.current = null;
-      lastActionId.current = null;
       lastSoundEventId.current = 0;
-      lastAscensionEventId.current = 0;
-      hasReceivedGameState.current = false;
-      ascensionQueue.current = [];
-      ascensionActive.current = false;
-      clearTimeout(ascensionTimer.current);
-      setAscensionAnim(null);
-      lastEffectEventId.current = 0;
-      hasReceivedEffectState.current = false;
-      effectQueue.current = [];
-      effectActive.current = false;
-      clearTimeout(effectTimer.current);
-      setEffectAnim(null);
+      lastPresentationEventId.current = 0;
+      hasReceivedPresentationState.current = false;
+      presentationQueue.current = [];
+      presentationActive.current = false;
+      clearTimeout(presentationTimer.current);
+      clearPresentation();
+      setVisibleField(null);
     });
 
     socket.on('errorMsg', (msg) => {
@@ -217,14 +191,9 @@ export default function GameRoom() {
     });
 
     return () => {
-      clearTimeout(damageTimer.current);
-      clearTimeout(actionTimer.current);
-      clearTimeout(ascensionTimer.current);
-      ascensionQueue.current = [];
-      ascensionActive.current = false;
-      clearTimeout(effectTimer.current);
-      effectQueue.current = [];
-      effectActive.current = false;
+      clearTimeout(presentationTimer.current);
+      presentationQueue.current = [];
+      presentationActive.current = false;
       activeSoundTimers.forEach(clearTimeout);
       socket.disconnect();
     };
@@ -358,7 +327,8 @@ export default function GameRoom() {
     );
   }
 
-  const { me, opponent: firstOpponent, turn, phase, field } = gameState;
+  const { me, opponent: firstOpponent, turn, phase, field: serverField } = gameState;
+  const field = visibleField || serverField;
   const opponents = gameState.opponents?.length ? gameState.opponents : [firstOpponent].filter(Boolean);
   const targetableOpponents = opponents.filter(player => !(me.team && player.team === me.team));
   const opponent = targetableOpponents.find(player => player.id === selectedTargetId && !player.ascended && player.hp > 0)
@@ -367,6 +337,12 @@ export default function GameRoom() {
   const playerNameById = playerId => playerId === me.id
     ? me.name
     : opponents.find(player => player.id === playerId)?.name;
+  const presentationTargetStyle = playerId => {
+    const playerIndex = playerId === me.id
+      ? opponents.length
+      : Math.max(0, opponents.findIndex(player => player.id === playerId));
+    return { '--presentation-target-y': `${8 + playerIndex * 41}px` };
+  };
   const isResolvingDamage = (gameState.actionLockedUntil || 0) > now;
   const isMyTurn = turn === me.id && !isResolvingDamage;
   const remainingSeconds = gameState.turnDeadline
@@ -576,9 +552,9 @@ export default function GameRoom() {
         <button type="button">教典</button>
       </div>
 
-        <div className="gf-battle-shell">
+        <div className={`gf-battle-shell ${fieldClearing ? 'field-clearing' : ''} ${cardEnterAnim ? 'card-enter-active' : ''}`}>
         {ascensionAnim && (
-          <div key={ascensionAnim.id} className="ascension-overlay" role="status" aria-label={`${ascensionAnim.playerName}が昇天`}>
+          <div key={ascensionAnim.id} className="ascension-overlay" style={presentationTargetStyle(ascensionAnim.playerId)} role="status" aria-label={`${ascensionAnim.playerName}が昇天`}>
             <div className="ascension-screen-flash" />
             <div className="ascension-light-column" />
             <div className="ascension-soul" />
@@ -591,6 +567,7 @@ export default function GameRoom() {
             <div
               key={effectAnim.id}
               className={`dream-reveal-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              style={presentationTargetStyle(effectAnim.playerId)}
               role="status"
               aria-label={effectAnim.changed ? '夢の影響で神器が変化' : '夢の影響を受けたが神器はそのまま'}
             >
@@ -617,9 +594,11 @@ export default function GameRoom() {
             <div
               key={effectAnim.id}
               className={`resource-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              style={presentationTargetStyle(effectAnim.playerId)}
               role="status"
               aria-label={`${effectAnim.playerName}の${effectAnim.type}が${effectAnim.amount}増加`}
             >
+              <span className="presentation-target-name">{effectAnim.playerName}</span>
               <img className="resource-effect-label" src={`/godfield-flash/ui/game/effect/${effectAnim.type}.png`} alt="" />
               <div className="resource-effect-number">{renderEffectNumber(effectAnim.type, effectAnim.amount)}</div>
               {effectAnim.revived && <span className="revive-effect-label">復活</span>}
@@ -628,6 +607,7 @@ export default function GameRoom() {
             <div
               key={effectAnim.id}
               className={`assistant-effect-overlay ${effectAnim.type} ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              style={presentationTargetStyle(effectAnim.playerId)}
               role="status"
               aria-label={`${effectAnim.playerName}の${EFFECT_LABELS[effectAnim.type]}`}
             >
@@ -639,6 +619,7 @@ export default function GameRoom() {
             <div
               key={effectAnim.id}
               className={`status-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              style={presentationTargetStyle(effectAnim.playerId)}
               role="status"
               aria-label={`${effectAnim.playerName}に${EFFECT_LABELS[effectAnim.type] || effectAnim.type}`}
             >
@@ -651,8 +632,10 @@ export default function GameRoom() {
           <div
             key={`${damageAnim.timestamp}-${damageAnim.isDarkFollowUp ? 'dark' : 'normal'}`}
             className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'} ${damageAnim.isDarkFollowUp ? 'dark-follow-up' : ''}`}
+            style={presentationTargetStyle(damageAnim.targetId)}
             aria-label={`${playerNameById(damageAnim.targetId)}に${damageAnim.amount}ダメージ`}
           >
+            <span className="presentation-target-name">{playerNameById(damageAnim.targetId)}</span>
             <div className="gf-damage-number">{renderDamageNumber(damageAnim.amount, damageAnim.isDarkFollowUp)}</div>
             <img className="gf-damage-label" src={`/godfield-flash/ui/game-ja/effect/${damageAnim.isDarkFollowUp ? 'damage_dark' : 'damage'}.png`} alt={damageAnim.isDarkFollowUp ? '冥ダメージ' : 'ダメージ'} />
           </div>
@@ -663,6 +646,7 @@ export default function GameRoom() {
         {actionAnim && !damageAnim && actionAnim.outcome === 'use' && (
           <div
             className={`activity-action-overlay ${actionAnim.attackerId === me.id ? 'actor-me' : 'actor-opponent'}`}
+            style={presentationTargetStyle(actionAnim.attackerId)}
             role="status"
             aria-label={`${actionAnim.attackerName || playerNameById(actionAnim.attackerId)}が${actionAnim.label || `${actionAnim.card?.name}を使用`}`}
           >
@@ -679,8 +663,26 @@ export default function GameRoom() {
         )}
 
         {actionAnim && !damageAnim && actionAnim.outcome !== 'use' && (
-          <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`}>
+          <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`} style={presentationTargetStyle(actionAnim.defenderId)}>
+            <span className="presentation-target-name">{playerNameById(actionAnim.defenderId)}</span>
             <img src={`/godfield-flash/ui/game-ja/effect/${actionEffect}.png`} alt={actionEffect === 'miss' ? '回避' : '命中'} />
+          </div>
+        )}
+
+        {turnAnim && (
+          <div className="turn-start-overlay" style={presentationTargetStyle(turnAnim.playerId)} role="status">
+            <span>{turnAnim.playerId === me.id ? 'あなたの番' : `${turnAnim.playerName}の番`}</span>
+          </div>
+        )}
+
+        {cardEnterAnim && (
+          <div className={`presentation-card-stack phase-${cardEnterAnim.phase}`}>
+            <div className="gf-field-owner">{cardEnterAnim.playerName}</div>
+            {cardEnterAnim.cards.map((card, index) => (
+              <div key={`${card.id}-${index}`} className="presentation-enter-card" style={{ '--card-enter-index': index }}>
+                {renderFieldCard(card)}
+              </div>
+            ))}
           </div>
         )}
 
