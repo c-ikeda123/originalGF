@@ -69,6 +69,7 @@ const GF_BASE_CARDS = require('../shared/baseCards.json');
 const FLASH_SOUNDS = new Set(require('../shared/flashSounds.json'));
 const { resolveDreamCard } = require('../shared/dreamRules.cjs');
 const { normalizeBaseCardEdit, normalizeBaseCardEdits } = require('./baseCardEdits');
+const { addPresentationEvent, resetPresentationEvents } = require('./presentationEvents');
 
 // Stores active rooms
 // rooms[roomName] = { players: { socketId: { name, ready, ...gameState } }, state: 'waiting' | 'playing' }
@@ -93,6 +94,10 @@ function addAscensionEvent(room, player) {
     playerName: player.name,
     timestamp: Date.now(),
   }].slice(-20);
+  addPresentationEvent(room, 'ascension', {
+    playerId: player.id,
+    playerName: player.name,
+  });
 }
 
 function addEffectEvent(room, type, player, amount = 0, details = {}) {
@@ -105,6 +110,13 @@ function addEffectEvent(room, type, player, amount = 0, details = {}) {
     amount,
     ...details,
   }].slice(-60);
+  addPresentationEvent(room, 'effect', {
+    effectType: type,
+    playerId: player?.id || null,
+    playerName: player?.name || '',
+    amount,
+    ...details,
+  });
 }
 
 const AILMENT_EFFECT_TYPES = {
@@ -220,6 +232,10 @@ io.on('connection', (socket) => {
         ascensionSeq: 0,
         effectEvents: [],
         effectSeq: 0,
+        presentationEvents: [],
+        presentationSeq: 0,
+        pendingTurnTransition: null,
+        fieldTransitionTimer: null,
         winnerId: null,
         winnerTeam: null,
         followUpAttacks: [],
@@ -404,11 +420,15 @@ io.on('connection', (socket) => {
     room.lastDamage = null;
     room.lastAction = null;
     room.actionLockedUntil = 0;
+    clearTimeout(room.fieldTransitionTimer);
+    room.pendingTurnTransition = null;
+    room.fieldTransitionTimer = null;
     room.damageSeq = 0;
     room.soundEvents = [];
     room.soundSeq = 0;
     room.effectEvents = [];
     room.effectSeq = 0;
+    resetPresentationEvents(room);
     room.winnerId = null;
     room.winnerTeam = null;
     room.pendingBuy = null;
@@ -583,13 +603,31 @@ io.on('connection', (socket) => {
 
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
 
+    addPresentationEvent(room, 'card_enter', {
+      playerId: player.id,
+      playerName: player.name,
+      targetId: opponent?.id || null,
+      phase: room.phase,
+      cards: cards.map(usedCard => ({
+        id: usedCard.id,
+        name: usedCard.name,
+        imageUrl: usedCard.imageUrl || '',
+        type: usedCard.type,
+        attack: usedCard.attack || 0,
+        defense: usedCard.defense || 0,
+        costMp: usedCard.costMp || 0,
+        attribute: usedCard.attribute || 'none',
+        description: usedCard.description || '',
+      })),
+    });
+
     applyImmediateCardEffects(room, player, getActivatedCards(cards, isSell));
 
     if (isSell) {
       const sellIndex = cards.findIndex(c => c.effect === 'sell');
       const soldCard = cards[sellIndex === 0 ? 1 : 0];
       const sellCard = cards[sellIndex];
-      room.lastAction = createActionEvent(player, opponent, sellCard, 'use', {
+      room.lastAction = createActionEvent(room, player, opponent, sellCard, 'use', {
         type: 'trade',
         label: `${soldCard.name}を売る`,
       });
@@ -601,7 +639,7 @@ io.on('connection', (socket) => {
     }
 
     if (isSingleTrade) {
-      room.lastAction = createActionEvent(player, opponent, card, 'use', { type: 'trade' });
+      room.lastAction = createActionEvent(room, player, opponent, card, 'use', { type: 'trade' });
       if (card.effect === 'exchange') {
         room.phase = 'exchange';
         addSoundEvent(room, 'exchange');
@@ -637,7 +675,7 @@ io.on('connection', (socket) => {
     if (combinedCard.target !== 'all' && !combinedCard.forcedTargetId) combinedCard.forcedTargetId = opponent.id;
 
     room.log.push(`${player.name} played ${combinedCard.name}!`);
-    room.lastAction = createActionEvent(player, opponent, combinedCard, 'use', { type: 'card' });
+    room.lastAction = createActionEvent(room, player, opponent, combinedCard, 'use', { type: 'card' });
 
     if (room.phase === 'main') {
        // Ailment: Hallucination causes random wrong card to be played sometimes? 
@@ -872,7 +910,7 @@ io.on('connection', (socket) => {
     queueReplacementDraws(player, discarded.length);
     if (discarded.length) addSoundEvent(room, 'item_remove');
     if (discarded.length) {
-      room.lastAction = createActionEvent(player, null, discarded[0], 'use', {
+      room.lastAction = createActionEvent(room, player, null, discarded[0], 'use', {
         type: 'discard',
         label: `${discarded[0].name}を捨てる`,
       });
@@ -905,7 +943,7 @@ io.on('connection', (socket) => {
     } else {
        room.log.push(`${player.name} は祈った... (しかし何も起きなかった)`);
     }
-    room.lastAction = createActionEvent(player, null, null, 'use', {
+    room.lastAction = createActionEvent(room, player, null, null, 'use', {
       type: 'pray',
       label: '祈る',
     });
@@ -1012,6 +1050,20 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      isDark: isDarkAttack,
      timestamp: getNextEventTimestamp(room.lastDamage?.timestamp),
    };
+   addPresentationEvent(room, 'damage', {
+     playerId: player.id,
+     playerName: player.name,
+     amount: damageSequence.primaryDamage,
+     dark: false,
+   });
+   if (damageSequence.darkDamage > 0) {
+     addPresentationEvent(room, 'damage', {
+       playerId: player.id,
+       playerName: player.name,
+       amount: damageSequence.darkDamage,
+       dark: true,
+     });
+   }
    room.actionLockedUntil = Date.now() + getDamageResolutionDelay(damageSequence.darkDamage);
 
    checkDeath(room);
@@ -1036,9 +1088,36 @@ function clearFieldLater(roomName) {
   setTimeout(() => {
     const room = rooms[roomName];
     if (!room || room.state === 'waiting') return;
+    if (room.pendingTurnTransition?.field === scheduledField) return;
     if (!clearFieldIfCurrent(room, scheduledField)) return;
+    addPresentationEvent(room, 'field_clear', {});
     emitGameState(roomName);
   }, FIELD_CLEAR_DELAY_MS);
+}
+
+function scheduleTurnAfterField(room, nextTurnId, options) {
+  if (!room.field) return false;
+  clearTimeout(room.fieldTransitionTimer);
+  const transition = { field: room.field, nextTurnId, options };
+  room.pendingTurnTransition = transition;
+  room.phase = 'resolving';
+  const delay = Math.max(FIELD_CLEAR_DELAY_MS, (room.actionLockedUntil || 0) - Date.now());
+  room.actionLockedUntil = Math.max(room.actionLockedUntil || 0, Date.now() + delay);
+  room.fieldTransitionTimer = setTimeout(() => {
+    const currentRoom = rooms[room.name];
+    if (!currentRoom || currentRoom.pendingTurnTransition !== transition || currentRoom.state === 'waiting') return;
+    if (currentRoom.field === transition.field) {
+      currentRoom.field = null;
+      addPresentationEvent(currentRoom, 'field_clear', {});
+    }
+    currentRoom.pendingTurnTransition = null;
+    currentRoom.fieldTransitionTimer = null;
+    currentRoom.actionLockedUntil = 0;
+    endTurnInternal(currentRoom, transition.nextTurnId, { ...transition.options, afterFieldClear: true });
+    checkDeath(currentRoom);
+    emitGameState(currentRoom.name);
+  }, delay);
+  return true;
 }
 
 function withInstanceId(card) {
@@ -1123,7 +1202,7 @@ function startNextQueuedAttack(room, roomName) {
     const target = room.players[queued.targetId];
     if (!attacker || !target || target.ascended || target.hp <= 0) continue;
     const hitResult = rollAttack(context.card, target.ailments);
-    room.lastAction = createActionEvent(attacker, target, context.card, hitResult.outcome);
+    room.lastAction = createActionEvent(room, attacker, target, context.card, hitResult.outcome);
     if (!hitResult.hit) {
       addSoundEvent(room, 'miss');
       room.log.push(`${target.name} は ${context.card.name}（${queued.repeat}回目）を回避！`);
@@ -1386,7 +1465,8 @@ function processAilments(player, room) {
   if (result.fatal) room.log.push(`${player.name} は天国病の発作でHPが0になった。`);
 }
 
-function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false } = {}) {
+function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false, afterFieldClear = false } = {}) {
+   if (!afterFieldClear && scheduleTurnAfterField(room, nextTurnId, { skipAssistantOpportunity })) return;
    if (!nextTurnId || !room.players[nextTurnId] || room.players[nextTurnId].ascended || room.players[nextTurnId].hp <= 0) {
      nextTurnId = getNextAlivePlayerId(room.turnOrder || Object.keys(room.players), room.players, room.mainTurnOwner);
    }
@@ -1409,11 +1489,12 @@ function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false } 
    room.phase = 'main';
    const player = room.players[nextTurnId];
     room.log.push(`--- ${player.name}'s Turn ---`);
+    addPresentationEvent(room, 'turn_start', { playerId: nextTurnId, playerName: player.name });
     addSoundEvent(room, 'client_turn', { targetId: nextTurnId, delayMs: getTurnSoundDelay(room.field) });
  }
 
-function createActionEvent(attacker, defender, card, outcome, { type = 'attack', label = '' } = {}) {
-  return {
+function createActionEvent(room, attacker, defender, card, outcome, { type = 'attack', label = '' } = {}) {
+  const event = {
     id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
     type,
     outcome,
@@ -1430,6 +1511,8 @@ function createActionEvent(attacker, defender, card, outcome, { type = 'attack',
     } : null,
     timestamp: Date.now(),
   };
+  addPresentationEvent(room, outcome === 'use' ? 'action' : 'hit_result', event);
+  return event;
 }
 
 function checkDeath(room) {
@@ -1502,6 +1585,9 @@ function startGame(roomName) {
   room.lastDamage = null;
   room.lastAction = null;
   room.actionLockedUntil = 0;
+  clearTimeout(room.fieldTransitionTimer);
+  room.pendingTurnTransition = null;
+  room.fieldTransitionTimer = null;
   room.damageSeq = 0;
   room.soundEvents = [];
   room.soundSeq = 0;
@@ -1509,6 +1595,7 @@ function startGame(roomName) {
   room.ascensionSeq = 0;
   room.effectEvents = [];
   room.effectSeq = 0;
+  resetPresentationEvents(room);
   room.field = null;
   room.attackQueue = [];
   room.attackContext = null;
@@ -1542,6 +1629,8 @@ function startGame(roomName) {
   addSoundEvent(room, 'game_start_number');
   addSoundEvent(room, 'game_start', { delayMs: 550 });
   addSoundEvent(room, 'client_turn', { targetId: startingPlayer, delayMs: 900 });
+  addPresentationEvent(room, 'game_start', { playerId: startingPlayer, playerName: room.players[startingPlayer].name });
+  addPresentationEvent(room, 'turn_start', { playerId: startingPlayer, playerName: room.players[startingPlayer].name });
   
   console.log(`Game started in room ${roomName}. Turn: ${startingPlayer}`);
   
@@ -1702,6 +1791,7 @@ function emitGameState(roomName) {
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId || event.targetId === id),
       ascensionEvents: room.ascensionEvents || [],
       effectEvents: room.effectEvents || [],
+      presentationEvents: room.presentationEvents || [],
       usableDefenseInstanceIds,
       usableDefenseMiracleIndices,
       selectableDefenseSupportInstanceIds,
@@ -1754,6 +1844,7 @@ function emitGameState(roomName) {
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId),
       ascensionEvents: room.ascensionEvents || [],
       effectEvents: room.effectEvents || [],
+      presentationEvents: room.presentationEvents || [],
       usableDefenseInstanceIds: [],
       usableDefenseMiracleIndices: [],
       selectableDefenseSupportInstanceIds: [],
