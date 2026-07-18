@@ -28,7 +28,7 @@ export function canAddCardToSelection(selectedCards, nextCard, phase, hasFlash =
 
   const baseAttacks = cards.filter(card => card.attack > 0 && !card.additive && card.supportEffect !== 'magic_free');
   const actionMiracles = cards.filter(card => card.type === 'miracle' && card.attack <= 0 && !card.additive);
-  const attackCombination = baseAttacks.length <= 1
+  const attackCombination = baseAttacks.length === 1
     && actionMiracles.length === 0
     && cards.every(card => card.attack > 0 || card.additive || card.supportEffect === 'magic_free')
     && cards.every(card => card.type !== 'item' || ['magic_free', 'increase_attack'].includes(card.supportEffect));

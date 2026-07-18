@@ -20,6 +20,13 @@ test('攻撃補助と売る組み合わせは必要な枚数だけ選択でき�
   assert.equal(canAddCardToSelection([sell, weapon], additive, 'main'), false);
 });
 
+test('追加攻撃同士は重ねず通常攻撃には複数追加できる', () => {
+  const otherAdditive = { type: 'weapon', attack: 3, additive: true };
+  assert.equal(canAddCardToSelection([additive], otherAdditive, 'main'), false);
+  assert.equal(canAddCardToSelection([weapon, additive], otherAdditive, 'main'), true);
+  assert.deepEqual(getNextCardSelection([2], 3, [weapon, otherWeapon, additive, otherAdditive], 'main'), [3]);
+});
+
 test('防御神器は重ねられるが閃光中は1枚だけにする', () => {
   const armor = { type: 'armor', defense: 5 };
   const otherArmor = { type: 'armor', defense: 3 };
