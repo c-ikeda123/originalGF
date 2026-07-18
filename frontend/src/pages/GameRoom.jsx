@@ -63,6 +63,7 @@ export default function GameRoom() {
   const soundTimers = useRef([]);
   const damageTimer = useRef(null);
   const actionTimer = useRef(null);
+  const chatMessagesRef = useRef(null);
   useEffect(() => {
     const updateBattleScale = () => setBattleScale(Math.min(window.innerWidth / 1024, window.innerHeight / 768));
     window.addEventListener('resize', updateBattleScale);
@@ -250,6 +251,11 @@ export default function GameRoom() {
     setHoveredCardIndex(null);
   }, [gameState?.turn, gameState?.phase, gameState?.actionLockedUntil, handInstanceKey]);
 
+  useEffect(() => {
+    const chatElement = chatMessagesRef.current;
+    if (chatElement) chatElement.scrollTop = chatElement.scrollHeight;
+  }, [chatMessages]);
+
   const myTeam = gameState?.me?.team
     || roomState?.players?.find(player => player.id === socketId)?.team;
   const submitChat = event => {
@@ -258,9 +264,9 @@ export default function GameRoom() {
     socket.emit('sendChat', { roomName: id, text: chatText, teamOnly: teamChat && Boolean(myTeam) });
     setChatText('');
   };
-  const renderChat = () => (
-    <div className="chat-panel">
-      <div className="chat-messages">
+  const renderChat = (className = '') => (
+    <div className={`chat-panel ${className}`.trim()}>
+      <div className="chat-messages" ref={chatMessagesRef}>
         {chatMessages.slice(-30).map(message => (
           <div key={message.id} className={message.teamOnly ? 'team-message' : ''}>
             <strong>{message.senderName}</strong>{message.teamOnly ? ' [チーム]' : ''}: {message.text}
@@ -347,7 +353,7 @@ export default function GameRoom() {
           )}
         </div>
         {role === 'player' && <RoomBaseEditor socket={socket} roomName={id} editorState={baseEditorState} myId={socketId} />}
-        {renderChat()}
+        {renderChat('lobby-chat-panel')}
       </div>
     );
   }

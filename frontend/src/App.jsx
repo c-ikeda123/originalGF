@@ -7,6 +7,7 @@ import './layout.css'; // Add a layout CSS file
 import Editor from './pages/Editor';
 import BaseEditor from './pages/BaseEditor';
 import GameRoom from './pages/GameRoom';
+import VolumeControl from './components/VolumeControl';
 
 function Home() {
   const navigate = useNavigate();
@@ -69,6 +70,7 @@ function Home() {
 function App() {
   return (
     <Router>
+      <VolumeControl />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/editor" element={<Editor />} />

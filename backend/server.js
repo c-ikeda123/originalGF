@@ -1586,6 +1586,9 @@ function armTurnTimer(roomName) {
   }, limit * 1000);
 }
 
+const BOT_THINK_DELAY_MS = 1400;
+const BOT_THINK_JITTER_MS = 700;
+
 function scheduleBotTurn(roomName) {
   const room = rooms[roomName];
   if (!room) return;
@@ -1593,7 +1596,8 @@ function scheduleBotTurn(roomName) {
   const bot = room.players[room.turn];
   if (room.state !== 'playing' || !bot?.isBot || !['main', 'defense'].includes(room.phase)) return;
   const lockDelay = Math.max(0, (room.actionLockedUntil || 0) - Date.now());
-  room.botTimer = setTimeout(() => performBotTurn(roomName), Math.max(350, lockDelay + 20));
+  const thinkDelay = BOT_THINK_DELAY_MS + Math.floor(Math.random() * BOT_THINK_JITTER_MS);
+  room.botTimer = setTimeout(() => performBotTurn(roomName), lockDelay + thinkDelay);
 }
 
 function performBotTurn(roomName) {

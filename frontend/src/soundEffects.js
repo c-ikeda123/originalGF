@@ -3,6 +3,24 @@ import flashSounds from '../../shared/flashSounds.json';
 const availableSounds = new Set(flashSounds);
 const audioCache = new Map();
 const baseUrl = '/godfield-flash/sounds';
+const MASTER_VOLUME_KEY = 'gf_master_volume';
+
+function readStoredMasterVolume() {
+  if (typeof window === 'undefined') return 1;
+  const stored = Number(window.localStorage.getItem(MASTER_VOLUME_KEY));
+  return Number.isFinite(stored) ? Math.max(0, Math.min(1, stored)) : 1;
+}
+
+let masterVolume = readStoredMasterVolume();
+
+export function getMasterVolume() {
+  return masterVolume;
+}
+
+export function setMasterVolume(volume) {
+  masterVolume = Math.max(0, Math.min(1, Number(volume) || 0));
+  if (typeof window !== 'undefined') window.localStorage.setItem(MASTER_VOLUME_KEY, String(masterVolume));
+}
 
 function getAudio(name) {
   if (!availableSounds.has(name) || typeof Audio === 'undefined') return null;
@@ -22,7 +40,7 @@ export function playSound(name, volume = 0.7) {
   const source = getAudio(name);
   if (!source) return;
   const audio = source.cloneNode();
-  audio.volume = Math.max(0, Math.min(1, volume));
+  audio.volume = Math.max(0, Math.min(1, volume * masterVolume));
   audio.play().catch(() => {});
 }
 
