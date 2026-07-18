@@ -92,6 +92,7 @@ export default function GameRoom() {
   const handOrderRef = useRef([]);
   const suppressCardClick = useRef(false);
   const chatMessagesRef = useRef(null);
+  const activePlayRequest = useRef(0);
   useEffect(() => {
     const updateBattleScale = () => setBattleScale(Math.min(window.innerWidth / 1024, window.innerHeight / 768));
     window.addEventListener('resize', updateBattleScale);
@@ -255,6 +256,7 @@ export default function GameRoom() {
     });
 
     socket.on('gameStateCleared', () => {
+      activePlayRequest.current += 1;
       setGameState(null);
       setSelectedCards([]);
       setPlayPending(false);
@@ -306,6 +308,7 @@ export default function GameRoom() {
   }, [gameState?.turnDeadline, gameState?.actionLockedUntil]);
 
   useEffect(() => {
+    activePlayRequest.current += 1;
     setSelectedCards([]);
     setPlayPending(false);
     setHoveredCardIndex(null);
@@ -500,11 +503,14 @@ export default function GameRoom() {
   const handlePlayCard = (cardIndex) => {
     if (playPending || (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex))) return;
     const cardIndices = selectedCards.includes(cardIndex) ? selectedCards : [cardIndex];
+    const requestId = activePlayRequest.current + 1;
+    activePlayRequest.current = requestId;
     setPlayPending(true);
     socket.timeout(4000).emit(
       'playCard',
       { roomName: id, cardIndices, targetId: opponent?.id },
       (timeoutError, response) => {
+        if (activePlayRequest.current !== requestId) return;
         setPlayPending(false);
         if (timeoutError) {
           const message = '操作の応答がありません。もう一度OKを押してください。';
