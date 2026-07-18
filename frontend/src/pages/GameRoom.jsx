@@ -69,6 +69,7 @@ export default function GameRoom() {
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [hoveredMiracleIndex, setHoveredMiracleIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
+  const [playPending, setPlayPending] = useState(false);
   const [selectedTargetId, setSelectedTargetId] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatText, setChatText] = useState('');
@@ -251,6 +252,7 @@ export default function GameRoom() {
     socket.on('gameStateCleared', () => {
       setGameState(null);
       setSelectedCards([]);
+      setPlayPending(false);
       setDamageAnim(null);
       setActionAnim(null);
       setStartAnim(false);
@@ -300,6 +302,7 @@ export default function GameRoom() {
 
   useEffect(() => {
     setSelectedCards([]);
+    setPlayPending(false);
     setHoveredCardIndex(null);
   }, [gameState?.turn, gameState?.phase, gameState?.actionLockedUntil, handInstanceKey]);
 
@@ -470,10 +473,23 @@ export default function GameRoom() {
     : (selectedAttackTotal > 0 ? `攻${selectedAttackTotal}` : '使う');
 
   const handlePlayCard = (cardIndex) => {
-    if (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex)) return;
+    if (playPending || (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex))) return;
     const cardIndices = selectedCards.includes(cardIndex) ? selectedCards : [cardIndex];
-    socket.emit('playCard', { roomName: id, cardIndices, targetId: opponent?.id });
-    setSelectedCards([]);
+    setPlayPending(true);
+    socket.timeout(4000).emit(
+      'playCard',
+      { roomName: id, cardIndices, targetId: opponent?.id },
+      (timeoutError, response) => {
+        setPlayPending(false);
+        if (timeoutError) {
+          const message = '操作の応答がありません。もう一度OKを押してください。';
+          setError(message);
+          setTimeout(() => setError(current => current === message ? '' : current), 3000);
+          return;
+        }
+        if (response?.ok) setSelectedCards([]);
+      },
+    );
   };
 
   const toggleCard = (index) => {
@@ -885,7 +901,7 @@ export default function GameRoom() {
           </div>
           <div className="gf-hand-actions">
             {isMyTurn && selectedCards.length > 0 && (phase === 'main' || (phase === 'defense' && hasSelectedDefense)) && (
-               <button className="btn gf-command-button" aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>{commandLabel}</button>
+               <button className="btn gf-command-button" disabled={playPending} aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>{commandLabel}</button>
             )}
             {isMyTurn && phase === 'defense' && selectedCards.length === 0 && (
                <button className="btn gf-command-button forgive-command" aria-label="防御せずダメージを受ける" onClick={() => socket.emit('finishDefense', { roomName: id })}>許す</button>
