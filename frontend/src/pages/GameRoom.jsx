@@ -4,7 +4,7 @@ import io from 'socket.io-client';
 import '../index.css';
 import RoomBaseEditor from './RoomBaseEditor';
 import { playSound } from '../soundEffects';
-import { getDefenseTotal, getNextCardSelection } from '../utils/cardSelection';
+import { canAddCardToSelection, getDefenseTotal, getNextCardSelection } from '../utils/cardSelection';
 import { getDreamDisplayedCard, isDreamAffectedCard } from '../utils/dreamCards';
 import { mergeHandOrder, moveHandCard } from '../utils/handOrder';
 import {
@@ -564,9 +564,26 @@ export default function GameRoom() {
 
   // Render a small square card for the hand
   const renderSquareCard = (realCard, index, displayIndex = index) => {
-    const usable = isCardUsable(realCard) || (isMyTurn && phase === 'main') || selectedCards.includes(index);
+    const selected = selectedCards.includes(index);
+    const usable = isCardUsable(realCard);
+    const selectableForDiscard = isMyTurn && phase === 'main';
+    const selectedRealCards = selectedCards.map(cardIndex => me.hand[cardIndex]).filter(Boolean);
+    const compatibleWithSelection = selected
+      || selectedCards.length === 0
+      || canAddCardToSelection(selectedRealCards, realCard, phase, me.ailments.includes('flash'));
+    const visuallyAvailable = selected || (usable && compatibleWithSelection);
+    const selectable = usable || selectableForDiscard || selected;
     const card = getDisplayedCard(realCard, index);
     const dreamAffected = isDreamAffectedCard(realCard, hasDream);
+    const cardTitle = dreamAffected
+      ? `${card.name}（夢の影響中）`
+      : (!compatibleWithSelection
+        ? `${card.name}（同時には選択できません。選ぶと選択を切り替えます）`
+        : (visuallyAvailable
+          ? card.name
+          : (phase === 'main'
+            ? `${card.name}（防御時に使用。捨てる場合は選択できます）`
+            : `${card.name}（現在は使用できません）`)));
 
     let statText = '';
     if (card.attack > 0) statText = `攻${card.attack}`;
@@ -580,16 +597,16 @@ export default function GameRoom() {
     return (
       <div 
          key={realCard.instanceId} 
-         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${draggedCardId === realCard.instanceId ? 'dragging' : ''} ${dreamAffected ? 'dream-affected' : ''} ${initialDealAnim?.playerIds?.includes(me.id) ? 'initial-deal-card' : ''} ${handRefillAnim?.playerId === me.id && index >= me.hand.length - handRefillAnim.count ? 'refill-new' : ''} ${usable ? '' : 'disabled'}`}
+         className={`gf-card-square ${borderClass} ${selected ? 'selected' : ''} ${draggedCardId === realCard.instanceId ? 'dragging' : ''} ${dreamAffected ? 'dream-affected' : ''} ${initialDealAnim?.playerIds?.includes(me.id) ? 'initial-deal-card' : ''} ${handRefillAnim?.playerId === me.id && index >= me.hand.length - handRefillAnim.count ? 'refill-new' : ''} ${visuallyAvailable ? '' : 'unavailable'}`}
          style={{ '--deal-index': displayIndex }}
-         aria-disabled={!usable}
+         aria-disabled={!selectable}
          aria-grabbed={draggedCardId === realCard.instanceId}
          draggable={selectedCards.length === 0 && !playPending}
-         title={dreamAffected ? `${card.name}（夢の影響中）` : (usable ? card.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません'))}
+         title={cardTitle}
          onClick={() => {
            if (!suppressCardClick.current) toggleCard(index);
          }}
-         onDoubleClick={() => usable && handlePlayCard(index)}
+         onDoubleClick={() => visuallyAvailable && handlePlayCard(index)}
          onDragStart={event => handleCardDragStart(event, realCard.instanceId)}
          onDragEnter={() => handleCardDragEnter(realCard.instanceId)}
          onDragOver={event => event.preventDefault()}
@@ -655,6 +672,7 @@ export default function GameRoom() {
   const hasSelectedDefense = selectedCards.some(index => (
     gameState.usableDefenseInstanceIds || []
   ).includes(me.hand[index]?.instanceId));
+  const hasSelectedUsableCard = selectedCards.some(index => isCardUsable(me.hand[index]));
 
   const renderAssistant = (assistant) => assistant && (
     <div className="assistant-status">
@@ -968,7 +986,7 @@ export default function GameRoom() {
             })}
           </div>
           <div className="gf-hand-actions">
-            {isMyTurn && selectedCards.length > 0 && (phase === 'main' || (phase === 'defense' && hasSelectedDefense)) && (
+            {isMyTurn && selectedCards.length > 0 && ((phase === 'main' && hasSelectedUsableCard) || (phase === 'defense' && hasSelectedDefense)) && (
                <button className="btn gf-command-button" disabled={playPending} aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>{commandLabel}</button>
             )}
             {isMyTurn && phase === 'defense' && selectedCards.length === 0 && (

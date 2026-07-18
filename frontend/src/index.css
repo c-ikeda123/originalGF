@@ -2648,8 +2648,16 @@ h1, h2, h3, h4, h5, h6 {
   100% { opacity: 0; transform: translate(-50%, -8px) scale(0.98); }
 }
 
-.gf-game-screen .gf-card-square.disabled {
-  cursor: default;
+.gf-game-screen .gf-hand-dock .gf-card-square.unavailable {
+  filter: brightness(0.56) saturate(0.72);
+  opacity: 0.72;
+}
+
+.gf-game-screen .gf-hand-dock .gf-card-square.unavailable:hover {
+  filter: brightness(0.66) saturate(0.78);
+}
+
+.gf-game-screen .gf-hand-dock .gf-card-square.selected {
   filter: none;
   opacity: 1;
 }
