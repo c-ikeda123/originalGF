@@ -4,6 +4,7 @@ const {
   applyAilment,
   applySelfAilments,
   areEnemies,
+  canChooseTarget,
   canDiscardCardCount,
   canPlayerPray,
   combineAttackCards,
@@ -40,6 +41,21 @@ const {
   shouldAssistantLeave,
   validateCardPlay,
 } = require('./gameRules');
+
+test('生存中なら自分や味方も神器の対象に選べる', () => {
+  const actor = { id: 'actor', hp: 30, ascended: false, team: 'red' };
+  const ally = { id: 'ally', hp: 30, ascended: false, team: 'red' };
+  const weapon = { type: 'weapon', attack: 5 };
+  assert.equal(canChooseTarget(actor, actor, [weapon]), true);
+  assert.equal(canChooseTarget(actor, ally, [weapon]), true);
+});
+
+test('昇天済みと自己売買は対象に選べない', () => {
+  const actor = { id: 'actor', hp: 30, ascended: false };
+  assert.equal(canChooseTarget(actor, { id: 'dead', hp: 0, ascended: true }, [{ type: 'weapon' }]), false);
+  assert.equal(canChooseTarget(actor, actor, [{ type: 'trade', effect: 'buy' }]), false);
+  assert.equal(canChooseTarget(actor, actor, [{ type: 'trade', effect: 'sell' }, { type: 'weapon' }]), false);
+});
 
 test('ダメージ演出中は次の行動を待機する', () => {
   assert.equal(getDamageResolutionDelay(0), 1500);

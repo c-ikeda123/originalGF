@@ -7,6 +7,7 @@ const {
   applyAilment,
   applySelfAilments,
   areEnemies,
+  canChooseTarget,
   canDiscardCardCount,
   canPlayerPray,
   combineAttackCards,
@@ -541,16 +542,16 @@ io.on('connection', (socket) => {
     if (learnedMiracle) cards.push({ ...learnedMiracle, _learnedCast: true });
     let card = cards.find(c => c.type === 'weapon' || c.type === 'miracle') || cards[0];
     if (!card) return rejectPlay('選択した神器が見つかりません。');
+    const isSell = room.phase === 'main' && cards.length === 2 && cards.some(c => c.effect === 'sell');
+    const isSingleTrade = room.phase === 'main' && cards.length === 1 && cards[0].type === 'trade';
     const defaultOpponent = room.phase === 'defense'
       ? room.players[player.pendingDamage?.attackerId]
       : Object.values(room.players).find(candidate => areEnemies(player, candidate) && !candidate.ascended && candidate.hp > 0);
     const opponent = room.phase === 'defense' ? defaultOpponent : (room.players[targetId] || defaultOpponent);
-    if (!opponent || (room.phase === 'main' && (!areEnemies(player, opponent) || opponent.ascended || opponent.hp <= 0))) {
+    if (!opponent || (room.phase === 'main' && !canChooseTarget(player, opponent, cards))) {
       return rejectPlay('その参加者は対象にできません。');
     }
 
-    const isSell = room.phase === 'main' && cards.length === 2 && cards.some(c => c.effect === 'sell');
-    const isSingleTrade = room.phase === 'main' && cards.length === 1 && cards[0].type === 'trade';
     if (isSingleTrade && cards[0].effect === 'sell') {
       return rejectPlay('「売る」と売却する神器を2枚選択してください。');
     }

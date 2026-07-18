@@ -87,6 +87,14 @@ function areEnemies(first, second) {
   return true;
 }
 
+function canChooseTarget(actor, target, cards = []) {
+  if (!actor || !target || target.ascended || target.hp <= 0) return false;
+  if (actor.id !== target.id) return true;
+  const selfTargetBlocked = cards.some(card => card?.effect === 'sell')
+    || (cards.length === 1 && cards[0]?.type === 'trade' && cards[0]?.effect === 'buy');
+  return !selfTargetBlocked;
+}
+
 function getWinningSide(players) {
   const survivors = Object.values(players).filter(player => !player.ascended && player.hp > 0);
   if (!survivors.length) return { ended: true, winnerId: null, winnerTeam: null };
@@ -453,6 +461,7 @@ module.exports = {
   applyAilment,
   applySelfAilments,
   areEnemies,
+  canChooseTarget,
   canDiscardCardCount,
   canPlayerPray,
   combineAttackCards,
