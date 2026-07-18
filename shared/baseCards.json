@@ -16,7 +16,8 @@
     "costMp": 0,
     "copies": 3,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/bronze-club.webp"
   },
   {
     "id": "gf_weapon_002",
@@ -35,7 +36,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/silver-club.webp"
   },
   {
     "id": "gf_weapon_003",
@@ -54,7 +56,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/gold-club.webp"
   },
   {
     "id": "gf_weapon_004",
@@ -73,7 +76,8 @@
     "costMp": 0,
     "copies": 4,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/whip.webp"
   },
   {
     "id": "gf_weapon_005",
@@ -92,7 +96,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/saver-rod.webp"
   },
   {
     "id": "gf_weapon_006",
@@ -111,7 +116,8 @@
     "costMp": 0,
     "copies": 5,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/punch.webp"
   },
   {
     "id": "gf_weapon_007",
@@ -130,7 +136,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "2回攻撃",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/saw-boom-boom.webp",
+    "repeatCount": 2
   },
   {
     "id": "gf_weapon_008",
@@ -149,7 +157,8 @@
     "costMp": 0,
     "copies": 6,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/hatchet.webp"
   },
   {
     "id": "gf_weapon_009",
@@ -168,7 +177,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/spiked-belt.webp"
   },
   {
     "id": "gf_weapon_010",
@@ -187,7 +197,8 @@
     "costMp": 0,
     "copies": 7,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/chain-sickle.webp"
   },
   {
     "id": "gf_weapon_011",
@@ -206,7 +217,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/plate-of-strike.webp"
   },
   {
     "id": "gf_weapon_012",
@@ -225,7 +237,9 @@
     "costMp": 0,
     "copies": 7,
     "description": "無属性の攻撃を弾く",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/bouncing-sword.webp",
+    "defenseEffect": "flick_weapon"
   },
   {
     "id": "gf_weapon_013",
@@ -244,7 +258,8 @@
     "costMp": 0,
     "copies": 8,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/hard-hammer.webp"
   },
   {
     "id": "gf_weapon_014",
@@ -263,7 +278,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/elbow-sack.webp"
   },
   {
     "id": "gf_weapon_015",
@@ -282,7 +298,8 @@
     "costMp": 0,
     "copies": 8,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/glaive-classic.webp"
   },
   {
     "id": "gf_weapon_016",
@@ -301,7 +318,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "HP吸収",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/ghost-sword.webp",
+    "attackEffect": "absorb_hp"
   },
   {
     "id": "gf_weapon_017",
@@ -320,7 +339,8 @@
     "costMp": 0,
     "copies": 8,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/final-tusk.webp"
   },
   {
     "id": "gf_weapon_018",
@@ -339,7 +359,10 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で地獄病",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/hell-scissors.webp",
+    "ailmentInflict": "hell",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_019",
@@ -358,7 +381,8 @@
     "costMp": 0,
     "copies": 7,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/power-halberd.webp"
   },
   {
     "id": "gf_weapon_020",
@@ -377,7 +401,10 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で風邪",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/gale-sword.webp",
+    "ailmentInflict": "cold",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_021",
@@ -396,7 +423,8 @@
     "costMp": 0,
     "copies": 7,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/wonder-sword.webp"
   },
   {
     "id": "gf_weapon_022",
@@ -415,7 +443,10 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で夢",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/bogus-spear.webp",
+    "ailmentInflict": "dream",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_023",
@@ -434,7 +465,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/sword-shield.webp"
   },
   {
     "id": "gf_weapon_024",
@@ -453,7 +485,9 @@
     "costMp": 0,
     "copies": 3,
     "description": "無属性攻撃をはね返す",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/reflection-sword.webp",
+    "defenseEffect": "reflect_weapon"
   },
   {
     "id": "gf_weapon_025",
@@ -472,7 +506,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡をはね返す",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/moonlight-axe.webp",
+    "defenseEffect": "reflect_magic"
   },
   {
     "id": "gf_weapon_026",
@@ -491,7 +527,8 @@
     "costMp": 0,
     "copies": 4,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/gravity-mace.webp"
   },
   {
     "id": "gf_weapon_027",
@@ -510,7 +547,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を止める",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/angel-knife.webp",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_weapon_028",
@@ -529,7 +568,10 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で暗雲",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/hexagon-doom.webp",
+    "ailmentInflict": "darkcloud",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_029",
@@ -548,7 +590,8 @@
     "costMp": 0,
     "copies": 4,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/direct-smash-axe.webp"
   },
   {
     "id": "gf_weapon_030",
@@ -567,7 +610,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "HP吸収",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/real-ghost-sword.webp",
+    "attackEffect": "absorb_hp"
   },
   {
     "id": "gf_weapon_031",
@@ -586,7 +631,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "MP消費なしで奇跡を使える",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/spiritual-staff.webp",
+    "supportEffect": "magic_free"
   },
   {
     "id": "gf_weapon_032",
@@ -605,7 +652,8 @@
     "costMp": 0,
     "copies": 4,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/spear-in-fine-view.webp"
   },
   {
     "id": "gf_weapon_033",
@@ -624,7 +672,10 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で風邪",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/severe-gale-sword.webp",
+    "ailmentInflict": "cold",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_034",
@@ -643,7 +694,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/legendary-scabbard.webp"
   },
   {
     "id": "gf_weapon_035",
@@ -662,7 +714,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を止める",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/angel-sword.webp",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_weapon_036",
@@ -681,7 +735,8 @@
     "costMp": 0,
     "copies": 3,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/violent-flail.webp"
   },
   {
     "id": "gf_weapon_037",
@@ -700,7 +755,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "自分にも同じダメージ",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/evil-broadsword.webp",
+    "attackEffect": "damage_to_self"
   },
   {
     "id": "gf_weapon_038",
@@ -719,7 +776,8 @@
     "costMp": 0,
     "copies": 3,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/dragon-claws.webp"
   },
   {
     "id": "gf_weapon_039",
@@ -738,7 +796,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "奇跡を止める",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/angel-axe.webp",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_weapon_040",
@@ -757,7 +817,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/god-sword.webp"
   },
   {
     "id": "gf_weapon_041",
@@ -776,7 +837,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "MPを全消費し攻撃力MP×2",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/magical-stick.webp",
+    "attackEffect": "magical"
   },
   {
     "id": "gf_weapon_042",
@@ -795,7 +858,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/torch.webp"
   },
   {
     "id": "gf_weapon_043",
@@ -814,7 +878,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/ouch-knife.webp"
   },
   {
     "id": "gf_weapon_044",
@@ -833,7 +898,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/fire-whip.webp"
   },
   {
     "id": "gf_weapon_045",
@@ -852,7 +918,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/flaming-roll.webp"
   },
   {
     "id": "gf_weapon_046",
@@ -871,7 +938,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/blaze-blade.webp"
   },
   {
     "id": "gf_weapon_047",
@@ -890,7 +958,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/fire-dragon-s-horn.webp"
   },
   {
     "id": "gf_weapon_048",
@@ -909,7 +978,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/icicle.webp"
   },
   {
     "id": "gf_weapon_049",
@@ -928,7 +998,10 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で霧",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/fog-gun.webp",
+    "ailmentInflict": "fog",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_050",
@@ -947,7 +1020,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/frozen-hammer.webp"
   },
   {
     "id": "gf_weapon_051",
@@ -966,7 +1040,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/water-dragon-s-horn.webp"
   },
   {
     "id": "gf_weapon_052",
@@ -985,7 +1060,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/wooden-sword.webp"
   },
   {
     "id": "gf_weapon_053",
@@ -1004,7 +1080,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/thorn-whip.webp"
   },
   {
     "id": "gf_weapon_054",
@@ -1023,7 +1100,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/bur-nut.webp"
   },
   {
     "id": "gf_weapon_055",
@@ -1042,7 +1120,10 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で夢",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/dream-mallet.webp",
+    "ailmentInflict": "dream",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_056",
@@ -1061,7 +1142,10 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で風邪",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/wind-talons.webp",
+    "ailmentInflict": "cold",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_057",
@@ -1080,7 +1164,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/sword-ware.webp"
   },
   {
     "id": "gf_weapon_058",
@@ -1099,7 +1184,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/diamond-sword.webp"
   },
   {
     "id": "gf_weapon_059",
@@ -1118,7 +1204,10 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で閃光",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/flash-dagger.webp",
+    "ailmentInflict": "flash",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_060",
@@ -1137,7 +1226,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/star-staff.webp"
   },
   {
     "id": "gf_weapon_061",
@@ -1156,7 +1246,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/justice-lance.webp"
   },
   {
     "id": "gf_weapon_062",
@@ -1175,7 +1266,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/holy-sword.webp"
   },
   {
     "id": "gf_weapon_063",
@@ -1194,7 +1286,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "攻撃先が自分を含めランダム。ウス所持者に99ダメージ",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/dangerous-pestle.webp",
+    "attackEffect": "pestle"
   },
   {
     "id": "gf_weapon_064",
@@ -1213,7 +1307,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/pri-pri-pricker.webp"
   },
   {
     "id": "gf_weapon_065",
@@ -1232,7 +1327,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/cobra.webp"
   },
   {
     "id": "gf_weapon_066",
@@ -1251,7 +1347,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/goodbye-sword.webp"
   },
   {
     "id": "gf_weapon_067",
@@ -1270,7 +1367,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/killer-fork.webp"
   },
   {
     "id": "gf_weapon_068",
@@ -1289,7 +1387,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/death-s-scythe.webp"
   },
   {
     "id": "gf_weapon_069",
@@ -1309,7 +1408,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/blowgun.webp"
   },
   {
     "id": "gf_weapon_070",
@@ -1329,7 +1429,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/crossbow.webp"
   },
   {
     "id": "gf_weapon_071",
@@ -1349,7 +1450,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/boomerang.webp"
   },
   {
     "id": "gf_weapon_072",
@@ -1369,7 +1471,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/battle-ball.webp"
   },
   {
     "id": "gf_weapon_073",
@@ -1389,7 +1492,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/warrior-s-bow.webp"
   },
   {
     "id": "gf_weapon_074",
@@ -1409,7 +1513,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/jet-yo-yo.webp"
   },
   {
     "id": "gf_weapon_075",
@@ -1429,7 +1534,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/unknown-feather.webp"
   },
   {
     "id": "gf_weapon_076",
@@ -1449,7 +1555,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/psychic-card.webp"
   },
   {
     "id": "gf_weapon_077",
@@ -1469,7 +1576,9 @@
     "copies": 1,
     "description": "奇跡を弾く",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/sky-harpoon.webp",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_weapon_078",
@@ -1489,7 +1598,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/horror-wheel.webp"
   },
   {
     "id": "gf_weapon_079",
@@ -1509,7 +1619,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/top-of-combat.webp"
   },
   {
     "id": "gf_weapon_080",
@@ -1529,7 +1640,9 @@
     "copies": 1,
     "description": "奇跡を止める",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/angel-bow.webp",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_weapon_081",
@@ -1549,7 +1662,9 @@
     "copies": 1,
     "description": "攻撃を火属性に染める",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/wand-of-ignition.webp",
+    "supportEffect": "set_attribute"
   },
   {
     "id": "gf_weapon_082",
@@ -1569,7 +1684,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/fire-crossbow.webp"
   },
   {
     "id": "gf_weapon_083",
@@ -1589,7 +1705,9 @@
     "copies": 1,
     "description": "攻撃を水属性に染める",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/wand-of-mystic-water.webp",
+    "supportEffect": "set_attribute"
   },
   {
     "id": "gf_weapon_084",
@@ -1609,7 +1727,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/leaf-shuriken.webp"
   },
   {
     "id": "gf_weapon_085",
@@ -1629,7 +1748,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/mature-rubber-bow.webp"
   },
   {
     "id": "gf_weapon_086",
@@ -1649,7 +1769,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/paleolithic-javelin.webp"
   },
   {
     "id": "gf_weapon_087",
@@ -1669,7 +1790,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/neolithic-tomahawk.webp"
   },
   {
     "id": "gf_weapon_088",
@@ -1689,7 +1811,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/piece-of-brightness.webp"
   },
   {
     "id": "gf_weapon_089",
@@ -1709,7 +1832,8 @@
     "copies": 1,
     "description": "",
     "weaponKind": "additional",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/weapons/abyss-dart.webp"
   },
   {
     "id": "gf_weapon_090",
@@ -1728,7 +1852,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/spark-bag.webp"
   },
   {
     "id": "gf_weapon_091",
@@ -1747,7 +1872,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/flame-cup.webp"
   },
   {
     "id": "gf_weapon_092",
@@ -1766,7 +1892,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/fire-shower.webp"
   },
   {
     "id": "gf_weapon_093",
@@ -1785,7 +1912,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/flare-axe.webp"
   },
   {
     "id": "gf_weapon_094",
@@ -1804,7 +1932,10 @@
     "costMp": 0,
     "copies": 1,
     "description": "霧",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/fog-fan.webp",
+    "ailmentInflict": "fog",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_weapon_095",
@@ -1823,7 +1954,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/chill-cup.webp"
   },
   {
     "id": "gf_weapon_096",
@@ -1842,7 +1974,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/oversize-snowball.webp"
   },
   {
     "id": "gf_weapon_097",
@@ -1861,7 +1994,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/rain-deity-s-saber.webp"
   },
   {
     "id": "gf_weapon_098",
@@ -1880,7 +2014,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "HP吸収",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/vine-shoot.webp",
+    "attackEffect": "absorb_hp"
   },
   {
     "id": "gf_weapon_099",
@@ -1899,7 +2035,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/plant-cup.webp"
   },
   {
     "id": "gf_weapon_100",
@@ -1918,7 +2055,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/jinn-s-rocking-horse.webp"
   },
   {
     "id": "gf_weapon_101",
@@ -1937,7 +2075,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/rock-cup.webp"
   },
   {
     "id": "gf_weapon_102",
@@ -1956,7 +2095,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/cliff-hammer.webp"
   },
   {
     "id": "gf_weapon_103",
@@ -1975,7 +2115,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/petit-saturn.webp"
   },
   {
     "id": "gf_weapon_104",
@@ -1994,7 +2135,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/lightning-kids.webp"
   },
   {
     "id": "gf_weapon_105",
@@ -2013,7 +2155,8 @@
     "costMp": 0,
     "copies": 1,
     "description": "",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/light-orb.webp"
   },
   {
     "id": "gf_weapon_106",
@@ -2032,7 +2175,13 @@
     "costMp": 0,
     "copies": 1,
     "description": "昇天時に75%攻30",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/ascension-bow.webp",
+    "dyingAttack": {
+      "attack": 30,
+      "hitRate": 75,
+      "target": "all"
+    }
   },
   {
     "id": "gf_weapon_107",
@@ -2051,7 +2200,9 @@
     "costMp": 0,
     "copies": 1,
     "description": "1ダメージ以上で即死",
-    "weaponKind": "normal"
+    "weaponKind": "normal",
+    "imageUrl": "/godfield-current/images/items/weapons/shadow-hand.webp",
+    "lethalOnDamage": true
   },
   {
     "id": "gf_armor_108",
@@ -2069,7 +2220,8 @@
     "costMoney": 1,
     "costMp": 0,
     "copies": 10,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/leather-cap.webp"
   },
   {
     "id": "gf_armor_109",
@@ -2087,7 +2239,9 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を弾く"
+    "description": "奇跡を弾く",
+    "imageUrl": "/godfield-current/images/items/armor/sky-boots.webp",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_armor_110",
@@ -2105,7 +2259,8 @@
     "costMoney": 2,
     "costMp": 0,
     "copies": 10,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/leather-clothes.webp"
   },
   {
     "id": "gf_armor_111",
@@ -2123,7 +2278,8 @@
     "costMoney": 3,
     "costMp": 0,
     "copies": 8,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/iron-gauntlet.webp"
   },
   {
     "id": "gf_armor_112",
@@ -2141,7 +2297,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/ogre-s-shoes.webp"
   },
   {
     "id": "gf_armor_113",
@@ -2159,7 +2316,9 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を弾く"
+    "description": "奇跡を弾く",
+    "imageUrl": "/godfield-current/images/items/armor/sky-gauntlet.webp",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_armor_114",
@@ -2177,7 +2336,8 @@
     "costMoney": 4,
     "costMp": 0,
     "copies": 8,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/iron-shield.webp"
   },
   {
     "id": "gf_armor_115",
@@ -2195,7 +2355,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 8,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/iron-armor.webp"
   },
   {
     "id": "gf_armor_116",
@@ -2213,7 +2374,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/ogre-s-gauntlet.webp"
   },
   {
     "id": "gf_armor_117",
@@ -2231,7 +2393,9 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を弾く"
+    "description": "奇跡を弾く",
+    "imageUrl": "/godfield-current/images/items/armor/sky-helm.webp",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_armor_118",
@@ -2249,7 +2413,8 @@
     "costMoney": 6,
     "costMp": 0,
     "copies": 6,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/steel-gauntlet.webp"
   },
   {
     "id": "gf_armor_119",
@@ -2267,7 +2432,9 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": "MPなしで奇跡"
+    "description": "MPなしで奇跡",
+    "imageUrl": "/godfield-current/images/items/armor/spiritual-socks.webp",
+    "supportEffect": "magic_free"
   },
   {
     "id": "gf_armor_120",
@@ -2285,7 +2452,8 @@
     "costMoney": 7,
     "costMp": 0,
     "copies": 6,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/steel-helm.webp"
   },
   {
     "id": "gf_armor_121",
@@ -2303,7 +2471,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/ogre-s-helm.webp"
   },
   {
     "id": "gf_armor_122",
@@ -2321,7 +2490,9 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を弾く"
+    "description": "奇跡を弾く",
+    "imageUrl": "/godfield-current/images/items/armor/sky-shield.webp",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_armor_123",
@@ -2339,7 +2510,8 @@
     "costMoney": 8,
     "costMp": 0,
     "copies": 6,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/steel-shield.webp"
   },
   {
     "id": "gf_armor_124",
@@ -2357,7 +2529,8 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/beautiful-glasswork.webp"
   },
   {
     "id": "gf_armor_125",
@@ -2375,7 +2548,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡をはね返す"
+    "description": "奇跡をはね返す",
+    "imageUrl": "/godfield-current/images/items/armor/moonlight-helm.webp",
+    "defenseEffect": "reflect_magic"
   },
   {
     "id": "gf_armor_126",
@@ -2393,7 +2568,8 @@
     "costMoney": 9,
     "costMp": 0,
     "copies": 6,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/steel-armor.webp"
   },
   {
     "id": "gf_armor_127",
@@ -2411,7 +2587,8 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/ogre-s-armor.webp"
   },
   {
     "id": "gf_armor_128",
@@ -2429,7 +2606,9 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": "MPなしで奇跡"
+    "description": "MPなしで奇跡",
+    "imageUrl": "/godfield-current/images/items/armor/spiritual-hood.webp",
+    "supportEffect": "magic_free"
   },
   {
     "id": "gf_armor_129",
@@ -2447,7 +2626,9 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を弾く"
+    "description": "奇跡を弾く",
+    "imageUrl": "/godfield-current/images/items/armor/sky-armor.webp",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_armor_130",
@@ -2465,7 +2646,9 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を止める"
+    "description": "奇跡を止める",
+    "imageUrl": "/godfield-current/images/items/armor/angel-gauntlet.webp",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_armor_131",
@@ -2483,7 +2666,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 4,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/energy-helm.webp"
   },
   {
     "id": "gf_armor_132",
@@ -2501,7 +2685,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡をはね返す"
+    "description": "奇跡をはね返す",
+    "imageUrl": "/godfield-current/images/items/armor/moonlight-shield.webp",
+    "defenseEffect": "reflect_magic"
   },
   {
     "id": "gf_armor_133",
@@ -2519,7 +2705,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 4,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/energy-armor.webp"
   },
   {
     "id": "gf_armor_134",
@@ -2537,7 +2724,9 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を止める"
+    "description": "奇跡を止める",
+    "imageUrl": "/godfield-current/images/items/armor/angel-cap.webp",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_armor_135",
@@ -2555,7 +2744,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 2,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/core-barrier.webp"
   },
   {
     "id": "gf_armor_136",
@@ -2573,7 +2763,9 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": "MPなしで奇跡"
+    "description": "MPなしで奇跡",
+    "imageUrl": "/godfield-current/images/items/armor/spiritual-sash.webp",
+    "supportEffect": "magic_free"
   },
   {
     "id": "gf_armor_137",
@@ -2591,7 +2783,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡をはね返す"
+    "description": "奇跡をはね返す",
+    "imageUrl": "/godfield-current/images/items/armor/moonlight-armor.webp",
+    "defenseEffect": "reflect_magic"
   },
   {
     "id": "gf_armor_138",
@@ -2609,7 +2803,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 2,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/core-protector.webp"
   },
   {
     "id": "gf_armor_139",
@@ -2627,7 +2822,9 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を止める"
+    "description": "奇跡を止める",
+    "imageUrl": "/godfield-current/images/items/armor/angel-shield.webp",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_armor_140",
@@ -2645,7 +2842,9 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": "奇跡を止める"
+    "description": "奇跡を止める",
+    "imageUrl": "/godfield-current/images/items/armor/angel-armor.webp",
+    "defenseEffect": "block_magic"
   },
   {
     "id": "gf_armor_141",
@@ -2663,7 +2862,8 @@
     "costMoney": 30,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/god-shield.webp"
   },
   {
     "id": "gf_armor_142",
@@ -2681,7 +2881,8 @@
     "costMoney": 4,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/sparkle-glove.webp"
   },
   {
     "id": "gf_armor_143",
@@ -2699,7 +2900,8 @@
     "costMoney": 6,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/flame-boots.webp"
   },
   {
     "id": "gf_armor_144",
@@ -2717,7 +2919,8 @@
     "costMoney": 8,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/flame-helm.webp"
   },
   {
     "id": "gf_armor_145",
@@ -2735,7 +2938,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/flame-shield.webp"
   },
   {
     "id": "gf_armor_146",
@@ -2753,7 +2957,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/flame-mail.webp"
   },
   {
     "id": "gf_armor_147",
@@ -2771,7 +2976,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/burning-shield.webp"
   },
   {
     "id": "gf_armor_148",
@@ -2789,7 +2995,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/burning-jacket.webp"
   },
   {
     "id": "gf_armor_149",
@@ -2807,7 +3014,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "使用者に熱病"
+    "description": "使用者に熱病",
+    "imageUrl": "/godfield-current/images/items/armor/fever-mask.webp",
+    "selfAilment": "fever"
   },
   {
     "id": "gf_armor_150",
@@ -2825,7 +3034,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/heat-haze-armor.webp"
   },
   {
     "id": "gf_armor_151",
@@ -2843,7 +3053,8 @@
     "costMoney": 2,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/aqua-shoes.webp"
   },
   {
     "id": "gf_armor_152",
@@ -2861,7 +3072,8 @@
     "costMoney": 4,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/aqua-glove.webp"
   },
   {
     "id": "gf_armor_153",
@@ -2879,7 +3091,8 @@
     "costMoney": 6,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/ice-boots.webp"
   },
   {
     "id": "gf_armor_154",
@@ -2897,7 +3110,8 @@
     "costMoney": 8,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/ice-helm.webp"
   },
   {
     "id": "gf_armor_155",
@@ -2915,7 +3129,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/ice-shield.webp"
   },
   {
     "id": "gf_armor_156",
@@ -2933,7 +3148,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/ice-armor.webp"
   },
   {
     "id": "gf_armor_157",
@@ -2951,7 +3167,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/snow-mitten.webp"
   },
   {
     "id": "gf_armor_158",
@@ -2969,7 +3186,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/snow-mask.webp"
   },
   {
     "id": "gf_armor_159",
@@ -2987,7 +3205,8 @@
     "costMoney": 2,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/laurel-wreath.webp"
   },
   {
     "id": "gf_armor_160",
@@ -3005,7 +3224,8 @@
     "costMoney": 4,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/wood-shield.webp"
   },
   {
     "id": "gf_armor_161",
@@ -3023,7 +3243,8 @@
     "costMoney": 6,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/sacred-tree-gauntlet.webp"
   },
   {
     "id": "gf_armor_162",
@@ -3041,7 +3262,8 @@
     "costMoney": 8,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/grove-shield.webp"
   },
   {
     "id": "gf_armor_163",
@@ -3059,7 +3281,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/resin-knit-robe.webp"
   },
   {
     "id": "gf_armor_164",
@@ -3077,7 +3300,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/forest-shield.webp"
   },
   {
     "id": "gf_armor_165",
@@ -3095,7 +3319,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/amber-breastplate.webp"
   },
   {
     "id": "gf_armor_166",
@@ -3113,7 +3338,10 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": "使用者に夢、手札を一新"
+    "description": "使用者に夢、手札を一新",
+    "imageUrl": "/godfield-current/images/items/armor/dreaming-hat.webp",
+    "redrawHand": true,
+    "selfAilment": "dream"
   },
   {
     "id": "gf_armor_167",
@@ -3131,7 +3359,8 @@
     "costMoney": 2,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/slate.webp"
   },
   {
     "id": "gf_armor_168",
@@ -3149,7 +3378,8 @@
     "costMoney": 4,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/bedrock.webp"
   },
   {
     "id": "gf_armor_169",
@@ -3167,7 +3397,8 @@
     "costMoney": 6,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/crystal-board.webp"
   },
   {
     "id": "gf_armor_170",
@@ -3185,7 +3416,8 @@
     "costMoney": 8,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/terra-shoes.webp"
   },
   {
     "id": "gf_armor_171",
@@ -3203,7 +3435,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/terra-gauntlet.webp"
   },
   {
     "id": "gf_armor_172",
@@ -3221,7 +3454,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/terra-helm.webp"
   },
   {
     "id": "gf_armor_173",
@@ -3239,7 +3473,8 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/terra-armor.webp"
   },
   {
     "id": "gf_armor_174",
@@ -3257,7 +3492,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/shining-high-heels.webp"
   },
   {
     "id": "gf_armor_175",
@@ -3275,7 +3511,8 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 1,
-    "description": ""
+    "description": "",
+    "imageUrl": "/godfield-current/images/items/armor/glittering-dress.webp"
   },
   {
     "id": "gf_ring_176",
@@ -3293,7 +3530,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 敵全体75%攻{受けたダメージ}"
+    "description": "1ダメージ以上受けた時: 敵全体75%攻{受けたダメージ}",
+    "imageUrl": "/godfield-current/images/items/armor/mars-ring.webp",
+    "reactiveEffect": "counter_damage_all"
   },
   {
     "id": "gf_ring_177",
@@ -3311,7 +3550,10 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者に霧"
+    "description": "1ダメージ以上受けた時: 攻撃者に霧",
+    "imageUrl": "/godfield-current/images/items/armor/mercury-ring.webp",
+    "reactiveEffect": "counter_fog",
+    "retaliateAilment": "fog"
   },
   {
     "id": "gf_ring_178",
@@ -3329,7 +3571,10 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者に夢"
+    "description": "1ダメージ以上受けた時: 攻撃者に夢",
+    "imageUrl": "/godfield-current/images/items/armor/jupiter-ring.webp",
+    "reactiveEffect": "counter_dream",
+    "retaliateAilment": "dream"
   },
   {
     "id": "gf_ring_179",
@@ -3347,7 +3592,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者に攻{受けたダメージ×2}"
+    "description": "1ダメージ以上受けた時: 攻撃者に攻{受けたダメージ×2}",
+    "imageUrl": "/godfield-current/images/items/armor/saturn-ring.webp",
+    "reactiveEffect": "counter_double_damage"
   },
   {
     "id": "gf_ring_180",
@@ -3365,7 +3612,10 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者に閃光"
+    "description": "1ダメージ以上受けた時: 攻撃者に閃光",
+    "imageUrl": "/godfield-current/images/items/armor/uranus-ring.webp",
+    "reactiveEffect": "counter_flash",
+    "retaliateAilment": "flash"
   },
   {
     "id": "gf_ring_181",
@@ -3383,7 +3633,10 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者に暗雲"
+    "description": "1ダメージ以上受けた時: 攻撃者に暗雲",
+    "imageUrl": "/godfield-current/images/items/armor/pluto-ring.webp",
+    "reactiveEffect": "counter_darkcloud",
+    "retaliateAilment": "darkcloud"
   },
   {
     "id": "gf_ring_182",
@@ -3401,7 +3654,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 自分に+MP{受けたダメージ×2}"
+    "description": "1ダメージ以上受けた時: 自分に+MP{受けたダメージ×2}",
+    "imageUrl": "/godfield-current/images/items/armor/neptune-ring.webp",
+    "reactiveEffect": "recover_double_mp"
   },
   {
     "id": "gf_ring_183",
@@ -3419,7 +3674,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "1ダメージ以上受けた時: 攻撃者から￥{受けたダメージ}没収"
+    "description": "1ダメージ以上受けた時: 攻撃者から￥{受けたダメージ}没収",
+    "imageUrl": "/godfield-current/images/items/armor/venus-ring.webp",
+    "reactiveEffect": "absorb_money"
   },
   {
     "id": "gf_defense_item_184",
@@ -3437,7 +3694,9 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 3,
-    "description": "攻撃の属性を取り除く"
+    "description": "攻撃の属性を取り除く",
+    "imageUrl": "/godfield-current/images/items/armor/rainbow-curtain.webp",
+    "defenseEffect": "remove_attribute"
   },
   {
     "id": "gf_defense_item_185",
@@ -3455,7 +3714,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "何でもはね返す"
+    "description": "何でもはね返す",
+    "imageUrl": "/godfield-current/images/items/armor/super-mirror.webp",
+    "defenseEffect": "reflect_any"
   },
   {
     "id": "gf_miracle_186",
@@ -3474,7 +3735,8 @@
     "costMp": 2,
     "copies": 1,
     "description": "+攻2",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/miracles/fireball.webp"
   },
   {
     "id": "gf_miracle_187",
@@ -3493,7 +3755,8 @@
     "costMp": 4,
     "copies": 1,
     "description": "75%攻5",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/smoke.webp"
   },
   {
     "id": "gf_miracle_188",
@@ -3512,7 +3775,8 @@
     "costMp": 5,
     "copies": 1,
     "description": "攻10",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/flame.webp"
   },
   {
     "id": "gf_miracle_189",
@@ -3531,7 +3795,8 @@
     "costMp": 10,
     "copies": 1,
     "description": "75%攻15",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/magma.webp"
   },
   {
     "id": "gf_miracle_190",
@@ -3550,7 +3815,8 @@
     "costMp": 2,
     "copies": 1,
     "description": "攻4",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/ice.webp"
   },
   {
     "id": "gf_miracle_191",
@@ -3569,7 +3835,8 @@
     "costMp": 6,
     "copies": 1,
     "description": "75%攻8",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/avalanche.webp"
   },
   {
     "id": "gf_miracle_192",
@@ -3588,7 +3855,8 @@
     "costMp": 12,
     "copies": 1,
     "description": "攻25",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/waterfall.webp"
   },
   {
     "id": "gf_miracle_193",
@@ -3607,7 +3875,8 @@
     "costMp": 30,
     "copies": 1,
     "description": "75%攻30",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/ice-age.webp"
   },
   {
     "id": "gf_miracle_194",
@@ -3626,7 +3895,8 @@
     "costMp": 3,
     "copies": 1,
     "description": "攻6",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/big-tree.webp"
   },
   {
     "id": "gf_miracle_195",
@@ -3645,7 +3915,8 @@
     "costMp": 4,
     "copies": 1,
     "description": "攻8",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/rock.webp"
   },
   {
     "id": "gf_miracle_196",
@@ -3664,7 +3935,8 @@
     "costMp": 6,
     "copies": 1,
     "description": "50%攻12",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/mudflow.webp"
   },
   {
     "id": "gf_miracle_197",
@@ -3683,7 +3955,10 @@
     "costMp": 3,
     "copies": 1,
     "description": "25%攻1、閃光",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/flash.webp",
+    "ailmentInflict": "flash",
+    "ailmentTrigger": "damage"
   },
   {
     "id": "gf_miracle_198",
@@ -3702,7 +3977,8 @@
     "costMp": 4,
     "copies": 1,
     "description": "25%攻10",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/thunder.webp"
   },
   {
     "id": "gf_miracle_199",
@@ -3721,7 +3997,8 @@
     "costMp": 7,
     "copies": 1,
     "description": "+攻10",
-    "additive": true
+    "additive": true,
+    "imageUrl": "/godfield-current/images/items/miracles/meteor.webp"
   },
   {
     "id": "gf_miracle_200",
@@ -3740,7 +4017,9 @@
     "costMp": 10,
     "copies": 1,
     "description": "攻10、HP吸収",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/absorption.webp",
+    "attackEffect": "absorb_hp"
   },
   {
     "id": "gf_miracle_201",
@@ -3759,7 +4038,8 @@
     "costMp": 5,
     "copies": 1,
     "description": "攻5",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/darkness.webp"
   },
   {
     "id": "gf_miracle_202",
@@ -3778,7 +4058,10 @@
     "costMp": 6,
     "copies": 1,
     "description": "風邪",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/wind.webp",
+    "ailmentInflict": "cold",
+    "ailmentTrigger": "use"
   },
   {
     "id": "gf_miracle_203",
@@ -3797,7 +4080,10 @@
     "costMp": 15,
     "copies": 1,
     "description": "天国病",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/heaven-wind.webp",
+    "ailmentInflict": "heaven",
+    "ailmentTrigger": "use"
   },
   {
     "id": "gf_miracle_204",
@@ -3816,7 +4102,10 @@
     "costMp": 3,
     "copies": 1,
     "description": "霧",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/fog.webp",
+    "ailmentInflict": "fog",
+    "ailmentTrigger": "use"
   },
   {
     "id": "gf_miracle_205",
@@ -3835,7 +4124,10 @@
     "costMp": 6,
     "copies": 1,
     "description": "夢",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/dream.webp",
+    "ailmentInflict": "dream",
+    "ailmentTrigger": "use"
   },
   {
     "id": "gf_miracle_206",
@@ -3854,7 +4146,10 @@
     "costMp": 5,
     "copies": 1,
     "description": "暗雲",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/dark-cloud.webp",
+    "ailmentInflict": "darkcloud",
+    "ailmentTrigger": "use"
   },
   {
     "id": "gf_miracle_207",
@@ -3873,7 +4168,14 @@
     "costMp": 2,
     "copies": 1,
     "description": "風邪・熱病・霧・閃光を消す",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/tone.webp",
+    "cureAilments": [
+      "cold",
+      "fever",
+      "fog",
+      "flash"
+    ]
   },
   {
     "id": "gf_miracle_208",
@@ -3892,7 +4194,9 @@
     "costMp": 5,
     "copies": 1,
     "description": "全ての災いを消す",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/song.webp",
+    "cureAilments": "all"
   },
   {
     "id": "gf_miracle_209",
@@ -3911,7 +4215,9 @@
     "costMp": 6,
     "copies": 1,
     "description": "単体攻撃武器の攻撃力を倍にする",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/aura.webp",
+    "supportEffect": "double_attack"
   },
   {
     "id": "gf_miracle_210",
@@ -3930,7 +4236,9 @@
     "costMp": 5,
     "copies": 1,
     "description": "単体攻撃武器を100%攻にする",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/mirage.webp",
+    "supportEffect": "wide_attack"
   },
   {
     "id": "gf_miracle_211",
@@ -3949,7 +4257,9 @@
     "costMp": 5,
     "copies": 1,
     "description": "奇跡を弾く",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/turbulence.webp",
+    "defenseEffect": "flick_magic"
   },
   {
     "id": "gf_miracle_212",
@@ -3968,7 +4278,9 @@
     "costMp": 6,
     "copies": 1,
     "description": "無属性武器を止める",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/wall.webp",
+    "defenseEffect": "block_weapon"
   },
   {
     "id": "gf_miracle_213",
@@ -3987,7 +4299,8 @@
     "costMp": 7,
     "copies": 1,
     "description": "+HP10",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/spring.webp"
   },
   {
     "id": "gf_miracle_214",
@@ -4006,7 +4319,9 @@
     "costMp": 5,
     "copies": 1,
     "description": "+￥10",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/treasure.webp",
+    "moneyGain": 10
   },
   {
     "id": "gf_miracle_215",
@@ -4025,7 +4340,9 @@
     "costMp": 15,
     "copies": 1,
     "description": "守護神が現れる",
-    "additive": false
+    "additive": false,
+    "imageUrl": "/godfield-current/images/items/miracles/release.webp",
+    "setAssistant": true
   },
   {
     "id": "gf_item_216",
@@ -4043,7 +4360,8 @@
     "costMoney": 1,
     "costMp": 0,
     "copies": 12,
-    "description": "+HP5"
+    "description": "+HP5",
+    "imageUrl": "/godfield-current/images/items/sundries/smile-dew.webp"
   },
   {
     "id": "gf_item_217",
@@ -4061,7 +4379,8 @@
     "costMoney": 3,
     "costMp": 0,
     "copies": 8,
-    "description": "+HP10"
+    "description": "+HP10",
+    "imageUrl": "/godfield-current/images/items/sundries/heart-dew.webp"
   },
   {
     "id": "gf_item_218",
@@ -4079,7 +4398,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 4,
-    "description": "+HP15"
+    "description": "+HP15",
+    "imageUrl": "/godfield-current/images/items/sundries/romance-water.webp"
   },
   {
     "id": "gf_item_219",
@@ -4097,7 +4417,8 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": "+HP20"
+    "description": "+HP20",
+    "imageUrl": "/godfield-current/images/items/sundries/galaxy-geyser.webp"
   },
   {
     "id": "gf_item_220",
@@ -4115,7 +4436,8 @@
     "costMoney": 1,
     "costMp": 0,
     "copies": 12,
-    "description": "+MP5"
+    "description": "+MP5",
+    "imageUrl": "/godfield-current/images/items/sundries/smile-flower.webp"
   },
   {
     "id": "gf_item_221",
@@ -4133,7 +4455,8 @@
     "costMoney": 3,
     "costMp": 0,
     "copies": 8,
-    "description": "+MP10"
+    "description": "+MP10",
+    "imageUrl": "/godfield-current/images/items/sundries/heart-flower.webp"
   },
   {
     "id": "gf_item_222",
@@ -4151,7 +4474,8 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 4,
-    "description": "+MP15"
+    "description": "+MP15",
+    "imageUrl": "/godfield-current/images/items/sundries/romance-fragrance.webp"
   },
   {
     "id": "gf_item_223",
@@ -4169,7 +4493,9 @@
     "costMoney": 20,
     "costMp": 0,
     "copies": 1,
-    "description": "+MP20、天国病"
+    "description": "+MP20、天国病",
+    "imageUrl": "/godfield-current/images/items/sundries/heaven-herb.webp",
+    "selfAilment": "heaven"
   },
   {
     "id": "gf_item_224",
@@ -4187,7 +4513,14 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 12,
-    "description": "風邪・熱病・霧・閃光を払う"
+    "description": "風邪・熱病・霧・閃光を払う",
+    "imageUrl": "/godfield-current/images/items/sundries/smile-shell.webp",
+    "cureAilments": [
+      "cold",
+      "fever",
+      "fog",
+      "flash"
+    ]
   },
   {
     "id": "gf_item_225",
@@ -4205,7 +4538,9 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 6,
-    "description": "全ての災いを払う"
+    "description": "全ての災いを払う",
+    "imageUrl": "/godfield-current/images/items/sundries/heart-shell.webp",
+    "cureAilments": "all"
   },
   {
     "id": "gf_item_226",
@@ -4223,7 +4558,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 3,
-    "description": "守護神が宿る"
+    "description": "守護神が宿る",
+    "imageUrl": "/godfield-current/images/items/sundries/guardian-pot.webp",
+    "setAssistant": true
   },
   {
     "id": "gf_item_227",
@@ -4241,7 +4578,9 @@
     "costMoney": 1,
     "costMp": 0,
     "copies": 2,
-    "description": "+HP10または10ダメージ"
+    "description": "+HP10または10ダメージ",
+    "imageUrl": "/godfield-current/images/items/sundries/thump-thump-tear.webp",
+    "randomHp": 10
   },
   {
     "id": "gf_item_228",
@@ -4259,7 +4598,11 @@
     "costMoney": 15,
     "costMp": 0,
     "copies": 2,
-    "description": "+攻10"
+    "description": "+攻10",
+    "imageUrl": "/godfield-current/images/items/sundries/strength-powder.webp",
+    "supportEffect": "increase_attack",
+    "supportValue": 10,
+    "additive": true
   },
   {
     "id": "gf_item_229",
@@ -4277,7 +4620,9 @@
     "costMoney": 5,
     "costMp": 0,
     "copies": 2,
-    "description": "MP消費0で奇跡を使える"
+    "description": "MP消費0で奇跡を使える",
+    "imageUrl": "/godfield-current/images/items/sundries/spiritual-doll.webp",
+    "supportEffect": "magic_free"
   },
   {
     "id": "gf_item_230",
@@ -4295,7 +4640,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "無作為に神器を3つ掃き飛ばす"
+    "description": "無作為に神器を3つ掃き飛ばす",
+    "imageUrl": "/godfield-current/images/items/sundries/nocturnal-broom.webp",
+    "removeItems": 3
   },
   {
     "id": "gf_item_231",
@@ -4313,7 +4660,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "無作為に習得奇跡を2つ忘れさせる"
+    "description": "無作為に習得奇跡を2つ忘れさせる",
+    "imageUrl": "/godfield-current/images/items/sundries/goddess-s-soap.webp",
+    "removeMiracles": 2
   },
   {
     "id": "gf_item_232",
@@ -4331,7 +4680,9 @@
     "costMoney": 3,
     "costMp": 0,
     "copies": 1,
-    "description": "超常現象が起こる"
+    "description": "超常現象が起こる",
+    "imageUrl": "/godfield-current/images/items/sundries/string-of-fate.webp",
+    "mystery": true
   },
   {
     "id": "gf_item_233",
@@ -4349,7 +4700,9 @@
     "costMoney": 10,
     "costMp": 0,
     "copies": 1,
-    "description": "HP0時に+HP10"
+    "description": "HP0時に+HP10",
+    "imageUrl": "/godfield-current/images/items/sundries/sun-amulet.webp",
+    "reviveHp": 10
   },
   {
     "id": "gf_item_234",
@@ -4367,7 +4720,9 @@
     "costMoney": 1,
     "costMp": 0,
     "copies": 1,
-    "description": "キネ発動時99ダメージ。捨てると戻り1ダメージ"
+    "description": "キネ発動時99ダメージ。捨てると戻り1ダメージ",
+    "imageUrl": "/godfield-current/images/items/sundries/dangerous-mortar.webp",
+    "mortar": true
   },
   {
     "id": "gf_trade_235",
@@ -4386,7 +4741,8 @@
     "costMp": 0,
     "copies": 20,
     "description": "HP・MP・￥を1:1で自由配分",
-    "effect": "exchange"
+    "effect": "exchange",
+    "imageUrl": "/godfield-current/images/items/trade/exchange.webp"
   },
   {
     "id": "gf_trade_236",
@@ -4405,7 +4761,8 @@
     "costMp": 0,
     "copies": 20,
     "description": "神器1つを相手に強制的に売る",
-    "effect": "sell"
+    "effect": "sell",
+    "imageUrl": "/godfield-current/images/items/trade/sell.webp"
   },
   {
     "id": "gf_trade_237",
@@ -4424,7 +4781,8 @@
     "costMp": 0,
     "copies": 20,
     "description": "相手の神器を無作為に提示し購入を選ぶ",
-    "effect": "buy"
+    "effect": "buy",
+    "imageUrl": "/godfield-current/images/items/trade/buy.webp"
   },
   {
     "id": "gf_incarnation_238",
@@ -4444,7 +4802,8 @@
     "copies": 0,
     "description": "炎のささやき30%:75%攻3／つぶやき25%:75%攻4／しゃべり20%:75%攻5／うなり15%:75%攻6／叫び10%:75%攻7",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/mars.png"
   },
   {
     "id": "gf_incarnation_239",
@@ -4464,7 +4823,8 @@
     "copies": 0,
     "description": "霧雨30%／かすむ息25%／しぶき20%／泡15%／あられ10%。霧を伴う水攻撃",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/mercury.png"
   },
   {
     "id": "gf_incarnation_240",
@@ -4484,7 +4844,8 @@
     "copies": 0,
     "description": "枝30%／根っこ25%／触手20%／紅葉15%／落ち葉の舞10%。吸収と夢",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/jupiter.png"
   },
   {
     "id": "gf_incarnation_241",
@@ -4504,7 +4865,8 @@
     "copies": 0,
     "description": "小石30%攻2／石25%攻4／大きな石20%攻6／体当たり15%攻9／ダイヤモンドアクス10%攻15",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/saturn.png"
   },
   {
     "id": "gf_incarnation_242",
@@ -4524,7 +4886,8 @@
     "copies": 0,
     "description": "点滅30%／電撃25%／後光20%／祝福15%／レーザービーム10%。閃光と吸収",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/uranus.png"
   },
   {
     "id": "gf_incarnation_243",
@@ -4544,7 +4907,8 @@
     "copies": 0,
     "description": "思考30%／まばたき25%／不吉な予感20%／咳払い15%／挙手10%。闇攻撃と暗雲",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/pluto.png"
   },
   {
     "id": "gf_incarnation_244",
@@ -4564,7 +4928,8 @@
     "copies": 0,
     "description": "さざなみの音30%／潮汁25%／磯の香り20%／あっさり潮汁15%／さわやかな磯の香り10%。治癒と回復",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/neptune.png"
   },
   {
     "id": "gf_incarnation_245",
@@ -4584,7 +4949,8 @@
     "copies": 0,
     "description": "小銭ばらまき30%／わいろ25%／罰金20%／つまらない物15%／豪華なアクセサリー10%。￥を操作",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/venus.png"
   },
   {
     "id": "gf_incarnation_246",
@@ -4604,7 +4970,8 @@
     "copies": 0,
     "description": "神器を授かり率で抽選し、その神器に応じて自律行動する",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/earth.png"
   },
   {
     "id": "gf_incarnation_247",
@@ -4624,6 +4991,7 @@
     "copies": 0,
     "description": "受身を除く28種類の奇跡から無作為に使用する",
     "actionRate": 25,
-    "leaveOnDamageRate": 10
+    "leaveOnDamageRate": 10,
+    "imageUrl": "/godfield-flash/cards/assistant/moon.png"
   }
 ]

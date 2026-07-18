@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getBaseCardsWithEdits } from '../data/baseCards';
+import BaseCardEffectEditor from '../components/BaseCardEffectEditor';
+import SquareImageCropper from '../components/SquareImageCropper';
+import { GF_BASE_CARDS, getBaseCardsWithEdits } from '../data/baseCards';
+import { hasEffectChanges, normalizeBaseCardEdit, normalizeBaseCardEdits } from '../data/baseCardEdits';
 
 const CATEGORY_LABELS = {
   all: 'すべて', weapon: '武器', armor: '防具', ring: '指輪',
@@ -20,6 +23,11 @@ const decodeSettingCode = (code) => {
   return JSON.parse(new TextDecoder().decode(bytes));
 };
 
+const getSavedEdits = () => normalizeBaseCardEdits(
+  GF_BASE_CARDS,
+  JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}'),
+);
+
 export default function BaseEditor() {
   const navigate = useNavigate();
   const [cards, setCards] = useState([]);
@@ -28,6 +36,8 @@ export default function BaseEditor() {
   const [dirty, setDirty] = useState(false);
   const [settingCode, setSettingCode] = useState('');
   const [codeMessage, setCodeMessage] = useState('');
+  const [savedEdits, setSavedEdits] = useState(getSavedEdits);
+  const editedIds = new Set(Object.keys(savedEdits));
 
   useEffect(() => {
     setCards(getBaseCardsWithEdits());
@@ -39,49 +49,21 @@ export default function BaseEditor() {
     setDirty(true);
   };
 
-  const handleImageUpload = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const MAX_WIDTH = 320;
-        const MAX_HEIGHT = 480;
-        let width = img.width;
-        let height = img.height;
-        if (width > height) {
-          if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
-        } else {
-          if (height > MAX_HEIGHT) { width *= MAX_HEIGHT / height; height = MAX_HEIGHT; }
-        }
-        canvas.width = width; canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-        setCurrentCard(prev => ({ ...prev, imageUrl: canvas.toDataURL('image/jpeg', 0.7) }));
-        setDirty(true);
-      };
-      img.src = event.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
-
   useEffect(() => {
     if (!dirty || !currentCard) return;
-    const edits = JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}');
-    edits[currentCard.id] = {
-      name: currentCard.name,
-      imageUrl: currentCard.imageUrl,
-      description: currentCard.description
-    };
+    const edits = getSavedEdits();
+    const baseCard = GF_BASE_CARDS.find(card => card.id === currentCard.id);
+    const normalized = normalizeBaseCardEdit(baseCard, currentCard);
+    if (Object.keys(normalized).length > 0) edits[currentCard.id] = normalized;
+    else delete edits[currentCard.id];
     localStorage.setItem('gf_base_cards_edits', JSON.stringify(edits));
+    setSavedEdits(edits);
     setCards(getBaseCardsWithEdits());
     setDirty(false);
   }, [currentCard, dirty]);
 
   const createSettingCode = async () => {
-    const edits = JSON.parse(localStorage.getItem('gf_base_cards_edits') || '{}');
+    const edits = getSavedEdits();
     const code = encodeSettingCode(edits);
     setSettingCode(code);
     try {
@@ -94,9 +76,11 @@ export default function BaseEditor() {
 
   const importSettingCode = () => {
     try {
-      const edits = decodeSettingCode(settingCode);
-      if (!edits || Array.isArray(edits) || typeof edits !== 'object') throw new Error('invalid');
+      const decoded = decodeSettingCode(settingCode);
+      if (!decoded || Array.isArray(decoded) || typeof decoded !== 'object') throw new Error('invalid');
+      const edits = normalizeBaseCardEdits(GF_BASE_CARDS, decoded);
       localStorage.setItem('gf_base_cards_edits', JSON.stringify(edits));
+      setSavedEdits(edits);
       const nextCards = getBaseCardsWithEdits();
       setCards(nextCards);
       setCurrentCard(current => current ? nextCards.find(card => card.id === current.id) || null : null);
@@ -118,6 +102,7 @@ export default function BaseEditor() {
       <div className="editor-layout">
         <div className="glass-panel sidebar">
           <h3 style={{padding: '1rem 1rem 0.5rem'}}>基礎カード ({cards.length})</h3>
+          <div className="edited-card-summary">編集済み {editedIds.size}件</div>
           <select className="input-field" value={category} onChange={event => setCategory(event.target.value)} style={{margin: '0 1rem 0.75rem', width: 'calc(100% - 2rem)'}}>
             {Object.entries(CATEGORY_LABELS).map(([value, label]) => (
               <option key={value} value={value}>{label}</option>
@@ -127,10 +112,17 @@ export default function BaseEditor() {
             {cards.filter(card => category === 'all' || card.category === category).map(card => (
               <div 
                 key={card.id} 
-                className={`card-list-item ${currentCard?.id === card.id ? 'active' : ''}`}
+                className={`card-list-item ${currentCard?.id === card.id ? 'active' : ''} ${editedIds.has(card.id) ? 'edited' : ''}`}
                 onClick={() => { setCurrentCard(card); setDirty(false); }}
               >
-                <span>{card.name}</span>
+                <span className="card-list-name">
+                  {card.name}
+                  {editedIds.has(card.id) && (
+                    <span className={hasEffectChanges(savedEdits[card.id]) ? 'effect-edit-badge' : 'edited-card-badge'}>
+                      {hasEffectChanges(savedEdits[card.id]) ? '編集済み（効果変更有）' : '編集済み'}
+                    </span>
+                  )}
+                </span>
                 <span style={{fontSize: '0.7rem', color: '#94a3b8'}}>
                   {CATEGORY_LABELS[card.category] || card.type}{card.copies > 0 ? ` ×${card.copies}` : ''}
                 </span>
@@ -145,8 +137,9 @@ export default function BaseEditor() {
               <div className="glass-panel form-panel">
                 <h3>Edit Details</h3>
                 <p style={{fontSize: '0.8rem', color: 'var(--text-muted)', marginBottom: '1rem'}}>
-                  ※ 基礎カードは「名前」「画像」「説明文」のみ編集可能です。能力値は本家準拠で固定されています。
+                  ※ 名前・画像・説明文・カード効果を編集できます。変更は自動保存されます。
                 </p>
+                {hasEffectChanges(savedEdits[currentCard.id]) && <div className="effect-change-banner">編集済み（効果変更有）</div>}
                 <div className="form-grid">
                   <div className="form-group-sm">
                     <label>Name (名前)</label>
@@ -156,7 +149,7 @@ export default function BaseEditor() {
                   <div className="form-group-sm" style={{ gridColumn: '1 / -1' }}>
                     <label>Image (画像)</label>
                     <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
-                       <input type="file" accept="image/*" className="input-field" onChange={handleImageUpload} style={{ flex: 1, padding: '0.5rem' }} />
+                       <SquareImageCropper onCrop={imageUrl => { setCurrentCard(prev => ({ ...prev, imageUrl })); setDirty(true); }} />
                        <span style={{color: 'var(--text-muted)'}}>OR</span>
                        <input type="text" name="imageUrl" className="input-field" placeholder="URL (https://...)" value={currentCard.imageUrl || ''} onChange={handleChange} style={{ flex: 1 }} />
                     </div>
@@ -167,6 +160,12 @@ export default function BaseEditor() {
                     <textarea name="description" className="input-field" rows="2" value={currentCard.description || ''} onChange={handleChange}></textarea>
                   </div>
                 </div>
+
+                <BaseCardEffectEditor
+                  baseCard={GF_BASE_CARDS.find(card => card.id === currentCard.id)}
+                  card={currentCard}
+                  onChange={card => { setCurrentCard(card); setDirty(true); }}
+                />
 
                 <div className="autosave-status">{dirty ? '自動保存中…' : '変更は自動保存されます'}</div>
 

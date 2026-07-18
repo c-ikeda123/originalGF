@@ -240,13 +240,35 @@ h1, h2, h3, h4, h5, h6 {
 
 .room-editor-toolbar {
   display: flex;
-  align-items: center;
+  align-items: stretch;
+  flex-direction: column;
   justify-content: space-between;
   gap: 12px;
 }
 
-.room-editor-toolbar .input-field {
-  width: 180px;
+.room-category-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  border-bottom: 2px solid rgba(15, 118, 110, 0.28);
+}
+
+.room-category-tabs button {
+  min-width: 68px;
+  padding: 7px 12px 6px;
+  color: #315f55;
+  border: 1px solid #b7d9d1;
+  border-bottom: 0;
+  border-radius: 8px 8px 0 0;
+  background: rgba(255, 255, 255, 0.72);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.room-category-tabs button.active {
+  color: #fff;
+  border-color: var(--gf-green);
+  background: var(--gf-green);
 }
 
 .room-editor-body {
@@ -266,7 +288,8 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .room-card-row {
-  padding: 8px;
+  min-height: 58px;
+  padding: 4px 8px 4px 4px;
   border: 1px solid #cbd5e1;
   border-radius: 7px;
   background: white;
@@ -282,6 +305,175 @@ h1, h2, h3, h4, h5, h6 {
   box-shadow: 0 0 0 2px rgba(15, 118, 110, 0.2);
 }
 
+.target-selector {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 6px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.7);
+  font-size: 0.75rem;
+}
+
+.target-selector .selected {
+  outline: 2px solid var(--gf-green);
+}
+
+.spectator-banner {
+  position: fixed;
+  top: 8px;
+  left: 50%;
+  z-index: 1200;
+  transform: translateX(-50%);
+  padding: 6px 16px;
+  border-radius: 999px;
+  color: white;
+  background: rgba(15, 23, 42, 0.85);
+}
+
+.chat-panel {
+  padding: 8px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.chat-messages {
+  max-height: 140px;
+  overflow-y: auto;
+  font-size: 0.75rem;
+}
+
+.chat-messages .team-message {
+  color: #b91c1c;
+}
+
+.chat-form {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.chat-form > input {
+  min-width: 0;
+  flex: 1;
+}
+
+.timer-warning {
+  color: #fef08a;
+  animation: pulse 0.8s infinite alternate;
+}
+
+.room-card-row.edited {
+  border-left: 4px solid #f59e0b;
+}
+
+.room-card-row .card-list-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.edited-card-badge,
+.edited-card-count {
+  display: inline-flex;
+  flex: none;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+.effect-edit-badge {
+  display: inline-flex;
+  flex: none;
+  padding: 3px 7px;
+  border: 2px solid #dc2626;
+  border-radius: 999px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.67rem;
+  font-weight: 900;
+  line-height: 1.2;
+}
+
+.effect-change-banner {
+  padding: 9px 12px;
+  border: 2px solid #dc2626;
+  border-radius: 8px;
+  background: #fef2f2;
+  color: #b91c1c;
+  font-size: 0.82rem;
+  font-weight: 900;
+  text-align: center;
+}
+
+.base-effect-editor {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #cbd5e1;
+}
+
+.base-effect-editor h4 {
+  margin: 0;
+}
+
+.base-effect-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.base-effect-grid label,
+.special-effect-editor,
+.special-effect-editor label {
+  display: grid;
+  gap: 5px;
+}
+
+.base-effect-grid label > span,
+.special-effect-editor label > span {
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.special-effect-editor textarea {
+  min-height: 170px;
+  resize: vertical;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.76rem;
+  line-height: 1.45;
+}
+
+.special-effect-editor .btn {
+  justify-self: start;
+}
+
+.special-effect-message {
+  color: #b45309;
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.special-effect-key-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin: 7px 0;
+}
+
+.special-effect-key-list code {
+  padding: 2px 5px;
+  border-radius: 4px;
+  background: rgba(15, 118, 110, 0.1);
+  color: inherit;
+  font-size: 0.68rem;
+}
+
 .room-card-row:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -292,6 +484,15 @@ h1, h2, h3, h4, h5, h6 {
   display: grid;
   align-content: start;
   gap: 8px;
+}
+
+.room-card-form {
+  min-height: 0;
+  max-height: 65vh;
+  padding-right: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
 }
 
 .lock-status,
@@ -359,6 +560,172 @@ h1, h2, h3, h4, h5, h6 {
   .room-editor-body {
     grid-template-columns: 1fr;
   }
+
+  .base-effect-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.room-image-file-field {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.square-crop-file {
+  min-width: 0;
+  flex: 1;
+  padding: 0.5rem;
+}
+
+.square-crop-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(15, 23, 42, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.square-crop-dialog {
+  width: min(520px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.7);
+  border-radius: 16px;
+  background: #f0fdfa;
+  color: #173c38;
+  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.35);
+}
+
+.square-crop-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.square-crop-heading strong,
+.square-crop-heading small {
+  display: block;
+}
+
+.square-crop-heading strong {
+  font-size: 1.15rem;
+}
+
+.square-crop-heading small {
+  max-width: 380px;
+  margin-top: 3px;
+  overflow: hidden;
+  color: #64748b;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.square-crop-close {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(15, 118, 110, 0.1);
+  color: #0f766e;
+  cursor: pointer;
+  font-size: 1.5rem;
+  line-height: 1;
+}
+
+.square-crop-help {
+  margin: 12px 0;
+  color: #475569;
+  font-size: 0.85rem;
+}
+
+.square-crop-viewport {
+  position: relative;
+  width: min(360px, 100%);
+  aspect-ratio: 1;
+  margin: 0 auto;
+  overflow: hidden;
+  border: 3px solid #14b8a6;
+  border-radius: 10px;
+  background: #0f172a;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.square-crop-viewport:active {
+  cursor: grabbing;
+}
+
+.square-crop-viewport img {
+  position: absolute;
+  max-width: none;
+  object-fit: fill;
+  pointer-events: none;
+  user-select: none;
+}
+
+.square-crop-grid {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(to right, transparent 33.1%, rgba(255, 255, 255, 0.55) 33.3%, rgba(255, 255, 255, 0.55) 33.6%, transparent 33.8%, transparent 66.3%, rgba(255, 255, 255, 0.55) 66.5%, rgba(255, 255, 255, 0.55) 66.8%, transparent 67%),
+    linear-gradient(to bottom, transparent 33.1%, rgba(255, 255, 255, 0.55) 33.3%, rgba(255, 255, 255, 0.55) 33.6%, transparent 33.8%, transparent 66.3%, rgba(255, 255, 255, 0.55) 66.5%, rgba(255, 255, 255, 0.55) 66.8%, transparent 67%);
+}
+
+.square-crop-zoom {
+  display: grid;
+  grid-template-columns: auto 1fr 52px;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+  font-size: 0.85rem;
+}
+
+.square-crop-zoom input {
+  width: 100%;
+  accent-color: #0f766e;
+}
+
+.square-crop-zoom output {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.square-crop-actions {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+@media (max-width: 560px) {
+  .square-crop-overlay {
+    padding: 8px;
+  }
+
+  .square-crop-dialog {
+    max-height: calc(100vh - 16px);
+    padding: 14px;
+  }
+
+  .square-crop-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .square-crop-actions span {
+    display: none;
+  }
+
+  .square-crop-actions > button:first-child {
+    grid-column: 1 / -1;
+  }
 }
 
 .gf-card-square .image-area {
@@ -384,6 +751,40 @@ h1, h2, h3, h4, h5, h6 {
   align-items: center;
   justify-content: center;
   line-height: 1;
+}
+
+.room-card-form .room-name-field {
+  grid-template-columns: auto minmax(180px, 1fr) auto;
+  align-items: center;
+}
+
+.original-card-name {
+  max-width: 240px;
+  overflow: hidden;
+  color: #526d66;
+  font-size: 0.8rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.assistant-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-left: 20px;
+  font-size: 0.72rem;
+}
+
+.assistant-status img {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.gf-card-square.disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.75);
+  opacity: 0.42;
 }
 
 /* GF Classic Field Card (Detailed) */
@@ -480,7 +881,7 @@ h1, h2, h3, h4, h5, h6 {
 .damage-overlay {
   position: absolute;
   top: 50%;
-  left: 50%;
+  left: 42%;
   transform: translate(-50%, -50%);
   background: #333;
   color: #ff3333;
@@ -493,6 +894,98 @@ h1, h2, h3, h4, h5, h6 {
   animation: damagePop 1.5s ease-out forwards;
   pointer-events: none;
   border: 3px solid #555;
+  text-align: center;
+}
+
+.damage-overlay.target-opponent {
+  top: 22%;
+}
+
+.damage-overlay.target-me {
+  top: 72%;
+}
+
+.damage-overlay small {
+  display: block;
+  color: white;
+  font-size: 0.9rem;
+  text-shadow: none;
+}
+
+.damage-overlay span {
+  font-size: 2rem;
+}
+
+.combat-action-overlay {
+  position: absolute;
+  z-index: 110;
+  left: 40%;
+  top: 46%;
+  min-width: 260px;
+  padding: 10px 16px 10px 10px;
+  border: 3px solid #0f766e;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 14px 38px rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: none;
+  animation: combatAction 1.4s ease-out forwards;
+}
+
+.combat-action-overlay.target-opponent {
+  top: 20%;
+}
+
+.combat-action-overlay.target-me {
+  top: 68%;
+}
+
+.combat-action-overlay.outcome-evade {
+  border-color: #0284c7;
+}
+
+.combat-action-overlay.outcome-unavoidable {
+  border-color: #7c3aed;
+}
+
+.combat-action-card {
+  width: 58px;
+  height: 58px;
+  flex: none;
+  overflow: hidden;
+  border-radius: 9px;
+  background: #e2e8f0;
+  display: grid;
+  place-items: center;
+  font-size: 1.8rem;
+  font-weight: 900;
+}
+
+.combat-action-card img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.combat-action-overlay strong,
+.combat-action-overlay span {
+  display: block;
+}
+
+.combat-action-overlay span {
+  margin-top: 4px;
+  color: #dc2626;
+  font-size: 1.25rem;
+  font-weight: 900;
+}
+
+@keyframes combatAction {
+  0% { transform: translate(-50%, -50%) scale(0.65); opacity: 0; }
+  12% { transform: translate(-50%, -50%) scale(1.08); opacity: 1; }
+  22%, 78% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -58%) scale(0.96); opacity: 0; }
 }
 
 @keyframes damagePop {
@@ -515,4 +1008,1638 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 10px;
   text-align: center;
   line-height: 16px;
+}
+
+/* Flash版の対戦画面 */
+.gf-game-screen {
+  height: 100vh;
+  min-width: 720px;
+  display: grid;
+  grid-template-rows: 24px minmax(0, 1fr);
+  overflow: hidden;
+  color: #335c50;
+  font-family: Georgia, 'Yu Mincho', serif;
+  background:
+    radial-gradient(circle at 28% 30%, rgba(255, 255, 255, 0.8), transparent 30%),
+    radial-gradient(circle at 72% 52%, rgba(210, 255, 248, 0.7), transparent 36%),
+    linear-gradient(135deg, #cafff5 0%, #8fe4d4 47%, #d2fff5 100%);
+}
+
+.gf-battle-header {
+  display: grid;
+  grid-template-columns: auto 1fr auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 1px 4px;
+  color: #eaffea;
+  border-top: 1px solid #9df0bc;
+  border-bottom: 2px solid #087f54;
+  background: linear-gradient(#20bb78, #079b64);
+  font: 12px/1 Georgia, serif;
+  text-shadow: 0 1px #08714d;
+}
+
+.gf-battle-header strong {
+  color: #f4fff8;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+}
+
+.gf-battle-header > :nth-child(4) {
+  justify-self: end;
+}
+
+.gf-battle-header button {
+  min-width: 46px;
+  padding: 1px 8px;
+  color: #376b43;
+  border: 1px solid #3a9a58;
+  border-radius: 0;
+  background: linear-gradient(#ffffdb, #f2dc8a);
+  font: 12px Georgia, serif;
+  cursor: pointer;
+}
+
+.gf-battle-shell {
+  min-height: 0;
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  grid-template-rows: minmax(0, 1fr) 174px;
+}
+
+.gf-battle-stage {
+  min-width: 0;
+  min-height: 0;
+  position: relative;
+  padding: 12px 10px 34px;
+  overflow: auto;
+}
+
+.gf-field-cards {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 5px 10px;
+}
+
+.gf-field-group {
+  display: flex;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.gf-field-owner {
+  width: 100%;
+  height: 17px;
+  padding: 0 5px;
+  overflow: hidden;
+  color: #285a48;
+  border: 1px solid #52ac72;
+  background: rgba(233, 255, 220, 0.82);
+  font: bold 11px/15px Georgia, serif;
+  white-space: nowrap;
+}
+
+.gf-combat-totals {
+  position: absolute;
+  bottom: 2px;
+  left: 8px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  color: #294f45;
+  border-top: 1px solid rgba(29, 142, 97, 0.45);
+  font: bold 12px Georgia, serif;
+}
+
+.room-card-thumbnail {
+  width: 48px;
+  height: 48px;
+  flex: none;
+  border: 1px solid rgba(15, 118, 110, 0.28);
+  background: #edfdf8;
+  object-fit: cover;
+}
+
+.room-card-summary {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gf-battle-sidebar {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(80px, 1fr) auto;
+  gap: 2px;
+  padding: 6px 4px 3px;
+  border-left: 2px solid rgba(16, 137, 94, 0.45);
+  background: rgba(212, 255, 237, 0.24);
+}
+
+.battle-player-list {
+  display: grid;
+  align-content: start;
+  gap: 2px;
+}
+
+.battle-player {
+  min-height: 22px;
+  display: grid;
+  grid-template-columns: 10px minmax(70px, 1fr) auto;
+  align-items: center;
+  column-gap: 3px;
+  padding: 1px 4px;
+  color: #24634e;
+  border: 1px solid #7aba8e;
+  border-left: 8px solid #7aba8e;
+  background: linear-gradient(90deg, rgba(239, 255, 218, 0.94), rgba(238, 255, 231, 0.72));
+  font: 10px/1.15 Arial, sans-serif;
+}
+
+.battle-player.active {
+  border-color: #ef5774;
+  border-left-color: #ef5774;
+  background: linear-gradient(90deg, rgba(255, 219, 224, 0.96), rgba(255, 244, 220, 0.78));
+}
+
+.battle-player.defeated {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.battle-player-marker {
+  color: #a4d8a9;
+  font-size: 8px;
+}
+
+.battle-player-name {
+  overflow: hidden;
+  color: #258247;
+  font-weight: bold;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.battle-player-stats {
+  display: flex;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.battle-player-stats b {
+  color: #a94359;
+}
+
+.battle-player-ailments {
+  grid-column: 2 / -1;
+}
+
+.battle-player-fog {
+  color: #61726c;
+}
+
+.gf-battle-sidebar .assistant-status {
+  width: 300px;
+  height: 40px;
+  box-sizing: border-box;
+  gap: 4px;
+  padding: 0 8px 0 0;
+  background: url('/godfield-flash/ui/game/status/single_up.png') 0 0 / 300px 40px no-repeat;
+  font: 11px/40px Arial, sans-serif;
+}
+
+.gf-battle-sidebar .assistant-status img {
+  width: 50px;
+  height: 40px;
+}
+
+.gf-battle-log {
+  min-height: 0;
+  padding: 3px 5px;
+  overflow-y: auto;
+  color: #35604f;
+  border: 1px solid #529b70;
+  background: rgba(244, 255, 222, 0.82);
+  font: 10px/1.35 Arial, sans-serif;
+}
+
+.gf-battle-log div:last-child {
+  color: #a2304c;
+}
+
+.gf-battle-sidebar .chat-panel {
+  padding: 3px;
+  border: 1px solid #529b70;
+  border-radius: 0;
+  background: rgba(244, 255, 222, 0.84);
+}
+
+.gf-battle-sidebar .chat-messages {
+  max-height: 52px;
+  font-size: 9px;
+}
+
+.gf-battle-sidebar .chat-form {
+  margin-top: 2px;
+}
+
+.gf-battle-sidebar .chat-form input {
+  height: 20px;
+  border: 1px solid #75a886;
+  font-size: 10px;
+}
+
+.gf-battle-sidebar .chat-form label {
+  font: 9px Arial, sans-serif;
+}
+
+.gf-battle-sidebar .chat-form .btn,
+.gf-battle-sidebar .target-selector .btn {
+  min-height: 20px;
+  padding: 1px 5px;
+  border-width: 1px;
+  border-radius: 0;
+  box-shadow: none;
+  font-size: 9px;
+}
+
+.gf-battle-sidebar .target-selector {
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #529b70;
+  border-radius: 0;
+  background: rgba(244, 255, 222, 0.8);
+  font-size: 9px;
+}
+
+.gf-hand-dock {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  position: relative;
+  padding: 3px 72px 22px 3px;
+  border-top: 2px solid #43b58c;
+  background: rgba(40, 194, 160, 0.36);
+}
+
+.gf-hand-cards {
+  max-height: 116px;
+  display: flex;
+  align-content: flex-start;
+  flex-wrap: wrap;
+  gap: 2px;
+  overflow-y: auto;
+}
+
+.gf-hand-dock .gf-card-square {
+  width: 54px;
+  height: 54px;
+  flex: none;
+  border-width: 1px;
+  box-shadow: 1px 1px 2px rgba(25, 96, 72, 0.35);
+}
+
+.gf-hand-dock .gf-card-square:hover,
+.gf-hand-dock .gf-card-square.selected {
+  transform: translateY(-2px);
+}
+
+.gf-hand-dock .gf-card-square.selected {
+  box-shadow: 0 0 0 2px #f5df38, 1px 2px 4px rgba(0, 0, 0, 0.35);
+}
+
+.gf-hand-dock .gf-card-square.dream-affected::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  background: url('/godfield-flash/cards/harm/illusion_item.png') center / 100% 100% no-repeat;
+  filter: saturate(1.25) drop-shadow(0 0 4px #ff7a00);
+  pointer-events: none;
+  animation: dreamAffectedPulse 0.9s ease-in-out infinite alternate;
+}
+
+@keyframes dreamAffectedPulse {
+  from { opacity: 0.62; }
+  to { opacity: 1; }
+}
+
+.gf-hand-dock .gf-card-square .stat-bar {
+  height: 13px;
+  font-size: 9px;
+}
+
+.gf-hand-actions {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: 64px;
+  display: grid;
+  gap: 3px;
+}
+
+.gf-hand-actions .btn,
+.gf-back-button {
+  min-height: 22px;
+  padding: 2px 4px;
+  color: #78572a;
+  border: 1px solid #6a9652;
+  border-radius: 0;
+  background: linear-gradient(#ffffd7, #f1d77c);
+  box-shadow: 1px 1px 2px rgba(0, 0, 0, 0.25);
+  font: bold 10px Georgia, serif;
+}
+
+.gf-back-button {
+  position: absolute;
+  right: 4px;
+  bottom: 2px;
+  width: 64px;
+  cursor: pointer;
+}
+
+.gf-hand-dock .learned-miracles {
+  position: absolute;
+  top: 204px;
+  left: 3px;
+  z-index: 4;
+  display: grid;
+  grid-template-columns: repeat(6, 80px);
+  gap: 3px;
+  margin: 0;
+}
+
+.gf-hand-dock .miracle-stock-slot {
+  width: 80px;
+  height: 80px;
+  position: relative;
+  box-sizing: border-box;
+  padding: 0;
+  overflow: hidden;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.gf-hand-dock .miracle-stock-slot.empty {
+  pointer-events: none;
+}
+
+.gf-hand-dock .miracle-stock-slot img {
+  display: block;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+}
+
+.gf-hand-dock .miracle-stock-slot span {
+  position: absolute;
+  right: 1px;
+  bottom: 1px;
+  padding: 0 3px;
+  color: #f5f0ff;
+  border: 1px solid #d8c8ff;
+  background: #7b5ce1;
+  font: bold 10px/14px Arial, sans-serif;
+}
+
+.gf-hand-dock .miracle-stock-slot:hover:not(:disabled) {
+  outline: 2px solid #fff06d;
+  outline-offset: -2px;
+}
+
+.gf-hand-dock .miracle-stock-slot:disabled {
+  cursor: not-allowed;
+  filter: grayscale(0.65) brightness(0.68);
+}
+
+.gf-game-screen .gf-card-field {
+  width: 205px;
+  height: 56px;
+  border-width: 1px;
+  background: rgba(238, 255, 213, 0.92);
+  box-shadow: 1px 1px 2px rgba(28, 92, 67, 0.35);
+}
+
+.gf-game-screen .gf-card-field .image-area {
+  width: 54px;
+  border-right-color: #62a773;
+  background-size: cover;
+}
+
+.gf-game-screen .gf-card-field .details {
+  padding: 2px 4px;
+}
+
+.gf-game-screen .gf-card-field .card-name {
+  padding: 0;
+  margin: 0;
+  font: bold 12px Georgia, serif;
+}
+
+.gf-game-screen .gf-card-field .card-stat-text {
+  font-size: 10px;
+}
+
+.selected-field-preview {
+  width: auto;
+  padding: 3px;
+  border-width: 1px;
+  border-radius: 0;
+}
+
+.selected-field-title {
+  margin-bottom: 2px;
+  font-size: 10px;
+}
+
+.pending-defense-card {
+  margin: 17px 0 0;
+  border-radius: 0;
+  outline-width: 1px;
+}
+
+.hovered-card-detail {
+  position: absolute;
+  top: -62px;
+  z-index: 100;
+}
+
+.battle-error-toast {
+  position: absolute;
+  top: -26px;
+  left: 50%;
+  z-index: 1000;
+  transform: translateX(-50%);
+  padding: 3px 10px;
+  color: white;
+  border: 1px solid #7d2020;
+  background: rgba(190, 32, 32, 0.9);
+  font-size: 11px;
+}
+
+.gf-game-screen .damage-overlay {
+  left: 44%;
+  top: 46%;
+  padding: 0;
+  color: #dc1f2f;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  font-family: Georgia, serif;
+  font-size: 4.5rem;
+  text-shadow: 2px 2px #17251f, -1px -1px white;
+}
+
+.gf-game-screen .damage-overlay.target-me,
+.gf-game-screen .damage-overlay.target-opponent {
+  top: 46%;
+}
+
+.gf-game-screen .damage-overlay small {
+  color: #2d4a40;
+}
+
+.gf-game-screen .damage-overlay span {
+  color: #263c34;
+  font-size: 1.4rem;
+}
+
+.gf-game-screen .combat-action-overlay {
+  left: 42%;
+  top: 32%;
+  min-width: 210px;
+  padding: 3px;
+  border-width: 1px;
+  border-radius: 0;
+  box-shadow: 2px 2px 4px rgba(15, 72, 53, 0.35);
+  background: rgba(239, 255, 216, 0.96);
+}
+
+.gf-game-screen .combat-action-overlay.target-me,
+.gf-game-screen .combat-action-overlay.target-opponent {
+  top: 32%;
+}
+
+.gf-game-screen .combat-action-card {
+  width: 48px;
+  height: 48px;
+  border-radius: 0;
+}
+
+.gf-game-screen .combat-action-overlay span {
+  margin-top: 1px;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .gf-battle-shell {
+    grid-template-columns: minmax(0, 1fr) 250px;
+  }
+
+  .gf-battle-sidebar {
+    width: 250px;
+  }
+
+  .battle-player {
+    grid-template-columns: 8px minmax(55px, 1fr) auto;
+  }
+
+  .battle-player-stats {
+    gap: 2px;
+    font-size: 9px;
+  }
+}
+
+/* Flash版の実寸（1024×768）を基準にした戦闘画面 */
+.gf-game-viewport {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #004b3c;
+}
+
+.gf-game-frame {
+  position: relative;
+  overflow: clip;
+}
+
+.gf-game-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1024px;
+  height: 768px;
+  min-width: 0;
+  display: grid;
+  grid-template-rows: 30px 708px 30px;
+  transform-origin: top left;
+  color: #335c50;
+  background: #55bca8;
+  font-family: Georgia, 'Yu Mincho', serif;
+}
+
+.gf-battle-header,
+.gf-battle-footer {
+  width: 1024px;
+  height: 30px;
+  box-sizing: border-box;
+  border: 0;
+  background: url('/godfield-flash/ui/main/bar_top.png') 0 0 / 1024px 30px no-repeat;
+}
+
+.gf-battle-header {
+  grid-template-columns: 68px 1fr 110px 1fr 68px;
+  gap: 4px;
+  padding: 0 4px;
+  color: #effff2;
+  font: 11px/30px Arial, sans-serif;
+}
+
+.gf-battle-header button,
+.gf-back-button {
+  height: 20px;
+  min-width: 60px;
+  padding: 0 7px;
+  color: #426c45;
+  border: 1px solid #40844f;
+  background: linear-gradient(#ffffd9, #ead577);
+  box-shadow: 1px 1px 1px rgba(0, 0, 0, 0.28);
+  font: 11px/18px Georgia, serif;
+}
+
+.gf-battle-title {
+  width: 55px;
+  height: 15px;
+  justify-self: center;
+  overflow: hidden;
+  color: transparent !important;
+  background: url('/godfield-flash/ui/main/title.png') 0 0 / 55px 15px no-repeat;
+  text-shadow: none !important;
+}
+
+.gf-battle-shell {
+  width: 1024px;
+  height: 708px;
+  display: block;
+  overflow: hidden;
+  background: url('/godfield-flash/ui/game/background.jpg') 0 0 / 1024px 708px no-repeat;
+}
+
+.gf-battle-footer {
+  position: relative;
+  background-image: url('/godfield-flash/ui/main/bar_bottom.png');
+}
+
+.gf-back-button {
+  right: 4px;
+  bottom: 5px;
+  width: 60px;
+  min-height: 20px;
+}
+
+.gf-battle-stage {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.gf-battle-sidebar {
+  position: absolute;
+  top: 4px;
+  right: 3px;
+  bottom: 4px;
+  width: 357px;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: auto minmax(80px, 1fr) auto;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.battle-player-list {
+  width: 300px;
+  justify-self: start;
+  margin-left: 7px;
+  gap: 1px;
+}
+
+.battle-player {
+  width: 300px;
+  height: 40px;
+  min-height: 40px;
+  box-sizing: border-box;
+  grid-template-columns: 24px 120px 1fr;
+  grid-template-rows: 20px 20px;
+  column-gap: 2px;
+  padding: 0 8px 0 0;
+  border: 0;
+  position: relative;
+  isolation: isolate;
+  background: none;
+  font: 12px/20px Arial, sans-serif;
+}
+
+.battle-player.active {
+  border: 0;
+}
+
+.battle-player::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background: url('/godfield-flash/ui/game/status/single_up.png') 0 0 / 300px 40px no-repeat;
+}
+
+.battle-player.active::before {
+  filter: saturate(1.45) brightness(0.96);
+}
+
+.battle-player.team-red::before {
+  background-image: url('/godfield-flash/ui/game/status/team2_up.png');
+  filter: none;
+}
+
+.battle-player.team-blue::before {
+  background-image: url('/godfield-flash/ui/game/status/team1_up.png');
+  filter: none;
+}
+
+.battle-player[role='button'] {
+  cursor: pointer;
+}
+
+.battle-player.selected-target {
+  outline: 2px solid #45bfa4;
+  outline-offset: -2px;
+}
+
+.battle-player-marker {
+  width: 20px;
+  height: 20px;
+  justify-self: center;
+  color: transparent;
+  background-position: center;
+  background-size: 20px 20px;
+  background-repeat: no-repeat;
+}
+
+.battle-player.active .battle-player-marker {
+  background-image: url('/godfield-flash/ui/game/status/single_ready.png');
+  animation: gf-turn-marker-pulse 700ms ease-in-out infinite alternate;
+}
+
+.battle-player.active.team-red .battle-player-marker {
+  background-image: url('/godfield-flash/ui/game/status/team2_ready.png');
+}
+
+.battle-player.active.team-blue .battle-player-marker {
+  background-image: url('/godfield-flash/ui/game/status/team1_ready.png');
+}
+
+.battle-turn-label {
+  position: absolute;
+  top: 8px;
+  left: -112px;
+  width: 102px;
+  height: 24px;
+  z-index: 3;
+  box-sizing: border-box;
+  color: #285a48;
+  background: url('/godfield-flash/ui/game/command/value.png') 0 0 / 102px 24px no-repeat;
+  filter: drop-shadow(0 1px 1px rgba(17, 78, 57, 0.55));
+  font: bold 14px/24px Georgia, 'Yu Mincho', serif;
+  text-align: center;
+  white-space: nowrap;
+  pointer-events: none;
+  animation: gf-turn-label-pulse 700ms ease-in-out infinite alternate;
+}
+
+.battle-turn-label::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  right: -8px;
+  border-top: 5px solid transparent;
+  border-bottom: 5px solid transparent;
+  border-left: 8px solid #78ad86;
+}
+
+@keyframes gf-turn-marker-pulse {
+  from { filter: brightness(0.92); }
+  to { filter: brightness(1.35) drop-shadow(0 0 4px #fff89b); }
+}
+
+@keyframes gf-turn-label-pulse {
+  from { transform: translateX(0); }
+  to { transform: translateX(3px); }
+}
+
+.battle-player-name {
+  color: #237a46;
+  font-size: 13px;
+}
+
+.battle-player-stats {
+  gap: 2px;
+  font-size: 11px;
+}
+
+.battle-player-ailments {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  height: 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.battle-player-ailments .ailment-icon {
+  width: 30px;
+  height: 16px;
+  margin: 0;
+  border-radius: 0;
+  background: none;
+}
+
+.gf-battle-log,
+.gf-battle-sidebar .chat-panel {
+  box-sizing: border-box;
+  border: 0;
+  border-radius: 0;
+  background: rgba(234, 255, 190, 0.82);
+  font-size: 9px;
+}
+
+.gf-battle-chat-frame {
+  width: 357px;
+  height: 202px;
+  align-self: end;
+  box-sizing: border-box;
+  display: grid;
+  grid-row: 3;
+  grid-template-rows: minmax(0, 1fr) auto;
+  padding: 5px;
+  background: url('/godfield-flash/ui/room/chat.png') 0 0 / 357px 202px no-repeat;
+}
+
+.gf-battle-chat-frame .gf-battle-log,
+.gf-battle-chat-frame .chat-panel {
+  width: auto;
+  min-height: 0;
+  padding: 2px 4px;
+  border: 0;
+  background: transparent;
+}
+
+.gf-hand-dock {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 667px;
+  height: 304px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0;
+  border: 0;
+  background: url('/godfield-flash/ui/game/item/list.png') 0 0 / 667px 304px no-repeat;
+}
+
+.gf-hand-cards {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 661px;
+  height: 181px;
+  max-height: none;
+  display: grid;
+  grid-template-columns: repeat(8, 80px);
+  grid-auto-rows: 80px;
+  column-gap: 3px;
+  row-gap: 21px;
+  overflow: hidden;
+}
+
+.gf-hand-dock .gf-card-square {
+  width: 80px;
+  height: 80px;
+  box-sizing: border-box;
+  border: 0;
+  box-shadow: none;
+}
+
+.gf-hand-dock .gf-card-square .stat-bar {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 18px;
+  font-size: 12px;
+  line-height: 18px;
+}
+
+.gf-hand-dock .gf-card-square .image-area {
+  position: absolute;
+  inset: 0;
+}
+
+.gf-hand-dock .gf-card-square:hover,
+.gf-hand-dock .gf-card-square.selected {
+  transform: none;
+}
+
+.gf-hand-dock .gf-card-square.selected {
+  outline: 2px solid #f5df38;
+  outline-offset: -2px;
+  box-shadow: none;
+}
+
+.gf-hand-actions {
+  position: static;
+  width: auto;
+  display: block;
+}
+
+.gf-hand-actions .gf-command-button {
+  position: absolute;
+  top: -38px;
+  left: 230px;
+  width: 250px;
+  min-height: 38px;
+  box-sizing: border-box;
+  padding: 0 60px 0 18px;
+  background: url('/godfield-flash/ui/game/command/ok_button_up.png') 0 0 / 250px 38px no-repeat;
+  border: 0;
+  box-shadow: none;
+  font-size: 13px;
+  text-align: center;
+}
+
+.gf-hand-actions .gf-fixed-action {
+  position: absolute;
+  top: 104px;
+  width: 80px;
+  height: 80px;
+  min-height: 0;
+  overflow: hidden;
+  color: transparent;
+  border: 0;
+  box-shadow: none;
+  background-position: center;
+  background-size: 80px 80px;
+  background-repeat: no-repeat;
+}
+
+.gf-hand-actions .pray-action {
+  right: 0;
+  background-image: url('/godfield-flash/cards/fixed/inoru.png');
+}
+
+.gf-hand-actions .discard-action {
+  right: 80px;
+  background-image: url('/godfield-flash/cards/fixed/suteru.png');
+}
+
+.gf-combat-totals {
+  right: auto;
+  bottom: 344px;
+  left: 0;
+  width: 608px;
+  height: 38px;
+  box-sizing: border-box;
+  align-items: flex-start;
+  justify-content: space-between;
+  padding: 0 20px;
+  border: 0;
+  background: none;
+}
+
+.gf-combat-totals span {
+  width: 260px;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  overflow: hidden;
+  background: url('/godfield-flash/ui/game/command/value.png') 0 0 / 260px 30px no-repeat;
+  font: bold 25px/30px Georgia, 'Yu Mincho', serif;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.gf-field-cards {
+  position: relative;
+  width: 608px;
+  display: grid;
+  grid-template-columns: repeat(2, 300px);
+  align-items: start;
+  gap: 8px;
+}
+
+.gf-field-group {
+  width: 300px;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  gap: 10px;
+}
+
+.gf-field-group.attacker > .gf-card-field.type-item {
+  transform-origin: center top;
+  animation: gf-effect-item-settle 420ms ease-out both;
+}
+
+@keyframes gf-effect-item-settle {
+  0% { transform: translateY(-18px) scale(0.97); opacity: 0; }
+  22% { transform: translateY(3px) scale(1); opacity: 1; }
+  38% { transform: translateY(0); }
+  58% { transform: translateY(-5px); }
+  78% { transform: translateY(1px); }
+  100% { transform: translateY(0); opacity: 1; }
+}
+
+.gf-field-group.defender .pending-defense-card {
+  margin: 0;
+}
+
+.gf-field-owner {
+  width: 240px;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 10px 0 28px;
+  border: 0;
+  background: url('/godfield-flash/ui/game/commander/single.png') 0 0 / 240px 30px no-repeat;
+  font: bold 13px/30px Arial, sans-serif;
+}
+
+.gf-field-target-arrow {
+  position: absolute;
+  top: -5px;
+  left: 248px;
+  z-index: 2;
+  width: 60px;
+  height: 40px;
+  pointer-events: none;
+}
+
+.gf-game-screen .gf-card-field {
+  width: 300px;
+  height: 90px;
+  box-sizing: border-box;
+  border: 0;
+  background: url('/godfield-flash/ui/game/card.png') 0 0 / 300px 90px no-repeat;
+  box-shadow: none;
+}
+
+.gf-game-screen .gf-card-field .image-area {
+  width: 90px;
+  height: 88px;
+  flex: none;
+  border: 0;
+  background-size: 80px 80px;
+  background-repeat: no-repeat;
+}
+
+.gf-game-screen .gf-card-field .details {
+  position: relative;
+  width: 210px;
+  height: 88px;
+  flex: none;
+  display: block;
+  box-sizing: border-box;
+  padding: 0;
+  overflow: hidden;
+}
+
+.gf-game-screen .gf-card-field .card-name {
+  position: absolute;
+  top: 7px;
+  right: 6px;
+  left: 6px;
+  height: 30px;
+  overflow: hidden;
+  font: bold 16px/30px Georgia, 'Yu Mincho', serif;
+  white-space: nowrap;
+}
+
+.gf-game-screen .gf-card-field .card-stat-text {
+  position: absolute;
+  top: 40px;
+  right: 6px;
+  left: 6px;
+  height: 22px;
+  overflow: hidden;
+  font: 13px/22px Georgia, 'Yu Mincho', serif;
+  white-space: nowrap;
+}
+
+.gf-game-screen .gf-card-field .card-description-text {
+  position: absolute;
+  top: 62px;
+  right: 6px;
+  left: 6px;
+  height: 22px;
+  overflow: hidden;
+  font: 13px/22px Georgia, 'Yu Mincho', serif;
+  white-space: nowrap;
+}
+
+.hovered-card-detail {
+  top: -92px;
+}
+
+.gf-game-screen .damage-overlay,
+.gf-game-screen .damage-overlay.target-me,
+.gf-game-screen .damage-overlay.target-opponent {
+  top: 46%;
+  left: 50%;
+  width: auto;
+  display: grid;
+  justify-items: center;
+  gap: 2px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  text-shadow: none;
+}
+
+.gf-damage-number {
+  height: 116px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.gf-damage-number img {
+  width: auto;
+  height: 115px;
+  object-fit: contain;
+}
+
+.damage-overlay.dark-follow-up .gf-damage-number {
+  filter: drop-shadow(0 0 12px #581c87) drop-shadow(0 0 5px #0f172a);
+}
+
+.resource-effect-overlay {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  z-index: 125;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 10px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  filter: drop-shadow(0 3px 2px rgba(0, 0, 0, 0.55));
+  animation: resourceEffectPop 1.25s ease-out forwards;
+}
+
+.resource-effect-overlay.target-me {
+  top: 64%;
+}
+
+.resource-effect-label {
+  width: auto;
+  height: 78px;
+  object-fit: contain;
+}
+
+.resource-effect-number {
+  height: 92px;
+  display: flex;
+  align-items: flex-end;
+}
+
+.resource-effect-number img {
+  width: auto;
+  height: 90px;
+  object-fit: contain;
+}
+
+.revive-effect-label {
+  position: absolute;
+  top: -36px;
+  left: 50%;
+  padding: 3px 18px;
+  transform: translateX(-50%);
+  border-radius: 999px;
+  background: #fffde7;
+  color: #b45309;
+  font: bold 22px/30px Georgia, 'Yu Mincho', serif;
+  text-shadow: 0 1px #fff;
+}
+
+@keyframes resourceEffectPop {
+  0% { opacity: 0; transform: translate(-50%, 20px) scale(0.45); }
+  18% { opacity: 1; transform: translate(-50%, -6px) scale(1.08); }
+  28%, 72% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -40px) scale(0.96); }
+}
+
+.status-effect-overlay {
+  position: absolute;
+  top: 27%;
+  left: 50%;
+  z-index: 126;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: statusEffectStamp 1.25s ease-out forwards;
+}
+
+.status-effect-overlay.target-me {
+  top: 63%;
+}
+
+.status-effect-overlay img {
+  width: auto;
+  max-width: 360px;
+  height: 145px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.7));
+}
+
+.status-effect-overlay span {
+  min-width: 170px;
+  padding: 2px 14px;
+  border-radius: 999px;
+  background: rgba(0, 45, 43, 0.76);
+  color: #fffde7;
+  font: bold 15px/24px Georgia, 'Yu Mincho', serif;
+  text-align: center;
+  text-shadow: 0 2px 2px #000;
+}
+
+.dream-reveal-overlay {
+  position: absolute;
+  top: 28%;
+  left: 50%;
+  z-index: 127;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: statusEffectStamp 1.25s ease-out forwards;
+}
+
+.dream-reveal-overlay.target-me {
+  top: 64%;
+}
+
+.dream-reveal-title {
+  width: auto;
+  height: 74px;
+  object-fit: contain;
+  filter: drop-shadow(0 4px 2px rgba(0, 0, 0, 0.7));
+}
+
+.dream-reveal-cards,
+.dream-reveal-pair {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.dream-reveal-pair > strong {
+  min-width: 54px;
+  color: #fff4cb;
+  font: bold 16px/24px Georgia, 'Yu Mincho', serif;
+  text-align: center;
+  text-shadow: 0 2px 3px #8b2600, 0 0 7px #ff7a00;
+}
+
+.dream-reveal-card {
+  width: 70px;
+  padding: 3px;
+  border: 2px solid #ff8b19;
+  border-radius: 4px;
+  background: rgba(255, 238, 190, 0.94);
+  box-shadow: 0 0 12px #ff6a00;
+  color: #553000;
+  text-align: center;
+}
+
+.dream-reveal-card img {
+  display: block;
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+}
+
+.dream-reveal-card span {
+  display: block;
+  overflow: hidden;
+  font: bold 10px/16px 'Yu Gothic', sans-serif;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.dream-reveal-card.changed {
+  animation: dreamCardChange 0.55s steps(2, end) both;
+}
+
+@keyframes dreamCardChange {
+  0% { opacity: 0; transform: scale(0.7) rotateY(90deg); }
+  55% { opacity: 1; transform: scale(1.12) rotateY(0); }
+  100% { opacity: 1; transform: scale(1) rotateY(0); }
+}
+
+@keyframes statusEffectStamp {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(2.2); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(0.9); }
+  28%, 72% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -68%) scale(1.03); }
+}
+
+.assistant-effect-overlay {
+  position: absolute;
+  top: 27%;
+  left: 50%;
+  z-index: 127;
+  display: grid;
+  grid-template-columns: 128px auto;
+  grid-template-rows: auto auto;
+  align-items: center;
+  column-gap: 12px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  animation: assistantEffectEnter 1.25s ease-out forwards;
+}
+
+.assistant-effect-overlay.target-me {
+  top: 62%;
+}
+
+.assistant-effect-overlay img {
+  grid-row: 1 / 3;
+  width: 128px;
+  height: 128px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 14px #fff7a8) drop-shadow(0 5px 2px rgba(0, 0, 0, 0.55));
+}
+
+.assistant-effect-overlay strong {
+  align-self: end;
+  color: #fffde7;
+  font: bold 26px/34px Georgia, 'Yu Mincho', serif;
+  text-shadow: 0 3px 2px #003c38, 0 0 8px #facc15;
+  white-space: nowrap;
+}
+
+.assistant-effect-overlay span {
+  align-self: start;
+  color: #fff;
+  font: bold 15px/24px Georgia, 'Yu Mincho', serif;
+  text-shadow: 0 2px 2px #000;
+}
+
+.assistant-effect-overlay.assistant_remove img {
+  filter: grayscale(0.7) drop-shadow(0 5px 2px rgba(0, 0, 0, 0.55));
+}
+
+@keyframes assistantEffectEnter {
+  0% { opacity: 0; transform: translate(-50%, 20px) scale(0.3); }
+  22% { opacity: 1; transform: translate(-50%, -8px) scale(1.08); }
+  34%, 72% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -45px) scale(0.9); }
+}
+
+.ascension-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1900;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.ascension-screen-flash {
+  position: absolute;
+  inset: 0;
+  background: #fff;
+  animation: ascensionFlash 1.9s ease-out forwards;
+}
+
+.ascension-light-column {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 50%;
+  width: 310px;
+  transform: translateX(-50%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 210, 0.9) 28%, #fff 50%, rgba(255, 255, 210, 0.9) 72%, transparent);
+  filter: blur(5px);
+  animation: ascensionColumn 1.9s ease-out forwards;
+}
+
+.ascension-soul {
+  position: absolute;
+  bottom: 17%;
+  left: 50%;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(circle, #fff 0 28%, #fff7a8 45%, rgba(255, 255, 255, 0) 72%);
+  box-shadow: 0 0 25px #fff, 0 0 55px #fef08a;
+  animation: ascensionSoul 1.45s ease-in forwards;
+}
+
+.ascension-title {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  width: 330px;
+  height: 160px;
+  object-fit: contain;
+  transform: translate(-50%, -50%);
+  filter: drop-shadow(0 5px 2px rgba(0, 0, 0, 0.6));
+  animation: ascensionTitle 1.9s ease-out forwards;
+}
+
+.ascension-player-name {
+  position: absolute;
+  top: calc(42% + 82px);
+  left: 50%;
+  min-width: 220px;
+  padding: 4px 18px;
+  transform: translateX(-50%);
+  border: 1px solid rgba(255, 255, 220, 0.85);
+  border-radius: 999px;
+  background: rgba(0, 45, 43, 0.78);
+  color: #fffde7;
+  font: bold 18px/28px Georgia, 'Yu Mincho', serif;
+  text-align: center;
+  text-shadow: 0 2px 2px #000;
+  animation: ascensionName 1.9s ease-out forwards;
+}
+
+@keyframes ascensionFlash {
+  0% { opacity: 0; }
+  10% { opacity: 0.92; }
+  32% { opacity: 0.25; }
+  78% { opacity: 0.12; }
+  100% { opacity: 0; }
+}
+
+@keyframes ascensionColumn {
+  0% { opacity: 0; transform: translateX(-50%) scaleX(0.15); }
+  16% { opacity: 1; transform: translateX(-50%) scaleX(1); }
+  72% { opacity: 0.72; }
+  100% { opacity: 0; transform: translateX(-50%) scaleX(0.45); }
+}
+
+@keyframes ascensionSoul {
+  0% { opacity: 0; transform: translate(-50%, 35px) scale(0.35); }
+  18% { opacity: 1; }
+  74% { opacity: 0.9; }
+  100% { opacity: 0; transform: translate(-50%, -520px) scale(1.35); }
+}
+
+@keyframes ascensionTitle {
+  0%, 12% { opacity: 0; transform: translate(-50%, -50%) scale(2.4); }
+  25% { opacity: 1; transform: translate(-50%, -50%) scale(0.88); }
+  32% { transform: translate(-50%, -50%) scale(1.04); }
+  38%, 76% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -66%) scale(1.04); }
+}
+
+@keyframes ascensionName {
+  0%, 28% { opacity: 0; transform: translate(-50%, 10px); }
+  40%, 78% { opacity: 1; transform: translate(-50%, 0); }
+  100% { opacity: 0; transform: translate(-50%, -12px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ascension-screen-flash,
+  .ascension-light-column,
+  .ascension-soul,
+  .ascension-title,
+  .ascension-player-name {
+    animation-duration: 0.01ms;
+  }
+}
+
+.gf-damage-label {
+  width: 200px;
+  height: 70px;
+  object-fit: contain;
+}
+
+.gf-game-screen .combat-action-overlay,
+.gf-game-screen .combat-action-overlay.target-me,
+.gf-game-screen .combat-action-overlay.target-opponent {
+  top: 40%;
+  left: 50%;
+  min-width: 0;
+  width: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gf-game-screen .combat-action-overlay > img {
+  width: auto;
+  height: 70px;
+  object-fit: contain;
+}
+
+.activity-action-overlay {
+  position: absolute;
+  z-index: 112;
+  left: 50%;
+  display: flex;
+  min-width: 250px;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 14px 6px 6px;
+  border: 2px solid #38a88c;
+  background: rgba(235, 255, 215, 0.96);
+  box-shadow: 2px 3px 7px rgba(0, 63, 48, 0.38);
+  color: #174b3d;
+  pointer-events: none;
+  animation: gf-activity-action 2s ease-out both;
+}
+
+.activity-action-overlay.actor-opponent { top: 12%; }
+.activity-action-overlay.actor-me { top: 61%; }
+
+.activity-action-card {
+  width: 64px;
+  height: 64px;
+  flex: none;
+  overflow: hidden;
+  border: 2px solid #51b99a;
+  background: #dfffc5;
+}
+
+.activity-action-card img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.activity-action-card span {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  color: #fff6a0;
+  background: radial-gradient(circle, #56d9c0 0 32%, #168e78 68%, #075f51 100%);
+  font: bold 35px/1 'Yu Mincho', serif;
+  text-shadow: 0 1px 2px #084d40;
+}
+
+.activity-action-overlay strong,
+.activity-action-overlay > div > span {
+  display: block;
+}
+
+.activity-action-overlay strong { font-size: 15px; }
+.activity-action-overlay > div > span { margin-top: 4px; font-size: 18px; }
+
+@keyframes gf-activity-action {
+  0% { opacity: 0; transform: translate(-50%, -15px) scale(0.9); }
+  24% { opacity: 1; transform: translate(-50%, 3px) scale(1); }
+  82% { opacity: 1; transform: translate(-50%, 0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -8px) scale(0.98); }
+}
+
+.gf-game-screen .gf-card-square.disabled {
+  cursor: default;
+  filter: none;
+  opacity: 1;
+}
+
+.gf-game-start-effect {
+  position: absolute;
+  z-index: 130;
+  top: 50%;
+  left: 50%;
+  width: 310px;
+  height: 170px;
+  transform: translate(-50%, -50%);
+  object-fit: contain;
+  pointer-events: none;
+  animation: combatAction 1.4s ease-out forwards;
+}
+
+.gf-game-screen .shrine-overlay,
+.gf-game-screen .game-end-overlay {
+  position: absolute;
+  inset: 30px 0 30px;
+  padding: 0;
+  background: rgba(79, 190, 170, 0.35);
+}
+
+.gf-game-screen .shrine-panel {
+  width: 520px;
+  box-sizing: border-box;
+  padding: 18px;
+  gap: 10px;
+  color: #335c50;
+  border: 2px solid #28785d;
+  border-radius: 0;
+  background: rgba(228, 255, 192, 0.94);
+  box-shadow: 3px 3px 0 rgba(20, 91, 67, 0.35);
+}
+
+.gf-game-screen .buy-actions .btn {
+  width: 240px;
+  height: 60px;
+  overflow: hidden;
+  color: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: url('/godfield-flash/ui/game-ja/buy/do_button_up.png') 0 0 / 240px 60px no-repeat;
+}
+
+.gf-game-screen .buy-actions .btn-secondary {
+  background-image: url('/godfield-flash/ui/game-ja/buy/do_not_button_up.png');
+}
+
+.gf-game-screen .game-end-panel {
+  width: 640px;
+  min-height: 380px;
+  box-sizing: border-box;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  padding: 30px;
+  color: #335c50;
+  border: 0;
+  border-radius: 0;
+  background: url('/godfield-flash/ui/game/winner/list.png') 0 0 / 640px 380px no-repeat;
+  box-shadow: none;
+}
+
+.gf-result-effect {
+  max-width: 645px;
+  max-height: 225px;
+  object-fit: contain;
 }

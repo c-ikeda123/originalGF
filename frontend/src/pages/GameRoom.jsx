@@ -3,16 +3,28 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import io from 'socket.io-client';
 import '../index.css';
 import RoomBaseEditor from './RoomBaseEditor';
+import { playSound } from '../soundEffects';
+import { getDefenseTotal, getNextCardSelection } from '../utils/cardSelection';
+import { getDreamDisplayedCard, isDreamAffectedCard } from '../utils/dreamCards';
 
 let socket;
 const serverUrl = import.meta.env.VITE_SERVER_URL
   || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
+const RESOURCE_EFFECT_TYPES = new Set(['hp_increase', 'mp_increase', 'yen_increase']);
+const ASSISTANT_EFFECT_TYPES = new Set(['assistant_add', 'assistant_action', 'assistant_remove']);
+const EFFECT_LABELS = {
+  cold: '風邪', fever: '熱病', hell: '地獄病', heaven: '天国病', fog: '霧',
+  glory: '閃光', illusion: '夢', dark_cloud: '暗雲', harm_remove: '災い解除',
+  reflect: '反射', flick: '弾き', block: '防御', seizure: '奇跡消去', no_change: '効果なし',
+  assistant_add: '守護神降臨', assistant_action: '守護神行動', assistant_remove: '守護神離脱',
+};
 
 export default function GameRoom() {
   const { id } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const playerName = location.state?.playerName || 'Player';
+  const role = location.state?.role || 'player';
   
   const [gameState, setGameState] = useState(null);
   const [roomState, setRoomState] = useState(null);
@@ -20,13 +32,69 @@ export default function GameRoom() {
   const [socketId, setSocketId] = useState('');
   const [error, setError] = useState('');
   const [damageAnim, setDamageAnim] = useState(null);
+  const [actionAnim, setActionAnim] = useState(null);
+  const [startAnim, setStartAnim] = useState(false);
+  const [ascensionAnim, setAscensionAnim] = useState(null);
+  const [effectAnim, setEffectAnim] = useState(null);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
+  const [hoveredMiracleIndex, setHoveredMiracleIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
+  const [selectedTargetId, setSelectedTargetId] = useState(null);
+  const [chatMessages, setChatMessages] = useState([]);
+  const [chatText, setChatText] = useState('');
+  const [teamChat, setTeamChat] = useState(false);
+  const [now, setNow] = useState(Date.now());
   const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
+  const [battleScale, setBattleScale] = useState(() => Math.min(window.innerWidth / 1024, window.innerHeight / 768));
+  const handInstanceKey = gameState?.me?.hand.map(card => card.instanceId).join('|') || '';
   const lastDamageTimestamp = useRef(null);
+  const lastActionId = useRef(null);
+  const lastSoundEventId = useRef(0);
+  const lastAscensionEventId = useRef(0);
+  const hasReceivedGameState = useRef(false);
+  const ascensionQueue = useRef([]);
+  const ascensionActive = useRef(false);
+  const ascensionTimer = useRef(null);
+  const lastEffectEventId = useRef(0);
+  const hasReceivedEffectState = useRef(false);
+  const effectQueue = useRef([]);
+  const effectActive = useRef(false);
+  const effectTimer = useRef(null);
+  const soundTimers = useRef([]);
   const damageTimer = useRef(null);
+  const actionTimer = useRef(null);
+  useEffect(() => {
+    const updateBattleScale = () => setBattleScale(Math.min(window.innerWidth / 1024, window.innerHeight / 768));
+    window.addEventListener('resize', updateBattleScale);
+    return () => window.removeEventListener('resize', updateBattleScale);
+  }, []);
 
   useEffect(() => {
+    const activeSoundTimers = soundTimers.current;
+    const playNextAscension = () => {
+      const event = ascensionQueue.current.shift();
+      if (!event) {
+        ascensionActive.current = false;
+        setAscensionAnim(null);
+        return;
+      }
+      ascensionActive.current = true;
+      setAscensionAnim(event);
+      clearTimeout(ascensionTimer.current);
+      ascensionTimer.current = setTimeout(playNextAscension, 1900);
+    };
+    const playNextEffect = () => {
+      const event = effectQueue.current.shift();
+      if (!event) {
+        effectActive.current = false;
+        setEffectAnim(null);
+        return;
+      }
+      effectActive.current = true;
+      setEffectAnim(event);
+      clearTimeout(effectTimer.current);
+      effectTimer.current = setTimeout(playNextEffect, 1250);
+    };
     socket = io(serverUrl);
     socket.on('connect', () => setSocketId(socket.id));
 
@@ -38,49 +106,176 @@ export default function GameRoom() {
        password: id, 
        playerName, 
        customCards: savedCards,
-       baseCardsEdits 
+       baseCardsEdits,
+       role,
     });
 
     socket.on('roomUpdate', (data) => {
       setRoomState(data);
+      setChatMessages(current => current.length ? current : (data.chatMessages || []));
     });
 
     socket.on('gameState', (data) => {
       setGameState(data);
+      if (data.chatMessages) setChatMessages(data.chatMessages);
       const damage = data.lastDamage;
       if (damage && damage.timestamp !== lastDamageTimestamp.current) {
         lastDamageTimestamp.current = damage.timestamp;
         setDamageAnim(damage);
         clearTimeout(damageTimer.current);
-        damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
+        if (damage.followUpAmount > 0) {
+          damageTimer.current = setTimeout(() => {
+            setDamageAnim({ ...damage, amount: damage.followUpAmount, followUpAmount: 0, isDarkFollowUp: true });
+            damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
+          }, damage.followUpDelayMs || 650);
+        } else {
+          damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
+        }
+      }
+      const action = data.lastAction;
+      if (action && action.id !== lastActionId.current) {
+        lastActionId.current = action.id;
+        setActionAnim(action);
+        clearTimeout(actionTimer.current);
+        actionTimer.current = setTimeout(() => setActionAnim(null), action.outcome === 'use' ? 2000 : 1400);
+      }
+      const newSoundEvents = (data.soundEvents || []).filter(event => event.id > lastSoundEventId.current);
+      if (newSoundEvents.length) {
+        lastSoundEventId.current = Math.max(...newSoundEvents.map(event => event.id));
+        newSoundEvents.forEach(event => {
+          const timer = setTimeout(() => playSound(event.name), event.delayMs || 0);
+          activeSoundTimers.push(timer);
+          if (event.name === 'game_start') {
+            const showTimer = setTimeout(() => {
+              setStartAnim(true);
+              const hideTimer = setTimeout(() => setStartAnim(false), 1400);
+              activeSoundTimers.push(hideTimer);
+            }, event.delayMs || 0);
+            activeSoundTimers.push(showTimer);
+          }
+        });
+      }
+      const ascensionEvents = data.ascensionEvents || [];
+      if (!hasReceivedGameState.current) {
+        hasReceivedGameState.current = true;
+        lastAscensionEventId.current = Math.max(0, ...ascensionEvents.map(event => event.id));
+      }
+      const newAscensions = ascensionEvents.filter(event => event.id > lastAscensionEventId.current);
+      if (newAscensions.length) {
+        lastAscensionEventId.current = Math.max(...newAscensions.map(event => event.id));
+        ascensionQueue.current.push(...newAscensions);
+        if (!ascensionActive.current) playNextAscension();
+      }
+      const effectEvents = data.effectEvents || [];
+      if (!hasReceivedEffectState.current) {
+        hasReceivedEffectState.current = true;
+        lastEffectEventId.current = Math.max(0, ...effectEvents.map(event => event.id));
+      }
+      const newEffects = effectEvents.filter(event => event.id > lastEffectEventId.current);
+      if (newEffects.length) {
+        lastEffectEventId.current = Math.max(...newEffects.map(event => event.id));
+        effectQueue.current.push(...newEffects);
+        if (!effectActive.current) playNextEffect();
       }
     });
 
     socket.on('baseEditorState', data => setBaseEditorState(data));
+    socket.on('chatMessage', message => {
+      setChatMessages(current => current.some(existing => existing.id === message.id)
+        ? current
+        : [...current, message].slice(-100));
+    });
 
     socket.on('gameStateCleared', () => {
       setGameState(null);
       setSelectedCards([]);
       setDamageAnim(null);
+      setActionAnim(null);
+      setStartAnim(false);
       lastDamageTimestamp.current = null;
+      lastActionId.current = null;
+      lastSoundEventId.current = 0;
+      lastAscensionEventId.current = 0;
+      hasReceivedGameState.current = false;
+      ascensionQueue.current = [];
+      ascensionActive.current = false;
+      clearTimeout(ascensionTimer.current);
+      setAscensionAnim(null);
+      lastEffectEventId.current = 0;
+      hasReceivedEffectState.current = false;
+      effectQueue.current = [];
+      effectActive.current = false;
+      clearTimeout(effectTimer.current);
+      setEffectAnim(null);
     });
 
     socket.on('errorMsg', (msg) => {
+      playSound('alert');
       setError(msg);
       setTimeout(() => setError(''), 3000);
     });
 
     return () => {
       clearTimeout(damageTimer.current);
+      clearTimeout(actionTimer.current);
+      clearTimeout(ascensionTimer.current);
+      ascensionQueue.current = [];
+      ascensionActive.current = false;
+      clearTimeout(effectTimer.current);
+      effectQueue.current = [];
+      effectActive.current = false;
+      activeSoundTimers.forEach(clearTimeout);
       socket.disconnect();
     };
-  }, [id, playerName, navigate]);
+  }, [id, playerName, role, navigate]);
 
   useEffect(() => {
     if (gameState?.phase === 'exchange' && gameState.me) {
       setExchangeValues({ hp: gameState.me.hp, mp: gameState.me.mp, money: gameState.me.money });
     }
   }, [gameState?.phase, gameState?.me]);
+
+  useEffect(() => {
+    if (!gameState?.turnDeadline && !gameState?.actionLockedUntil) return undefined;
+    const timer = setInterval(() => {
+      const currentTime = Date.now();
+      setNow(currentTime);
+      if (!gameState?.turnDeadline && (gameState?.actionLockedUntil || 0) <= currentTime) clearInterval(timer);
+    }, 250);
+    return () => clearInterval(timer);
+  }, [gameState?.turnDeadline, gameState?.actionLockedUntil]);
+
+  useEffect(() => {
+    setSelectedCards([]);
+    setHoveredCardIndex(null);
+  }, [gameState?.turn, gameState?.phase, gameState?.actionLockedUntil, handInstanceKey]);
+
+  const myTeam = gameState?.me?.team
+    || roomState?.players?.find(player => player.id === socketId)?.team;
+  const submitChat = event => {
+    event.preventDefault();
+    if (!chatText.trim()) return;
+    socket.emit('sendChat', { roomName: id, text: chatText, teamOnly: teamChat && Boolean(myTeam) });
+    setChatText('');
+  };
+  const renderChat = () => (
+    <div className="chat-panel">
+      <div className="chat-messages">
+        {chatMessages.slice(-30).map(message => (
+          <div key={message.id} className={message.teamOnly ? 'team-message' : ''}>
+            <strong>{message.senderName}</strong>{message.teamOnly ? ' [チーム]' : ''}: {message.text}
+          </div>
+        ))}
+      </div>
+      <form onSubmit={submitChat} className="chat-form">
+        <input value={chatText} maxLength={200} onChange={event => setChatText(event.target.value)} placeholder="メッセージ" />
+        {myTeam && role === 'player' && (
+          <label><input type="checkbox" checked={teamChat} onChange={event => setTeamChat(event.target.checked)} />チーム</label>
+        )}
+        <button type="submit" className="btn btn-secondary">送信</button>
+      </form>
+    </div>
+  );
 
   if (!gameState) {
     return (
@@ -89,49 +284,152 @@ export default function GameRoom() {
         <div className="glass-panel lobby-header">
           <div><h2>Room: {id}</h2><p>{roomState?.players?.length || 0}人参加中</p></div>
           <div className="lobby-players">{roomState?.players?.map(player => <span key={player.id}>{player.name}{player.id === roomState.hostId ? '（部屋主）' : ''}</span>)}</div>
+          {role === 'player' && <button className="btn btn-secondary" onClick={() => socket.emit('toggleReady', { roomName: id })}>
+            {roomState?.players?.find(player => player.id === socketId)?.ready ? '準備を取り消す' : '準備完了'}
+          </button>}
+          {role === 'player' && <label>
+            チーム
+            <select
+              value={roomState?.players?.find(player => player.id === socketId)?.team || ''}
+              onChange={event => socket.emit('setTeam', { roomName: id, team: event.target.value || null })}
+            >
+              <option value="">個人戦</option>
+              <option value="red">赤</option>
+              <option value="blue">青</option>
+            </select>
+          </label>}
+          <div className="ready-status-list">
+            {roomState?.players?.map(player => (
+              <span key={player.id}>
+                {player.name}: {player.ready ? '準備完了' : '準備中'}
+                {player.isBot && socketId === roomState?.hostId && (
+                  <>
+                    <select
+                      value={player.team || ''}
+                      onChange={event => socket.emit('setTeam', {
+                        roomName: id, playerId: player.id, team: event.target.value || null,
+                      })}
+                    >
+                      <option value="">個人</option>
+                      <option value="red">赤</option>
+                      <option value="blue">青</option>
+                    </select>
+                    <button type="button" onClick={() => socket.emit('removeBot', { roomName: id, botId: player.id })}>削除</button>
+                  </>
+                )}
+              </span>
+            ))}
+          </div>
+          {(roomState?.spectators?.length || 0) > 0 && (
+            <div>観戦: {roomState.spectators.map(spectator => spectator.name).join('、')}</div>
+          )}
+          {socketId === roomState?.hostId && (
+            <button type="button" className="btn btn-secondary" onClick={() => socket.emit('addBot', { roomName: id })}>
+              Botを追加
+            </button>
+          )}
+          {socketId === roomState?.hostId && (
+            <label>
+              制限時間
+              <select
+                value={roomState?.timeLimitSeconds || 0}
+                onChange={event => socket.emit('setTimeLimit', { roomName: id, seconds: Number(event.target.value) })}
+              >
+                <option value={0}>無制限</option>
+                <option value={30}>30秒</option>
+                <option value={60}>60秒</option>
+                <option value={120}>120秒</option>
+              </select>
+            </label>
+          )}
           {socketId === roomState?.hostId && (
             <button className="btn" disabled={(roomState?.players?.length || 0) < 2} onClick={() => socket.emit('startGame', { roomName: id })}>対戦を開始</button>
           )}
         </div>
-        <RoomBaseEditor socket={socket} roomName={id} editorState={baseEditorState} myId={socketId} />
+        {role === 'player' && <RoomBaseEditor socket={socket} roomName={id} editorState={baseEditorState} myId={socketId} />}
+        {renderChat()}
       </div>
     );
   }
 
-  const { me, opponent, turn, phase, field } = gameState;
-  const isMyTurn = turn === me.id;
+  const { me, opponent: firstOpponent, turn, phase, field } = gameState;
+  const opponents = gameState.opponents?.length ? gameState.opponents : [firstOpponent].filter(Boolean);
+  const targetableOpponents = opponents.filter(player => !(me.team && player.team === me.team));
+  const opponent = targetableOpponents.find(player => player.id === selectedTargetId && !player.ascended && player.hp > 0)
+    || targetableOpponents.find(player => !player.ascended && player.hp > 0)
+    || firstOpponent;
+  const playerNameById = playerId => playerId === me.id
+    ? me.name
+    : opponents.find(player => player.id === playerId)?.name;
+  const isResolvingDamage = (gameState.actionLockedUntil || 0) > now;
+  const isMyTurn = turn === me.id && !isResolvingDamage;
+  const remainingSeconds = gameState.turnDeadline
+    ? Math.max(0, Math.ceil((gameState.turnDeadline - now) / 1000))
+    : null;
   const hasFog = me.ailments.includes('fog');
-  const hasHallucination = me.ailments.includes('hallucination');
+  const hasDream = me.ailments.includes('dream');
+
+  const isCardUsable = (card) => {
+    if (!isMyTurn || !card) return false;
+    if (phase === 'main') return !['armor', 'ring', 'defense_item'].includes(card.type);
+    if (phase === 'defense') {
+      return (gameState.usableDefenseInstanceIds || []).includes(card.instanceId)
+        || (gameState.selectableDefenseSupportInstanceIds || []).includes(card.instanceId);
+    }
+    return false;
+  };
+
+  const getDisplayedCard = (card, index) => {
+    return getDreamDisplayedCard(me.hand, index) || card;
+  };
+
+  const renderSelectedCard = (index, className) => {
+    const realCard = me.hand[index];
+    if (!realCard) return null;
+    return (
+      <div key={realCard.instanceId} className={className}>
+        {renderFieldCard(getDisplayedCard(realCard, index))}
+      </div>
+    );
+  };
+
+  const selectedDefenseCards = phase === 'defense'
+    ? selectedCards.map(index => getDisplayedCard(me.hand[index], index)).filter(Boolean)
+    : [];
+  const displayedDefenseTotal = getDefenseTotal([
+    ...(field?.defenseCards || []),
+    ...selectedDefenseCards,
+  ]);
 
   const handlePlayCard = (cardIndex) => {
-    if (!isMyTurn) return;
+    if (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex)) return;
     const cardIndices = selectedCards.includes(cardIndex) ? selectedCards : [cardIndex];
     socket.emit('playCard', { roomName: id, cardIndices, targetId: opponent?.id });
     setSelectedCards([]);
   };
 
   const toggleCard = (index) => {
-    if (!isMyTurn) return;
-    setSelectedCards(current => current.includes(index)
-      ? current.filter(i => i !== index)
-      : [...current, index].sort((a, b) => a - b));
-  };
-
-  const handleEndTurn = () => {
-    if (!isMyTurn || phase !== 'main') return;
-    socket.emit('endTurn', { roomName: id });
+    const canSelectForDiscard = isMyTurn && phase === 'main';
+    if (!selectedCards.includes(index) && !isCardUsable(me.hand[index]) && !canSelectForDiscard) return;
+    setSelectedCards(current => getNextCardSelection(
+      current,
+      index,
+      me.hand,
+      phase,
+      me.ailments.includes('flash'),
+    ));
   };
 
   // Render a small square card for the hand
   const renderSquareCard = (realCard, index) => {
-    const card = hasHallucination ? {
-       ...realCard, name: '?', type: '?', attack: '?', defense: '?', costMp: '?', costMoney: '?'
-    } : realCard;
+    const usable = isCardUsable(realCard) || (isMyTurn && phase === 'main') || selectedCards.includes(index);
+    const card = getDisplayedCard(realCard, index);
+    const dreamAffected = isDreamAffectedCard(realCard, hasDream);
 
     let statText = '';
     if (card.attack > 0) statText = `攻${card.attack}`;
     else if (card.defense > 0) statText = `守${card.defense}`;
-    else if (card.healHp > 0) statText = `回${card.healHp}`;
+    else if (card.healHp > 0) statText = `HP+${card.healHp}`;
     
     // Convert attributes to class for color
     const attrClass = `attr-bg-${card.attribute}`;
@@ -140,13 +438,18 @@ export default function GameRoom() {
     return (
       <div 
          key={realCard.instanceId} 
-         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''}`} 
+         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${dreamAffected ? 'dream-affected' : ''} ${usable ? '' : 'disabled'}`}
+         aria-disabled={!usable}
+         title={dreamAffected ? `${card.name}（夢の影響中）` : (usable ? card.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません'))}
          onClick={() => toggleCard(index)}
-         onDoubleClick={() => handlePlayCard(index)}
-         onMouseEnter={() => setHoveredCardIndex(index)}
+         onDoubleClick={() => usable && handlePlayCard(index)}
+         onMouseEnter={() => {
+           setHoveredMiracleIndex(null);
+           setHoveredCardIndex(index);
+         }}
          onMouseLeave={() => setHoveredCardIndex(null)}
       >
-         {card.imageUrl && !hasHallucination ? (
+         {card.imageUrl ? (
             <div className="image-area" style={{backgroundImage: `url(${card.imageUrl})`}} />
          ) : (
             <div className="image-area" style={{backgroundColor: '#e2e8f0'}}>{card.type.charAt(0).toUpperCase()}</div>
@@ -160,13 +463,15 @@ export default function GameRoom() {
   const renderFieldCard = (card) => {
     if (!card) return null;
     let statText = '';
-    if (card.attack > 0) statText += `攻${card.attack} `;
-    if (card.hitRate > 0 && card.type !== 'armor') statText += `${card.hitRate}% `;
+    if (card.attack > 0) {
+      statText += `攻${card.attack} `;
+      if (card.hitRate > 0) statText += `命中${card.hitRate}% `;
+    }
     if (card.defense > 0) statText += `守${card.defense} `;
     if (card.healHp > 0) statText += `HP+${card.healHp} `;
 
     return (
-      <div className={`gf-card-field attr-border-${card.attribute}`}>
+      <div className={`gf-card-field type-${card.type} attr-border-${card.attribute}`}>
         {card.imageUrl ? (
           <div className="image-area" style={{backgroundImage: `url(${card.imageUrl})`}}></div>
         ) : (
@@ -175,7 +480,7 @@ export default function GameRoom() {
         <div className="details">
            <div className="card-name">{card.name}</div>
            <div className="card-stat-text">{statText}</div>
-           <div className="card-stat-text" style={{fontSize: '0.6rem'}}>{card.description}</div>
+           <div className="card-description-text">{card.description}</div>
         </div>
         {card.costMoney > 0 && <div className="card-price">¥{card.costMoney}</div>}
       </div>
@@ -183,207 +488,316 @@ export default function GameRoom() {
   };
 
   const renderAilments = (player) => {
-    return player.ailments.map(a => {
-      let icon = '';
-      if(a === 'cold') icon = '🤧';
-      if(a === 'fever') icon = '🤒';
-      if(a === 'hell') icon = '🔥';
-      if(a === 'heaven') icon = '👼';
-      if(a === 'fog') icon = '🌫️';
-      if(a === 'flash') icon = '✨';
-      if(a === 'hallucination') icon = '🌀';
-      if(a === 'darkcloud') icon = '☁️';
-      return <span key={a} className="ailment-icon" title={a}>{icon}</span>;
-    });
+    const names = { cold: '風邪', fever: '熱病', hell: '地獄病', heaven: '天国病', fog: '霧', flash: '閃光', dream: '夢', darkcloud: '暗雲' };
+    const files = { flash: 'glory', dream: 'illusion', darkcloud: 'dark_cloud' };
+    return player.ailments.map(ailment => (
+      <img
+        key={ailment}
+        className="ailment-icon"
+        src={`/godfield-flash/ui/game/status/harm/${files[ailment] || ailment}.png`}
+        alt={names[ailment] || ailment}
+        title={names[ailment] || ailment}
+      />
+    ));
+  };
+
+  const hasSelectedDefense = selectedCards.some(index => (
+    gameState.usableDefenseInstanceIds || []
+  ).includes(me.hand[index]?.instanceId));
+
+  const renderAssistant = (assistant) => assistant && (
+    <div className="assistant-status">
+      <img src={`/godfield-flash/ui/game/status/assistant/${assistant.type}.png`} alt="" />
+      <span>守護神 {assistant.type}（HP {assistant.hp}）</span>
+    </div>
+  );
+
+  const renderPlayerStatus = (player, isSelf = false) => player && (
+    <div
+      className={`battle-player ${isSelf ? 'self' : 'opponent'} team-${player.team || 'single'} ${isMyTurn && phase === 'main' && targetableOpponents.length > 1 && opponent?.id === player.id ? 'selected-target' : ''} ${turn === player.id && !isResolvingDamage ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}
+      role={!isSelf && targetableOpponents.length > 1 ? 'button' : undefined}
+      tabIndex={!isSelf && targetableOpponents.length > 1 ? 0 : undefined}
+      onClick={() => !isSelf && targetableOpponents.length > 1 && player.hp > 0 && !player.ascended && setSelectedTargetId(player.id)}
+      onKeyDown={event => {
+        if ((event.key === 'Enter' || event.key === ' ') && !isSelf && targetableOpponents.length > 1 && player.hp > 0 && !player.ascended) {
+          setSelectedTargetId(player.id);
+        }
+      }}
+    >
+      <span className="battle-player-marker">●</span>
+      <span className="battle-player-name">{player.name}{isSelf ? ' (You)' : ''}</span>
+      {hasFog && !isSelf ? (
+        <span className="battle-player-fog">[霧]</span>
+      ) : (
+        <span className="battle-player-stats">
+          <span>HP <b>{player.hp}</b></span>
+          <span>MP <b>{player.mp}</b></span>
+          <span>￥ <b>{player.money}</b></span>
+        </span>
+      )}
+      {player.ailments.length > 0 && <span className="battle-player-ailments">{renderAilments(player)}</span>}
+      {isSelf && isMyTurn && <span className="battle-turn-label" role="status">あなたの番</span>}
+    </div>
+  );
+
+  const actionEffect = actionAnim?.outcome === 'evade' ? 'miss' : 'hit';
+  const renderDamageNumber = (amount, isDark = false) => String(Math.max(0, amount)).split('').map((digit, index) => (
+    <img
+      key={`${digit}-${index}`}
+      src={`/godfield-flash/ui/game/effect/${isDark ? 'damage_dark' : 'damage'}_${digit}.png`}
+      alt={digit}
+    />
+  ));
+  const renderEffectNumber = (type, amount) => {
+    const prefix = type === 'yen_increase' ? 'yen' : type.split('_')[0];
+    return String(Math.max(0, amount)).split('').map((digit, index) => (
+      <img key={`${digit}-${index}`} src={`/godfield-flash/ui/game/effect/${prefix}_${digit}.png`} alt={digit} />
+    ));
   };
 
   return (
-    <div style={{ display: 'grid', gridTemplateRows: 'auto 1fr auto', height: '100vh', padding: '10px' }}>
-      
-      {/* Top Bar */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', background: 'var(--gf-green)', color: 'white', padding: '4px 10px', borderRadius: '4px' }}>
-         <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-            <span style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>← 修行 (Room: {id})</span>
-         </div>
-         <div style={{ fontWeight: 'bold' }}>{gameState.gameStateStr === 'ended' ? '決着' : 'G.F.1'}</div>
-         <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
-            <button className="btn" style={{ padding: '2px 8px', fontSize: '0.8rem' }}>教典</button>
-         </div>
+    <div className="gf-game-viewport">
+      <div className="gf-game-frame" style={{ width: 1024 * battleScale, height: 768 * battleScale }}>
+        <div className="gf-game-screen" style={{ transform: `scale(${battleScale})` }}>
+      {gameState.spectator && <div className="spectator-banner">観戦中（操作はできません）</div>}
+
+      <div className="gf-battle-header">
+        <button type="button" onClick={() => navigate('/')}>修行</button>
+        <span>部屋 {id}</span>
+        <strong className="gf-battle-title">God Field</strong>
+        {isResolvingDamage && <span>ダメージ処理中</span>}
+        {remainingSeconds !== null && <span className={remainingSeconds <= 10 ? 'timer-warning' : ''}>残り {remainingSeconds}秒</span>}
+        <button type="button">教典</button>
       </div>
 
-      {/* Main Area */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 300px', gap: '10px', position: 'relative' }}>
-         
-         {/* Damage Overlay */}
-         {damageAnim && (
-           <div className="damage-overlay">
-             {damageAnim.amount} <span style={{fontSize: '2rem'}}>ダメージ</span>
-           </div>
-         )}
-
-         {/* Left/Center: Field */}
-         <div style={{ display: 'flex', gap: '10px', padding: '10px' }}>
-            {/* Attacker Box */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-               <div className="player-pill" style={{ marginBottom: '10px', width: '150px', justifyContent: 'center', background: '#f1f5f9' }}>
-                 {field ? (field.attackerId === me.id ? me.name : opponent?.name) : '---'}
-               </div>
-               
-               {field && renderFieldCard(field.attackCard)}
-               {!field && selectedCards.length > 0 && (
-                 <div className="selected-field-preview">
-                   <div className="selected-field-title">選択中 ({selectedCards.length})</div>
-                   <div className="selected-field-cards">
-                     {selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
-                       <div key={card.instanceId}>{renderFieldCard(card)}</div>
-                     ))}
-                   </div>
-                 </div>
-               )}
-               
-               {field && field.attackCard.attack > 0 && (
-                 <div style={{ marginTop: 'auto', background: '#eaffea', border: '2px solid #555', borderRadius: '8px', padding: '4px 20px', fontSize: '1.2rem', fontWeight: 'bold' }}>
-                   攻{field.attackCard.attack}
-                 </div>
-               )}
-            </div>
-            
-            <div style={{ alignSelf: 'flex-start', color: '#ff3333', fontSize: '2rem', fontWeight: 'bold', marginTop: '5px' }}>➡</div>
-
-            {/* Defender Box */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(255,255,255,0.3)', borderRadius: '12px', padding: '10px' }}>
-               <div className="player-pill" style={{ marginBottom: '10px', width: '150px', justifyContent: 'center', background: '#f1f5f9' }}>
-                 {field && field.defenderId ? (field.defenderId === me.id ? me.name : opponent?.name) : '---'}
-               </div>
-               
-               {field && field.defenseCards && field.defenseCards.map((c, i) => (
-                  <div key={i} style={{ marginBottom: '5px' }}>{renderFieldCard(c)}</div>
-               ))}
-
-               {field && selectedCards.length > 0 && selectedCards.map(index => me.hand[index]).filter(Boolean).map(card => (
-                 <div key={card.instanceId} className="pending-defense-card">{renderFieldCard(card)}</div>
-               ))}
-
-               {field && field.defenderId && (
-                 <div style={{ marginTop: 'auto', background: '#eaffea', border: '2px solid #555', borderRadius: '8px', padding: '4px 20px', fontSize: '1.2rem', fontWeight: 'bold' }}>
-                   守{field.defenseCards ? field.defenseCards.reduce((acc, c) => acc + (c.defense||0), 0) : 0}
-                 </div>
-               )}
-            </div>
-         </div>
-
-         {/* Right: Player List & Log */}
-         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            
-            {/* Opponent */}
-            {opponent && (
-               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  <div className={`player-pill ${turn === opponent.id ? 'active' : ''}`} style={{ flex: 1 }}>
-                     <span style={{ marginRight: '10px', color: '#94a3b8' }}>●</span>
-                     <span style={{ flex: 1, color: 'var(--gf-blue)' }}>{opponent.name}</span>
-                     
-                     {hasFog ? (
-                        <span style={{ fontSize: '0.7rem', color: '#666' }}>[霧]</span>
-                     ) : (
-                        <div style={{ fontSize: '0.7rem', display: 'flex', gap: '4px', fontWeight: 'normal' }}>
-                           <span title="HP">HP <span style={{fontWeight:'bold'}}>{opponent.hp}</span></span>
-                           <span title="MP">MP <span style={{fontWeight:'bold'}}>{opponent.mp}</span></span>
-                           <span title="Money">¥ <span style={{fontWeight:'bold'}}>{opponent.money}</span></span>
-                        </div>
-                     )}
+        <div className="gf-battle-shell">
+        {ascensionAnim && (
+          <div key={ascensionAnim.id} className="ascension-overlay" role="status" aria-label={`${ascensionAnim.playerName}が昇天`}>
+            <div className="ascension-screen-flash" />
+            <div className="ascension-light-column" />
+            <div className="ascension-soul" />
+            <img className="ascension-title" src="/godfield-flash/ui/game-ja/effect/dead.png" alt="昇天" />
+            <div className="ascension-player-name">{ascensionAnim.playerName}</div>
+          </div>
+        )}
+        {effectAnim && (
+          effectAnim.dreamReveal ? (
+            <div
+              key={effectAnim.id}
+              className={`dream-reveal-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              role="status"
+              aria-label={effectAnim.changed ? '夢の影響で神器が変化' : '夢の影響を受けたが神器はそのまま'}
+            >
+              <img className="dream-reveal-title" src="/godfield-flash/ui/game-ja/effect/illusion.png" alt="夢" />
+              <div className="dream-reveal-cards">
+                {effectAnim.fromCards.map((fromCard, index) => (
+                  <div className="dream-reveal-pair" key={`${fromCard.name}-${index}`}>
+                    <div className="dream-reveal-card">
+                      {fromCard.imageUrl && <img src={fromCard.imageUrl} alt="" />}
+                      <span>{fromCard.name}</span>
+                    </div>
+                    <strong>{effectAnim.toCards[index]?.name === fromCard.name ? 'そのまま' : '→'}</strong>
+                    {effectAnim.toCards[index]?.name !== fromCard.name && (
+                      <div className="dream-reveal-card changed">
+                        {effectAnim.toCards[index]?.imageUrl && <img src={effectAnim.toCards[index].imageUrl} alt="" />}
+                        <span>{effectAnim.toCards[index]?.name}</span>
+                      </div>
+                    )}
                   </div>
-                  {/* Status Icons below or inside. GF puts them inside or below. We put them below. */}
-               </div>
+                ))}
+              </div>
+            </div>
+          ) : RESOURCE_EFFECT_TYPES.has(effectAnim.type) ? (
+            <div
+              key={effectAnim.id}
+              className={`resource-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              role="status"
+              aria-label={`${effectAnim.playerName}の${effectAnim.type}が${effectAnim.amount}増加`}
+            >
+              <img className="resource-effect-label" src={`/godfield-flash/ui/game/effect/${effectAnim.type}.png`} alt="" />
+              <div className="resource-effect-number">{renderEffectNumber(effectAnim.type, effectAnim.amount)}</div>
+              {effectAnim.revived && <span className="revive-effect-label">復活</span>}
+            </div>
+          ) : ASSISTANT_EFFECT_TYPES.has(effectAnim.type) ? (
+            <div
+              key={effectAnim.id}
+              className={`assistant-effect-overlay ${effectAnim.type} ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              role="status"
+              aria-label={`${effectAnim.playerName}の${EFFECT_LABELS[effectAnim.type]}`}
+            >
+              <img src={`/godfield-flash/ui/game/assistant/${effectAnim.assistantType}.png`} alt="" />
+              <strong>{EFFECT_LABELS[effectAnim.type]}</strong>
+              <span>{effectAnim.playerName}</span>
+            </div>
+          ) : (
+            <div
+              key={effectAnim.id}
+              className={`status-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              role="status"
+              aria-label={`${effectAnim.playerName}に${EFFECT_LABELS[effectAnim.type] || effectAnim.type}`}
+            >
+              <img src={`/godfield-flash/ui/game-ja/effect/${effectAnim.type}.png`} alt={EFFECT_LABELS[effectAnim.type] || effectAnim.type} />
+              {effectAnim.playerName && <span>{effectAnim.playerName}</span>}
+            </div>
+          )
+        )}
+        {damageAnim && (
+          <div
+            key={`${damageAnim.timestamp}-${damageAnim.isDarkFollowUp ? 'dark' : 'normal'}`}
+            className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'} ${damageAnim.isDarkFollowUp ? 'dark-follow-up' : ''}`}
+            aria-label={`${playerNameById(damageAnim.targetId)}に${damageAnim.amount}ダメージ`}
+          >
+            <div className="gf-damage-number">{renderDamageNumber(damageAnim.amount, damageAnim.isDarkFollowUp)}</div>
+            <img className="gf-damage-label" src={`/godfield-flash/ui/game-ja/effect/${damageAnim.isDarkFollowUp ? 'damage_dark' : 'damage'}.png`} alt={damageAnim.isDarkFollowUp ? '冥ダメージ' : 'ダメージ'} />
+          </div>
+        )}
+
+        {startAnim && <img className="gf-game-start-effect" src="/godfield-flash/ui/game-ja/effect/game_start.png" alt="ゲーム開始" />}
+
+        {actionAnim && !damageAnim && actionAnim.outcome === 'use' && (
+          <div
+            className={`activity-action-overlay ${actionAnim.attackerId === me.id ? 'actor-me' : 'actor-opponent'}`}
+            role="status"
+            aria-label={`${actionAnim.attackerName || playerNameById(actionAnim.attackerId)}が${actionAnim.label || `${actionAnim.card?.name}を使用`}`}
+          >
+            <div className={`activity-action-card ${actionAnim.type === 'pray' ? 'pray' : ''}`}>
+              {actionAnim.card?.imageUrl
+                ? <img src={actionAnim.card.imageUrl} alt="" />
+                : <span>{actionAnim.type === 'pray' ? '祈' : '効'}</span>}
+            </div>
+            <div>
+              <strong>{actionAnim.attackerName || playerNameById(actionAnim.attackerId)}</strong>
+              <span>{actionAnim.label || `${actionAnim.card?.name || '神器'}を使用`}</span>
+            </div>
+          </div>
+        )}
+
+        {actionAnim && !damageAnim && actionAnim.outcome !== 'use' && (
+          <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`}>
+            <img src={`/godfield-flash/ui/game-ja/effect/${actionEffect}.png`} alt={actionEffect === 'miss' ? '回避' : '命中'} />
+          </div>
+        )}
+
+        <main className="gf-battle-stage">
+          <div className="gf-field-cards">
+            {field && (
+              <section className="gf-field-group attacker">
+                <div className="gf-field-owner">{playerNameById(field.attackerId) || '---'}</div>
+                {renderFieldCard(field.attackCard)}
+                {phase !== 'defense' && selectedCards.map(index => renderSelectedCard(index, 'pending-defense-card'))}
+              </section>
             )}
-            {opponent && opponent.ailments.length > 0 && (
-               <div style={{ paddingLeft: '20px' }}>{renderAilments(opponent)}</div>
+            {field?.defenderId && (
+              <img className="gf-field-target-arrow" src="/godfield-flash/ui/game/commander/target_arrow_right.png" alt="攻撃対象" />
             )}
-
-            {/* Empty Slots to look like GF */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', opacity: 0.5 }}>
-               <div className="player-pill" style={{ flex: 1 }}>
-                  <span style={{ marginRight: '10px', color: '#94a3b8' }}>●</span>
-                  <span style={{ flex: 1 }}>---</span>
-               </div>
-            </div>
-
-            {/* Me */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-               <div className={`player-pill ${turn === me.id ? 'active' : ''}`} style={{ flex: 1 }}>
-                  <span style={{ marginRight: '10px', color: '#94a3b8' }}>●</span>
-                  <span style={{ flex: 1, color: 'var(--gf-blue)' }}>{me.name}</span>
-                  <div style={{ fontSize: '0.7rem', display: 'flex', gap: '4px', fontWeight: 'normal' }}>
-                     <span title="HP">HP <span style={{fontWeight:'bold'}}>{me.hp}</span></span>
-                     <span title="MP">MP <span style={{fontWeight:'bold'}}>{me.mp}</span></span>
-                     <span title="Money">¥ <span style={{fontWeight:'bold'}}>{me.money}</span></span>
-                  </div>
-               </div>
-            </div>
-            {me.ailments.length > 0 && (
-               <div style={{ paddingLeft: '20px' }}>{renderAilments(me)}</div>
+            {field?.defenderId && (
+              <section className="gf-field-group defender">
+                <div className="gf-field-owner">{playerNameById(field.defenderId) || '---'}</div>
+                {(field.defenseCards || []).map((card, index) => <div key={index}>{renderFieldCard(card)}</div>)}
+                {phase === 'defense' && selectedCards.map(index => renderSelectedCard(index, 'pending-defense-card'))}
+              </section>
             )}
-
-            {/* Log / Actions Box */}
-            <div className="glass-panel" style={{ flex: 1, marginTop: '20px', padding: '10px', fontSize: '0.8rem', overflowY: 'auto', background: 'white' }}>
-               <div style={{ textAlign: 'center', borderBottom: '1px solid #ccc', paddingBottom: '4px', marginBottom: '8px', fontWeight: 'bold' }}>※ 起こした奇跡 (Log)</div>
-               {gameState.log.slice(-10).map((l, i) => <div key={i}>{l}</div>)}
+            {!field && selectedCards.length > 0 && (
+              <div className="selected-field-preview">
+                <div className="selected-field-title">選択中 ({selectedCards.length})</div>
+                <div className="selected-field-cards">
+                  {selectedCards.map(index => renderSelectedCard(index))}
+                </div>
+              </div>
+            )}
+          </div>
+          {field?.defenderId && (
+            <div className="gf-combat-totals">
+              <span>攻{field.attackCard.attack || 0}</span>
+              <span>守{displayedDefenseTotal}</span>
             </div>
-         </div>
-      </div>
+          )}
+        </main>
 
-      {/* Bottom Area: Hand & Actions */}
-      <div style={{ background: '#7bd7c6', padding: '10px', borderTop: '2px solid var(--gf-green)', position: 'relative' }}>
-         
-         {/* Error Toast */}
-         {error && (
-            <div style={{ position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(255,0,0,0.8)', color: 'white', padding: '5px 15px', borderRadius: '20px', fontWeight: 'bold', zIndex: 1000, boxShadow: '0 2px 5px rgba(0,0,0,0.3)' }}>
-               {error}
+        <aside className="gf-battle-sidebar">
+          <div className="battle-player-list">
+            {opponents.map(player => <div key={player.id}>{renderPlayerStatus(player)}{renderAssistant(player.assistant)}</div>)}
+            {renderPlayerStatus(me, true)}
+            {renderAssistant(me.assistant)}
+          </div>
+          <div className="gf-battle-chat-frame">
+            <div className="gf-battle-log">
+              {gameState.log.slice(-12).map((line, index) => <div key={index}>{line}</div>)}
             </div>
-         )}
+            {renderChat()}
+          </div>
+        </aside>
 
-         {/* Hovered Card Detail */}
-         {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
-            <div style={{ position: 'absolute', top: '-85px', left: `${Math.min(hoveredCardIndex * 70, window.innerWidth - 240)}px`, zIndex: 100 }}>
-               {renderFieldCard(hasHallucination ? { ...me.hand[hoveredCardIndex], name: '???', type: '???', attack: '?', defense: '?', costMp: '?', costMoney: '?' } : me.hand[hoveredCardIndex])}
+        <section className="gf-hand-dock">
+          {error && <div className="battle-error-toast">{error}</div>}
+          {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
+            <div className="hovered-card-detail" style={{ left: `${(hoveredCardIndex % 8) * 83}px` }}>
+              {renderFieldCard(getDisplayedCard(me.hand[hoveredCardIndex], hoveredCardIndex))}
             </div>
-         )}
-
-         <div style={{ display: 'flex', gap: '5px', overflowX: 'auto', paddingBottom: '5px' }}>
-            {me.hand.map((c, i) => renderSquareCard(c, i))}
-         </div>
-         {me.learnedMiracles?.length > 0 && (
-           <div className="learned-miracles">
-             <span>習得済み奇跡</span>
-             {me.learnedMiracles.map((miracle, index) => (
+          )}
+          {hoveredMiracleIndex !== null && me.learnedMiracles?.[hoveredMiracleIndex] && (
+            <div className="hovered-card-detail" style={{ left: `${hoveredMiracleIndex * 83}px` }}>
+              {renderFieldCard(me.learnedMiracles[hoveredMiracleIndex])}
+            </div>
+          )}
+          <div className="gf-hand-cards">{me.hand.map((card, index) => renderSquareCard(card, index))}</div>
+          <div className="learned-miracles" aria-label="使用済み奇跡ストック">
+            {Array.from({ length: 6 }, (_, index) => {
+              const miracle = me.learnedMiracles?.[index];
+              if (!miracle) return <div key={`miracle-slot-${index}`} className="miracle-stock-slot empty" aria-hidden="true" />;
+              const disabled = !isMyTurn
+                || !['main', 'defense'].includes(phase)
+                || (phase === 'defense' && !(gameState.usableDefenseMiracleIndices || []).includes(index))
+                || (me.mp < (miracle.costMp || 0) && !selectedCards.some(cardIndex => me.hand[cardIndex]?.supportEffect === 'magic_free'));
+              return (
                <button
+                  type="button"
                  key={`${miracle.id}-${index}`}
-                 className="btn btn-secondary"
-                 disabled={!isMyTurn || !['main', 'defense'].includes(phase) || me.mp < (miracle.costMp || 0)}
-                 onClick={() => socket.emit('castMiracle', { roomName: id, miracleIndex: index, targetId: opponent?.id })}
-               >
-                 {miracle.name}（MP{miracle.costMp || 0}）
-               </button>
-             ))}
-           </div>
-         )}
-         <div style={{ textAlign: 'center', fontSize: '0.75rem', marginTop: '4px' }}>
-           カードを選択して「使用」。複数選択で武器＋装飾品などを合体できます（ダブルクリックで単体使用）。
-         </div>
-         <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '10px' }}>
-            {isMyTurn && (phase === 'main' || phase === 'defense') && selectedCards.length > 0 && (
-               <button className="btn" onClick={() => handlePlayCard(selectedCards[0])}>選択カードを使用 ({selectedCards.length})</button>
+                  className="miracle-stock-slot"
+                  disabled={disabled}
+                  aria-label={`${miracle.name}を使用（MP${miracle.costMp || 0}）`}
+                  title={`${miracle.name}（MP${miracle.costMp || 0}）`}
+                  onMouseEnter={() => {
+                    setHoveredCardIndex(null);
+                    setHoveredMiracleIndex(index);
+                  }}
+                  onMouseLeave={() => setHoveredMiracleIndex(null)}
+                  onClick={() => {
+                    socket.emit('castMiracle', { roomName: id, miracleIndex: index, cardIndices: selectedCards, targetId: opponent?.id });
+                    setSelectedCards([]);
+                  }}
+                >
+                  <img src={miracle.imageUrl} alt="" />
+                  <span>MP{miracle.costMp || 0}</span>
+                </button>
+              );
+            })}
+          </div>
+          <div className="gf-hand-actions">
+            {isMyTurn && selectedCards.length > 0 && (phase === 'main' || (phase === 'defense' && hasSelectedDefense)) && (
+               <button className="btn gf-command-button" aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>使用する</button>
             )}
-            {isMyTurn && phase === 'defense' && (
-               <button className="btn" onClick={() => socket.emit('finishDefense', { roomName: id })}>ダメージを受ける</button>
+            {isMyTurn && phase === 'defense' && selectedCards.length === 0 && (
+               <button className="btn gf-command-button" aria-label="防御せずダメージを受ける" onClick={() => socket.emit('finishDefense', { roomName: id })}>防御しない</button>
             )}
             {isMyTurn && phase === 'main' && (
-               <button className="btn" onClick={() => socket.emit('pray', { roomName: id })} title="手札に武器がない場合のみ可能">祈る (ドロー)</button>
+               <button
+                 className="btn gf-fixed-action pray-action"
+                 disabled={!gameState.canPray}
+                 onClick={() => socket.emit('pray', { roomName: id })}
+                 title={gameState.canPray ? '祈って神器を1枚引く' : '攻撃可能な武器があるため祈れません'}
+               >祈る (ドロー)</button>
             )}
-            {isMyTurn && phase === 'main' && (
-               <button className="btn" onClick={handleEndTurn}>ターン終了</button>
+            {isMyTurn && phase === 'main' && selectedCards.length === 1 && (
+               <button className="btn btn-secondary gf-fixed-action discard-action" onClick={() => { socket.emit('discardCards', { roomName: id, cardIndices: selectedCards }); setSelectedCards([]); }}>捨てる</button>
             )}
-         </div>
+          </div>
+        </section>
       </div>
+
+      <footer className="gf-battle-footer">
+        <button type="button" className="gf-back-button" onClick={() => navigate('/')}>Back</button>
+      </footer>
 
       {isMyTurn && phase === 'exchange' && (
         <div className="shrine-overlay">
@@ -425,19 +839,30 @@ export default function GameRoom() {
         </div>
       )}
 
-      {gameState.gameStateStr === 'ended' && (
+      {gameState.gameStateStr === 'ended' && !ascensionAnim && (
         <div className="game-end-overlay">
           <div className="glass-panel game-end-panel">
-            <h2>{gameState.winner ? '決着' : '引き分け'}</h2>
+            <img
+              className="gf-result-effect"
+              src={`/godfield-flash/ui/game-ja/effect/${gameState.winner ? 'game_win' : 'game_draw'}.png`}
+              alt={gameState.winner ? '決着' : '引き分け'}
+            />
             <p>
               {gameState.winner
-                ? (gameState.winner.id === me.id ? 'あなたの勝利です！' : `${gameState.winner.name} の勝利です。`)
+                ? (gameState.winner.id === me.id || (gameState.winner.team && gameState.winner.team === me.team)
+                  ? 'あなたの勝利です！'
+                  : `${gameState.winner.name} の勝利です。`)
                 : '生存者なしで決着しました。'}
             </p>
-            <button className="btn" onClick={() => socket.emit('returnToLobby', { roomName: id })}>待機画面に戻る</button>
+            <button className="btn" onClick={() => gameState.spectator
+              ? navigate('/')
+              : socket.emit('returnToLobby', { roomName: id })}
+            >{gameState.spectator ? 'トップへ戻る' : '待機画面に戻る'}</button>
           </div>
         </div>
       )}
+        </div>
+      </div>
     </div>
   );
 }

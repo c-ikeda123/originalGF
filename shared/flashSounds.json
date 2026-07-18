@@ -1,0 +1,11 @@
+[
+  "alert", "assistant", "assistant_add", "assistant_remove", "block",
+  "book_tab_down", "book_tab_over", "button_down", "button_over", "card",
+  "client_turn", "counter", "damage", "damage_dark", "dead", "defense_harm",
+  "disease", "dying_attack", "entry_toggle_over", "exchange", "flick",
+  "game_draw", "game_start", "game_start_number", "game_win", "harm_add",
+  "harm_remove", "hit", "hp_increase", "illusion_item", "item_remove", "miss",
+  "mortar", "mp_increase", "mystery", "no_change", "open_cover", "reflect",
+  "revive", "seizure", "target", "toggle_down", "winner", "worse",
+  "yen_absorb", "yen_increase"
+]

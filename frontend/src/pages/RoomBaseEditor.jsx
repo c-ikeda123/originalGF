@@ -1,5 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import BaseCardEffectEditor from '../components/BaseCardEffectEditor';
+import SquareImageCropper from '../components/SquareImageCropper';
 import { GF_BASE_CARDS } from '../data/baseCards';
+import { hasEffectChanges, normalizeBaseCardEdit } from '../data/baseCardEdits';
 
 const labels = {
   all: 'すべて', weapon: '武器', armor: '防具', ring: '指輪', defense_item: '防御雑貨',
@@ -38,12 +41,14 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
 
   useEffect(() => {
     if (!draft || !selectedId || !ownsLock) return;
+    const patch = normalizeBaseCardEdit(selectedBase, draft);
+    if (JSON.stringify(patch) === JSON.stringify(edits[selectedId] || {})) return;
     socket.emit('updateRoomBaseCard', {
       roomName,
       cardId: selectedId,
-      patch: { name: draft.name, description: draft.description, imageUrl: draft.imageUrl || '' },
+      patch,
     });
-  }, [draft, ownsLock, roomName, selectedId, socket]);
+  }, [draft, edits, ownsLock, roomName, selectedBase, selectedId, socket]);
 
   useEffect(() => {
     if (selectedBase && !ownsLock) setDraft({ ...selectedBase, ...(edits[selectedId] || {}) });
@@ -77,41 +82,43 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
     }
   };
 
-  const uploadImage = event => {
-    const file = event.target.files?.[0];
-    if (!file || !ownsLock) return;
-    const reader = new FileReader();
-    reader.onload = loadEvent => {
-      const image = new Image();
-      image.onload = () => {
-        const scale = Math.min(1, 320 / image.width, 480 / image.height);
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.round(image.width * scale);
-        canvas.height = Math.round(image.height * scale);
-        canvas.getContext('2d').drawImage(image, 0, 0, canvas.width, canvas.height);
-        setDraft(card => ({ ...card, imageUrl: canvas.toDataURL('image/jpeg', 0.7) }));
-      };
-      image.src = loadEvent.target.result;
-    };
-    reader.readAsDataURL(file);
-  };
-
   return (
     <div className="room-base-editor glass-panel">
       <div className="room-editor-toolbar">
-        <h3>共有 基礎カード設定</h3>
-        <select className="input-field" value={category} onChange={event => setCategory(event.target.value)}>
-          {Object.entries(labels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
-        </select>
+        <h3>共有 基礎カード設定 <span className="edited-card-count">編集済み {Object.keys(edits).length}件</span></h3>
+        <div className="room-category-tabs" role="tablist" aria-label="神器の分類">
+          {Object.entries(labels).map(([value, label]) => (
+            <button
+              key={value}
+              type="button"
+              role="tab"
+              aria-selected={category === value}
+              className={category === value ? 'active' : ''}
+              onClick={() => setCategory(value)}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
       </div>
       <div className="room-editor-body">
         <div className="room-card-list">
           {cards.map(card => {
             const lock = locks[card.id];
             return (
-              <button key={card.id} className={`room-card-row ${selectedId === card.id ? 'active' : ''}`} onClick={() => selectCard(card)} disabled={lock && lock.ownerId !== myId}>
-                <span>{edits[card.id]?.name || card.name}</span>
-                <small>{lock ? `${lock.ownerName} が編集中` : labels[card.category]}</small>
+              <button key={card.id} className={`room-card-row ${selectedId === card.id ? 'active' : ''} ${edits[card.id] ? 'edited' : ''}`} onClick={() => selectCard(card)} disabled={lock && lock.ownerId !== myId}>
+                <img className="room-card-thumbnail" src={edits[card.id]?.imageUrl || card.imageUrl} alt="" />
+                <span className="room-card-summary">
+                  <span className="card-list-name">
+                    {edits[card.id]?.name || card.name}
+                    {edits[card.id] && (
+                      <span className={hasEffectChanges(edits[card.id]) ? 'effect-edit-badge' : 'edited-card-badge'}>
+                        {hasEffectChanges(edits[card.id]) ? '編集済み（効果変更有）' : '編集済み'}
+                      </span>
+                    )}
+                  </span>
+                  <small>{lock ? `${lock.ownerName} が編集中` : labels[card.category]}</small>
+                </span>
               </button>
             );
           })}
@@ -120,13 +127,24 @@ export default function RoomBaseEditor({ socket, roomName, editorState, myId }) 
           {draft ? (
             <>
               <div className="lock-status">{ownsLock ? '編集中・変更は自動保存されます' : locks[selectedId] ? `${locks[selectedId].ownerName} が編集中です` : '編集権を取得中…'}</div>
-              <label>名前<input className="input-field" value={draft.name} disabled={!ownsLock} onChange={event => setDraft(card => ({ ...card, name: event.target.value }))} /></label>
+              {hasEffectChanges(edits[selectedId]) && <div className="effect-change-banner">編集済み（効果変更有）</div>}
+              <label className="room-name-field">
+                <span>名前</span>
+                <input className="input-field" value={draft.name} disabled={!ownsLock} onChange={event => setDraft(card => ({ ...card, name: event.target.value }))} />
+                {edits[selectedId] && <span className="original-card-name">元の名前: {selectedBase.name}</span>}
+              </label>
               <label>画像URL<input className="input-field" value={draft.imageUrl || ''} disabled={!ownsLock} onChange={event => setDraft(card => ({ ...card, imageUrl: event.target.value }))} /></label>
-              <label>画像ファイル<input className="input-field" type="file" accept="image/*" disabled={!ownsLock} onChange={uploadImage} /></label>
+              <div className="room-image-file-field"><span>画像ファイル</span><SquareImageCropper disabled={!ownsLock} onCrop={imageUrl => setDraft(card => ({ ...card, imageUrl }))} /></div>
               <div className="room-card-image-preview">
                 {draft.imageUrl ? <img src={draft.imageUrl} alt={`${draft.name} preview`} /> : <span>画像未設定</span>}
               </div>
               <label>説明<textarea className="input-field" rows="4" value={draft.description || ''} disabled={!ownsLock} onChange={event => setDraft(card => ({ ...card, description: event.target.value }))} /></label>
+              <BaseCardEffectEditor
+                baseCard={selectedBase}
+                card={draft}
+                disabled={!ownsLock}
+                onChange={setDraft}
+              />
             </>
           ) : <p>左からカードを選択してください。</p>}
           <div className="room-code-panel">

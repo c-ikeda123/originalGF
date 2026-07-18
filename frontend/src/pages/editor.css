@@ -47,6 +47,36 @@
   border-left: 3px solid var(--primary);
 }
 
+.card-list-item.edited {
+  box-shadow: inset 3px 0 0 #f59e0b;
+}
+
+.card-list-name {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.edited-card-summary {
+  margin: -0.25rem 1rem 0.75rem;
+  color: #b45309;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.edited-card-badge,
+.edited-card-count {
+  display: inline-flex;
+  flex: none;
+  padding: 0.12rem 0.4rem;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
 .icon-btn {
   background: transparent;
   border: none;

@@ -1,19 +1,74 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { godfieldFlashImages } from './godfieldFlashImages.mjs';
+import { godfieldCurrentImages } from './godfieldCurrentImages.mjs';
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const cards = [];
 let serial = 0;
 
 const attr = { '-': 'none', 火: 'fire', 水: 'water', 木: 'wood', 土: 'earth', 光: 'light', 闇: 'dark', 天: 'light' };
-const add = (category, name, data = {}) => cards.push({
-  id: `gf_${category}_${String(++serial).padStart(3, '0')}`,
-  name, category, type: data.type || category, attribute: data.attribute || 'none',
-  target: data.target || 'single', attack: 0, attackBonus: 0, defense: 0,
-  hitRate: 100, healHp: 0, healMp: 0, costMoney: 0, costMp: 0,
-  copies: 1, description: '', ...data,
-});
+const deriveSystemFields = card => {
+  const description = card.description || '';
+  const fields = {};
+  if (description.includes('2回攻撃')) fields.repeatCount = 2;
+  if (description.includes('HP吸収')) fields.attackEffect = 'absorb_hp';
+  if (description.includes('自分にも同じダメージ')) fields.attackEffect = 'damage_to_self';
+  if (description.includes('攻撃力MP×2')) fields.attackEffect = 'magical';
+  if (description.includes('攻撃先が自分を含めランダム')) fields.attackEffect = 'pestle';
+  if (description.includes('昇天時に75%攻30')) fields.dyingAttack = { attack: 30, hitRate: 75, target: 'all' };
+  if (description.includes('1ダメージ以上で即死')) fields.lethalOnDamage = true;
+  if (description.includes('単体攻撃武器の攻撃力を倍にする')) fields.supportEffect = 'double_attack';
+  if (description.includes('単体攻撃武器を100%攻にする')) fields.supportEffect = 'wide_attack';
+  if (description.includes('属性に染める')) fields.supportEffect = 'set_attribute';
+  if (description.includes('MP消費なしで奇跡') || description.includes('MP消費0で奇跡') || description.includes('MPなしで奇跡')) fields.supportEffect = 'magic_free';
+  if (card.name === 'ちからの粉') {
+    fields.supportEffect = 'increase_attack';
+    fields.supportValue = 10;
+    fields.additive = true;
+  }
+  if (description.includes('+￥10')) fields.moneyGain = 10;
+  if (description.includes('+HP10または10ダメージ')) fields.randomHp = 10;
+  if (description.includes('神器を3つ掃き飛ばす')) fields.removeItems = 3;
+  if (description.includes('習得奇跡を2つ忘れさせる')) fields.removeMiracles = 2;
+  if (description.includes('守護神が宿る') || description.includes('守護神が現れる')) fields.setAssistant = true;
+  if (description.includes('超常現象が起こる')) fields.mystery = true;
+  if (description.includes('HP0時に+HP10')) fields.reviveHp = 10;
+  if (description.includes('手札を一新')) fields.redrawHand = true;
+  if (description.includes('キネ発動時99ダメージ')) fields.mortar = true;
+  if (description.includes('何でもはね返す')) fields.defenseEffect = 'reflect_any';
+  else if (description.includes('無属性攻撃をはね返す')) fields.defenseEffect = 'reflect_weapon';
+  else if (description.includes('奇跡をはね返す')) fields.defenseEffect = 'reflect_magic';
+  else if (description.includes('無属性の攻撃を弾く')) fields.defenseEffect = 'flick_weapon';
+  else if (description.includes('奇跡を弾く')) fields.defenseEffect = 'flick_magic';
+  else if (description.includes('無属性武器を止める')) fields.defenseEffect = 'block_weapon';
+  else if (description.includes('奇跡を止める')) fields.defenseEffect = 'block_magic';
+  else if (description.includes('攻撃の属性を取り除く')) fields.defenseEffect = 'remove_attribute';
+  const ringEffects = {
+    火星の指輪: 'counter_damage_all',
+    水星の指輪: 'counter_fog',
+    木星の指輪: 'counter_dream',
+    土星の指輪: 'counter_double_damage',
+    天王の指輪: 'counter_flash',
+    冥王の指輪: 'counter_darkcloud',
+    海王の指輪: 'recover_double_mp',
+    金星の指輪: 'absorb_money',
+  };
+  if (ringEffects[card.name]) fields.reactiveEffect = ringEffects[card.name];
+  return fields;
+};
+const add = (category, name, data = {}) => {
+  const id = `gf_${category}_${String(++serial).padStart(3, '0')}`;
+  const card = {
+    id, name, category, type: data.type || category, attribute: data.attribute || 'none',
+    target: data.target || 'single', attack: 0, attackBonus: 0, defense: 0,
+    hitRate: 100, healHp: 0, healMp: 0, costMoney: 0, costMp: 0,
+    copies: 1, description: '', ...data,
+    imageUrl: data.imageUrl || godfieldCurrentImages[id] || godfieldFlashImages[id] || '',
+  };
+  cards.push({ ...card, ...deriveSystemFields(card) });
+};
 const rate = percent => Math.round(percent * 5);
 
 // 神器一覧-単体武器-: 通常武器
@@ -112,6 +167,35 @@ const guardians = [
  ['月神','none','受身を除く28種類の奇跡から無作為に使用する'],
 ];
 guardians.forEach(([n,a,e])=>add('incarnation',n,{type:'incarnation',attribute:a,copies:0,description:e,actionRate:25,leaveOnDamageRate:10}));
+
+const damageAilments = new Map([
+  ['地獄のハサミ', 'hell'], ['疾風剣', 'cold'], ['激烈疾風剣', 'cold'], ['風のカギ爪', 'cold'],
+  ['いんちきスピア', 'dream'], ['夢の木づち', 'dream'], ['霧鉄砲', 'fog'], ['霧の扇', 'fog'],
+  ['フラッシュダガー', 'flash'], ['六角凶', 'darkcloud'], ['＜閃光＞', 'flash'],
+]);
+const directAilments = new Map([
+  ['＜風＞', 'cold'], ['＜天国風＞', 'heaven'], ['＜霧＞', 'fog'], ['＜夢＞', 'dream'], ['＜暗雲＞', 'darkcloud'],
+]);
+const retaliationAilments = new Map([
+  ['水星の指輪', 'fog'], ['木星の指輪', 'dream'], ['天王の指輪', 'flash'], ['冥王の指輪', 'darkcloud'],
+]);
+
+cards.forEach(card => {
+  if (damageAilments.has(card.name)) {
+    card.ailmentInflict = damageAilments.get(card.name);
+    card.ailmentTrigger = 'damage';
+  }
+  if (directAilments.has(card.name)) {
+    card.ailmentInflict = directAilments.get(card.name);
+    card.ailmentTrigger = 'use';
+  }
+  if (retaliationAilments.has(card.name)) card.retaliateAilment = retaliationAilments.get(card.name);
+  if (card.name === '熱狂仮面') card.selfAilment = 'fever';
+  if (card.name === '夢見る帽子') card.selfAilment = 'dream';
+  if (card.name === '天国草') card.selfAilment = 'heaven';
+  if (['＜音色＞', 'スマイルの貝がら'].includes(card.name)) card.cureAilments = ['cold', 'fever', 'fog', 'flash'];
+  if (['＜歌声＞', 'ハートの貝がら'].includes(card.name)) card.cureAilments = 'all';
+});
 
 const output = resolve(root, 'shared', 'baseCards.json');
 await mkdir(dirname(output), { recursive: true });
