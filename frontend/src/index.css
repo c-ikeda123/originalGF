@@ -2650,48 +2650,100 @@ h1, h2, h3, h4, h5, h6 {
 .status-effect-overlay,
 .dream-reveal-overlay,
 .assistant-effect-overlay {
-  top: 190px !important;
-  right: 365px;
-  left: auto !important;
+  right: auto;
+  left: calc(var(--presentation-column-left, 0px) + 150px) !important;
 }
 
-.presentation-target-anchor {
-  position: absolute;
-  top: var(--presentation-target-y, 8px);
-  right: 365px;
-  z-index: 180;
-  width: 170px;
-  height: 24px;
+.gf-game-screen .damage-overlay,
+.gf-game-screen .damage-overlay.target-me,
+.gf-game-screen .damage-overlay.target-opponent {
+  top: 126px;
+  width: 188px;
+  height: 118px;
   box-sizing: border-box;
-  padding: 0 18px 0 8px;
-  color: #215646;
-  background: url('/godfield-flash/ui/game/command/value.png') center / 170px 24px no-repeat;
-  font: bold 13px/24px Arial, sans-serif;
-  text-align: right;
-  white-space: nowrap;
-  pointer-events: none;
-  animation: gfTargetAnchor 900ms ease-out both;
+  display: block;
+  overflow: hidden;
+  padding: 5px 10px 8px;
+  border: 0;
+  border-radius: 17px;
+  background: rgba(55, 55, 55, 0.94);
+  box-shadow: none;
 }
 
-.presentation-target-anchor span {
-  float: left;
-  color: #e75b87;
-  font-size: 19px;
+.gf-game-screen .gf-damage-number {
+  height: 82px;
+  align-items: center;
 }
 
-@keyframes gfTargetAnchor {
-  0% { opacity: 0; transform: translateX(-20px); }
-  20%, 78% { opacity: 1; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(5px); }
+.gf-game-screen .gf-damage-number img {
+  height: 79px;
+}
+
+.gf-game-screen .gf-damage-label {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  width: 77px;
+  height: 27px;
+}
+
+.resource-effect-overlay {
+  top: 105px !important;
+  width: 188px;
+  height: 96px;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 12px;
+  overflow: hidden;
+  border-radius: 17px;
+  background: rgba(0, 180, 137, 0.96);
+  filter: none;
+}
+
+.resource-effect-overlay.mp_increase {
+  background: rgba(54, 132, 202, 0.96);
+}
+
+.resource-effect-overlay.yen_increase {
+  background: rgba(216, 170, 20, 0.96);
+}
+
+.resource-effect-overlay .resource-effect-label {
+  height: 55px;
+}
+
+.resource-effect-overlay .resource-effect-number {
+  height: 61px;
+}
+
+.resource-effect-overlay .resource-effect-number img {
+  height: 59px;
+}
+
+.status-effect-overlay,
+.dream-reveal-overlay,
+.assistant-effect-overlay,
+.gf-game-screen .combat-action-overlay,
+.gf-game-screen .combat-action-overlay.target-me,
+.gf-game-screen .combat-action-overlay.target-opponent {
+  top: 126px;
+}
+
+.activity-action-overlay {
+  top: 96px !important;
+  left: calc(var(--presentation-column-left, 0px) + 150px);
 }
 
 .turn-start-overlay {
   position: absolute;
-  top: calc(var(--presentation-target-y, 8px) + 8px);
-  right: 365px;
+  top: 4px;
+  right: auto;
+  left: calc(var(--presentation-column-left, 0px) + 150px);
   z-index: 150;
   width: 160px;
   height: 28px;
+  transform: translateX(-50%);
   pointer-events: none;
   animation: gfTurnMove 850ms ease-out both;
 }
@@ -2716,9 +2768,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes gfTurnMove {
-  0% { opacity: 0; transform: translateX(-35px); }
-  24%, 78% { opacity: 1; transform: translateX(0); }
-  100% { opacity: 0; transform: translateX(8px); }
+  0% { opacity: 0; transform: translateX(calc(-50% - 35px)); }
+  24%, 78% { opacity: 1; transform: translateX(-50%); }
+  100% { opacity: 0; transform: translateX(calc(-50% + 8px)); }
 }
 
 .presentation-card-stack {
