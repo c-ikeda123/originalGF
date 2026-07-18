@@ -841,6 +841,26 @@ io.on('connection', (socket) => {
   };
   socket.on('playCard', handlePlayCard);
 
+  socket.on('reorderHand', ({ roomName, instanceIds }, acknowledge) => {
+    const room = rooms[roomName];
+    const player = room?.players[socket.id];
+    const respond = result => {
+      if (typeof acknowledge === 'function') acknowledge(result);
+    };
+    if (!player || room.state !== 'playing') return respond({ ok: false });
+    if (!Array.isArray(instanceIds) || instanceIds.length !== player.hand.length) {
+      return respond({ ok: false });
+    }
+    const cardsByInstanceId = new Map(player.hand.map(card => [card.instanceId, card]));
+    const uniqueIds = new Set(instanceIds);
+    if (uniqueIds.size !== player.hand.length || instanceIds.some(instanceId => !cardsByInstanceId.has(instanceId))) {
+      return respond({ ok: false });
+    }
+    player.hand = instanceIds.map(instanceId => cardsByInstanceId.get(instanceId));
+    respond({ ok: true });
+    emitGameState(roomName);
+  });
+
   socket.on('castMiracle', ({ roomName, miracleIndex, cardIndices = [], targetId }) => {
     const room = rooms[roomName];
     const player = room?.players[socket.id];

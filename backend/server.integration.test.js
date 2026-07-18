@@ -101,7 +101,14 @@ test('準備・チームチャット・観戦・途中参加拒否を実サー�
   botHost.emit('toggleReady', { roomName: botRoom });
   await waitFor(botHost, 'roomUpdate', state => state.players.every(player => player.ready));
   botHost.emit('startGame', { roomName: botRoom });
-  const initialBotGame = await waitFor(botHost, 'gameState', state => state.gameStateStr === 'playing');
+  let initialBotGame = await waitFor(botHost, 'gameState', state => state.gameStateStr === 'playing');
+  const reversedHandIds = initialBotGame.me.hand.map(card => card.instanceId).reverse();
+  const reorderedGameState = waitFor(botHost, 'gameState', state => state.me.hand[0]?.instanceId === reversedHandIds[0]);
+  const reorderResult = await new Promise(resolve => {
+    botHost.emit('reorderHand', { roomName: botRoom, instanceIds: reversedHandIds }, resolve);
+  });
+  assert.deepEqual(reorderResult, { ok: true });
+  initialBotGame = await reorderedGameState;
   await new Promise(resolve => setTimeout(resolve, Math.max(0, initialBotGame.actionLockedUntil - Date.now()) + 30));
   if (initialBotGame.turn !== botId) {
     const discardIndex = initialBotGame.me.hand.findIndex(card => !card.mortar);
