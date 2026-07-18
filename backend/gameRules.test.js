@@ -320,6 +320,14 @@ test('攻撃補助雑貨とMP無料化雑貨を攻撃に組み合わせられる
   assert.equal(combineAttackCards([weapon, powder]).attack, 15);
 });
 
+test('追加攻撃同士は重ねず通常攻撃には複数追加できる', () => {
+  const weapon = { name: '剣', type: 'weapon', attack: 5 };
+  const firstAddition = { name: '弓', type: 'weapon', attack: 2, additive: true };
+  const secondAddition = { name: '手裏剣', type: 'weapon', attack: 3, additive: true };
+  assert.equal(validateCardPlay([firstAddition, secondAddition], 'main').valid, false);
+  assert.equal(validateCardPlay([weapon, firstAddition, secondAddition], 'main').valid, true);
+});
+
 test('全体・複数回攻撃は各対象を回数分だけ順番に処理する', () => {
   assert.deepEqual(createAttackQueue(['B', 'C'], 2), [
     { targetId: 'B', repeat: 1 },

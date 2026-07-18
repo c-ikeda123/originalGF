@@ -170,7 +170,7 @@ function validateCardPlay(cards, phase, ailments = [], pendingDamage = null, def
   const modifiersOnly = cards.every(card => card.attack > 0 || card.additive || card.supportEffect === 'magic_free');
   const validItemModifiers = cards.every(card => card.type !== 'item' || ['magic_free', 'increase_attack'].includes(card.supportEffect));
   const magicFreeAction = actionMiracles.length === 1 && cards.every(card => card === actionMiracles[0] || card.supportEffect === 'magic_free');
-  return ((hasAttack && baseAttacks.length <= 1 && modifiersOnly) || magicFreeAction)
+  return ((hasAttack && baseAttacks.length === 1 && modifiersOnly) || magicFreeAction)
     && validItemModifiers && cards.every(card => combinationTypes.has(card.type))
     ? { valid: true }
     : { valid: false, message: 'この組み合わせでは使用できません。' };
