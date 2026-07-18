@@ -103,11 +103,14 @@ export default function GameRoom() {
     const playPresentationSound = event => {
       if (event.type === 'game_start') playSound('game_start');
       if (event.type === 'card_enter') {
-        const soundCount = Math.max(2, event.cards?.length || 1);
-        for (let index = 0; index < soundCount; index += 1) {
-          const timer = setTimeout(() => playSound('card'), index * 140);
+        const cardCount = Math.max(1, event.cards?.length || 0);
+        const soundDelays = cardCount === 1
+          ? [80, 260]
+          : Array.from({ length: cardCount }, (_, index) => index * 260 + 220);
+        soundDelays.forEach(delayMs => {
+          const timer = setTimeout(() => playSound('card'), delayMs);
           activeSoundTimers.push(timer);
-        }
+        });
       }
       if (event.type === 'initial_deal') {
         for (let index = 0; index < (event.cardCount || 0); index += 1) {
@@ -738,7 +741,7 @@ export default function GameRoom() {
         )}
 
         {cardEnterAnim && (
-          <div className={`presentation-card-stack phase-${cardEnterAnim.phase}`}>
+          <div className={`presentation-card-stack phase-${cardEnterAnim.phase} ${cardEnterAnim.playerId === socketId ? 'actor-self' : 'actor-remote'}`}>
             <div className="gf-field-owner">{cardEnterAnim.playerName}</div>
             {cardEnterAnim.cards.map((card, index) => (
               <div
@@ -749,7 +752,7 @@ export default function GameRoom() {
                   '--card-source-x': `${3 + ((cardEnterAnim.handIndices?.[index] || 0) % 8) * 83}px`,
                   '--card-source-y': `${467 + Math.floor((cardEnterAnim.handIndices?.[index] || 0) / 8) * 101}px`,
                   '--card-target-x': cardEnterAnim.phase === 'defense' ? '308px' : '0px',
-                  '--card-target-y': `${35 + index * 95}px`,
+                  '--card-target-y': `${40 + index * 100}px`,
                 }}
               >
                 {renderFieldCard(card)}
