@@ -13,6 +13,20 @@ const serverUrl = import.meta.env.VITE_SERVER_URL
   || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
 const RESOURCE_EFFECT_TYPES = new Set(['hp_increase', 'mp_increase', 'yen_increase']);
 const ASSISTANT_EFFECT_TYPES = new Set(['assistant_add', 'assistant_action', 'assistant_remove']);
+const PRESENTATION_MANAGED_SOUNDS = new Set([
+  'card', 'hit', 'miss', 'damage', 'damage_dark', 'client_turn', 'dead',
+  'hp_increase', 'mp_increase', 'yen_increase', 'harm_remove', 'harm_add', 'disease',
+  'illusion_item', 'reflect', 'flick', 'block', 'seizure', 'no_change',
+  'assistant_add', 'assistant', 'assistant_remove', 'game_start', 'game_draw', 'item_remove', 'exchange',
+]);
+const EFFECT_SOUNDS = {
+  hp_increase: 'hp_increase', mp_increase: 'mp_increase', yen_increase: 'yen_increase',
+  harm_remove: 'harm_remove', reflect: 'reflect', flick: 'flick', block: 'block',
+  seizure: 'seizure', no_change: 'no_change', illusion: 'illusion_item',
+  cold: 'disease', fever: 'disease', hell: 'disease', heaven: 'disease', fog: 'disease',
+  glory: 'disease', dark_cloud: 'disease', assistant_add: 'assistant_add',
+  assistant_action: 'assistant', assistant_remove: 'assistant_remove',
+};
 const EFFECT_LABELS = {
   cold: '風邪', fever: '熱病', hell: '地獄病', heaven: '天国病', fog: '霧',
   glory: '閃光', illusion: '夢', dark_cloud: '暗雲', harm_remove: '災い解除',
@@ -80,6 +94,25 @@ export default function GameRoom() {
       setFieldClearing(false);
       setHandRefillAnim(null);
     };
+    const playPresentationSound = event => {
+      if (event.type === 'game_start') playSound('game_start');
+      if (event.type === 'card_enter') {
+        const soundCount = Math.max(2, event.cards?.length || 1);
+        for (let index = 0; index < soundCount; index += 1) {
+          const timer = setTimeout(() => playSound('card'), index * 140);
+          activeSoundTimers.push(timer);
+        }
+      }
+      if (event.type === 'action') {
+        const actionSound = { pray: 'game_draw', discard: 'item_remove', trade: 'exchange' }[event.actionType];
+        if (actionSound) playSound(actionSound);
+      }
+      if (event.type === 'hit_result') playSound(event.outcome === 'evade' ? 'miss' : 'hit');
+      if (event.type === 'damage') playSound(event.dark ? 'damage_dark' : 'damage');
+      if (event.type === 'effect' && EFFECT_SOUNDS[event.effectType]) playSound(EFFECT_SOUNDS[event.effectType]);
+      if (event.type === 'ascension') playSound('dead');
+      if (event.type === 'turn_start' && event.playerId === socket.id) playSound('client_turn');
+    };
     const playNextPresentation = () => {
       const event = presentationQueue.current.shift();
       if (!event) {
@@ -89,6 +122,7 @@ export default function GameRoom() {
       }
       presentationActive.current = true;
       clearPresentation();
+      playPresentationSound(event);
       if (event.type === 'game_start') setStartAnim(true);
       if (event.type === 'card_enter') setCardEnterAnim(event);
       if (event.type === 'action' || event.type === 'hit_result') setActionAnim({
@@ -157,7 +191,7 @@ export default function GameRoom() {
       const newSoundEvents = (data.soundEvents || []).filter(event => event.id > lastSoundEventId.current);
       if (newSoundEvents.length) {
         lastSoundEventId.current = Math.max(...newSoundEvents.map(event => event.id));
-        newSoundEvents.forEach(event => {
+        newSoundEvents.filter(event => !PRESENTATION_MANAGED_SOUNDS.has(event.name)).forEach(event => {
           const timer = setTimeout(() => playSound(event.name), event.delayMs || 0);
           activeSoundTimers.push(timer);
         });
