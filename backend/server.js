@@ -136,6 +136,19 @@ function addAilmentEffect(room, player, ailment) {
   if (type) addEffectEvent(room, type, player, 0, { label: ailment });
 }
 
+function announceDefenseResolution(room, player, action) {
+  const presentation = {
+    reflect: { sound: 'reflect', effect: 'reflect' },
+    flick: { sound: 'flick', effect: 'flick' },
+    block: { sound: 'block', effect: 'block' },
+    reduce: { sound: 'block', effect: 'block' },
+    remove_attribute: { sound: 'defense_harm', effect: 'harm_remove', label: '属性解除' },
+  }[action];
+  if (!presentation) return;
+  addSoundEvent(room, presentation.sound);
+  addEffectEvent(room, presentation.effect, player, 0, { label: presentation.label || '' });
+}
+
 function resolveDreamCardsForUse(room, player, cards, phase, isSell = false) {
   if (!player.ailments.includes('dream')) {
     return cards.map(card => ({ card, originalCard: card, affected: false, changed: false }));
@@ -787,9 +800,8 @@ io.on('connection', (socket) => {
          pDamage.defensesUsed = (pDamage.defensesUsed || 0) + cards.length;
          room.field.defenseCards.push(combinedCard);
          room.field.defenseDisplayCards = [...(room.field.defenseDisplayCards || []), ...cards];
+         announceDefenseResolution(room, player, resolution.action);
          if (resolution.action === 'reflect' || resolution.action === 'flick') {
-           addSoundEvent(room, resolution.action);
-           addEffectEvent(room, resolution.action, player);
            const alivePlayers = Object.values(room.players).filter(candidate => !candidate.ascended && candidate.hp > 0);
            const target = resolution.action === 'reflect'
              ? room.players[pDamage.attackerId]
@@ -816,17 +828,11 @@ io.on('connection', (socket) => {
              if (target.id === player.id) applyDamageAndClearField(room, target, resolution.amount, roomName);
            }
         } else if (resolution.action === 'block') {
-           addSoundEvent(room, 'block');
-           addEffectEvent(room, 'block', player);
            room.log.push(`${combinedCard.name} が攻撃を完全に止めた！`);
         } else if (resolution.action === 'remove_attribute') {
-           addSoundEvent(room, 'defense_harm');
-           addEffectEvent(room, 'harm_remove', player, 0, { label: '属性解除' });
            pDamage.attribute = 'none';
            room.log.push(`${combinedCard.name} が攻撃の属性を取り除いた。`);
         } else if (resolution.action === 'reduce') {
-           addSoundEvent(room, 'block');
-           addEffectEvent(room, 'block', player);
            pDamage.amount = resolution.amount;
            room.log.push(`${player.name} は ${combinedCard.name} で防御し、残りダメージは ${pDamage.amount}。`);
          } else {
@@ -1840,6 +1846,7 @@ function performBotTurn(roomName) {
       room.field.defenseCards.push(card);
       room.field.defenseDisplayCards = [...(room.field.defenseDisplayCards || []), card];
       bot.pendingDamage.defensesUsed = (bot.pendingDamage.defensesUsed || 0) + 1;
+      announceDefenseResolution(room, bot, resolution.action);
       if (resolution.action === 'remove_attribute') bot.pendingDamage.attribute = 'none';
       applyDamageAndClearField(room, bot, resolution.amount, roomName);
     } else {

@@ -104,3 +104,8 @@ test('カーソルを重ねただけでは効果音を鳴らさない', () => {
   assert.doesNotMatch(implementation, /addEventListener\(['\"]pointerover['\"]/);
   assert.match(implementation, /addEventListener\(['\"]pointerdown['\"]/);
 });
+
+test('人間とBotの防御は同じ効果音演出を通る', () => {
+  const serverSource = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
+  assert.equal((serverSource.match(/announceDefenseResolution\(room, (?:player|bot), resolution\.action\)/g) || []).length, 2);
+});
