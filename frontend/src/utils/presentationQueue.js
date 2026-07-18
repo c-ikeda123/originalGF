@@ -31,3 +31,13 @@ export function getNewPresentationEvents(events, lastSeenId) {
 export function getLatestPresentationId(events, fallback = 0) {
   return Math.max(fallback, ...(events || []).map(event => Number.isInteger(event.id) ? event.id : 0));
 }
+
+export function getLatestFieldPresentationId(events, fallback = 0) {
+  return Math.max(fallback, ...(events || [])
+    .filter(event => event.type === 'card_enter' && ['main', 'defense'].includes(event.phase))
+    .map(event => Number.isInteger(event.id) ? event.id : 0));
+}
+
+export function shouldApplyFieldClear(clearEventId, fieldPresentationId) {
+  return !Number.isInteger(clearEventId) || clearEventId >= fieldPresentationId;
+}

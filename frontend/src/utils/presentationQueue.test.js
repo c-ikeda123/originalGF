@@ -1,9 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  getLatestFieldPresentationId,
   getLatestPresentationId,
   getNewPresentationEvents,
   getPresentationDuration,
+  shouldApplyFieldClear,
 } from './presentationQueue.js';
 
 test('未再生の戦闘演出をサーバー順に取り出す', () => {
@@ -24,4 +26,19 @@ test('複数神器は一枚ずつ置く時間を確保する', () => {
   assert.ok(triple > single);
   assert.equal(getPresentationDuration({ type: 'damage' }), 1200);
   assert.ok(getPresentationDuration({ type: 'initial_deal', cardCount: 9 }) > 900);
+});
+
+test('戦場に関係する最新の神器登場番号を取得する', () => {
+  const events = [
+    { id: 8, type: 'card_enter', phase: 'main' },
+    { id: 9, type: 'effect' },
+    { id: 12, type: 'card_enter', phase: 'defense' },
+  ];
+  assert.equal(getLatestFieldPresentationId(events), 12);
+});
+
+test('新しい戦場より古い消去演出を適用しない', () => {
+  assert.equal(shouldApplyFieldClear(10, 12), false);
+  assert.equal(shouldApplyFieldClear(12, 12), true);
+  assert.equal(shouldApplyFieldClear(13, 12), true);
 });
