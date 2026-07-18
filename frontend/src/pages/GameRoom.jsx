@@ -679,7 +679,17 @@ export default function GameRoom() {
           <div className={`presentation-card-stack phase-${cardEnterAnim.phase}`}>
             <div className="gf-field-owner">{cardEnterAnim.playerName}</div>
             {cardEnterAnim.cards.map((card, index) => (
-              <div key={`${card.id}-${index}`} className="presentation-enter-card" style={{ '--card-enter-index': index }}>
+              <div
+                key={`${card.id}-${index}`}
+                className="presentation-enter-card"
+                style={{
+                  '--card-enter-index': index,
+                  '--card-source-x': `${3 + ((cardEnterAnim.handIndices?.[index] || 0) % 8) * 83}px`,
+                  '--card-source-y': `${467 + Math.floor((cardEnterAnim.handIndices?.[index] || 0) / 8) * 101}px`,
+                  '--card-target-x': cardEnterAnim.phase === 'defense' ? '308px' : '0px',
+                  '--card-target-y': `${35 + index * 95}px`,
+                }}
+              >
                 {renderFieldCard(card)}
               </div>
             ))}
@@ -691,7 +701,9 @@ export default function GameRoom() {
             {field && (
               <section className="gf-field-group attacker">
                 <div className="gf-field-owner">{playerNameById(field.attackerId) || '---'}</div>
-                {renderFieldCard(field.attackCard)}
+                {(field.attackCards?.length ? field.attackCards : [field.attackCard]).map((card, index) => (
+                  <div key={`${card.instanceId || card.id || card.name}-${index}`}>{renderFieldCard(card)}</div>
+                ))}
                 {phase !== 'defense' && selectedCards.map(index => renderSelectedCard(index, 'pending-defense-card'))}
               </section>
             )}
@@ -701,7 +713,7 @@ export default function GameRoom() {
             {field?.defenderId && (
               <section className="gf-field-group defender">
                 <div className="gf-field-owner">{playerNameById(field.defenderId) || '---'}</div>
-                {(field.defenseCards || []).map((card, index) => <div key={index}>{renderFieldCard(card)}</div>)}
+                {(field.defenseDisplayCards || field.defenseCards || []).map((card, index) => <div key={index}>{renderFieldCard(card)}</div>)}
                 {phase === 'defense' && selectedCards.map(index => renderSelectedCard(index, 'pending-defense-card'))}
               </section>
             )}

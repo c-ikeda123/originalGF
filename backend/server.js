@@ -608,6 +608,7 @@ io.on('connection', (socket) => {
       playerName: player.name,
       targetId: opponent?.id || null,
       phase: room.phase,
+      handIndices: requestedIndices,
       cards: cards.map(usedCard => ({
         id: usedCard.id,
         name: usedCard.name,
@@ -685,7 +686,7 @@ io.on('connection', (socket) => {
        if (combinedCard.type === 'weapon') {
          queueAttackSequence(room, player, nextTurnId, combinedCard, cards, roomName);
        } else if (card.type === 'item') {
-         room.field = { attackerId: player.id, attackCard: combinedCard };
+         room.field = { attackerId: player.id, attackCard: combinedCard, attackCards: cards };
          addSoundEvent(room, 'card');
          addSoundEvent(room, 'card', { delayMs: 140 });
          if (card.healHp) {
@@ -745,7 +746,7 @@ io.on('connection', (socket) => {
               increasePlayerStat(room, player, 'money', card.moneyGain);
             }
             if (card.setAssistant) setRandomAssistant(player, room);
-            room.field = { attackerId: player.id, attackCard: card };
+            room.field = { attackerId: player.id, attackCard: card, attackCards: cards };
             clearFieldLater(roomName);
             endTurnInternal(room, nextTurnId);
          }
@@ -759,6 +760,7 @@ io.on('connection', (socket) => {
          const resolution = resolveDefenseCard(pDamage, combinedCard);
          pDamage.defensesUsed = (pDamage.defensesUsed || 0) + cards.length;
          room.field.defenseCards.push(combinedCard);
+         room.field.defenseDisplayCards = [...(room.field.defenseDisplayCards || []), ...cards];
          if (resolution.action === 'reflect' || resolution.action === 'flick') {
            addSoundEvent(room, resolution.action);
            addEffectEvent(room, resolution.action, player);
@@ -783,6 +785,7 @@ io.on('connection', (socket) => {
              room.field.attackerId = player.id;
              room.field.defenderId = target.id;
              room.field.defenseCards = [];
+             room.field.defenseDisplayCards = [];
              room.log.push(`${combinedCard.name} が攻撃を${resolution.action === 'reflect' ? 'はね返した' : '弾き飛ばした'}！`);
              if (target.id === player.id) applyDamageAndClearField(room, target, resolution.amount, roomName);
            }
@@ -1174,6 +1177,7 @@ function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, 
     attackerId: attacker.id,
     nextTurnId,
     card,
+    cards,
     assistantAction: options.assistantAction || false,
     skipAssistantOpportunity: options.skipAssistantOpportunity || false,
     ailments: getDamageAilments(cards),
@@ -1225,7 +1229,14 @@ function startNextQueuedAttack(room, roomName) {
     };
     room.phase = 'defense';
     room.turn = target.id;
-    room.field = { attackerId: attacker.id, attackCard: context.card, defenderId: target.id, defenseCards: [] };
+    room.field = {
+      attackerId: attacker.id,
+      attackCard: context.card,
+      attackCards: context.cards,
+      defenderId: target.id,
+      defenseCards: [],
+      defenseDisplayCards: [],
+    };
     room.log.push(hitResult.outcome === 'unavoidable'
       ? `${context.card.name} は ${target.name} に不可避！`
       : `${context.card.name}（${queued.repeat}回目）が ${target.name} に命中！`);
@@ -1712,6 +1723,7 @@ function performBotTurn(roomName) {
       applyImmediateCardEffects(room, bot, [card]);
       const resolution = resolveDefenseCard(bot.pendingDamage, card);
       room.field.defenseCards.push(card);
+      room.field.defenseDisplayCards = [...(room.field.defenseDisplayCards || []), card];
       bot.pendingDamage.defensesUsed = (bot.pendingDamage.defensesUsed || 0) + 1;
       if (resolution.action === 'remove_attribute') bot.pendingDamage.attribute = 'none';
       applyDamageAndClearField(room, bot, resolution.amount, roomName);

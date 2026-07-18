@@ -2734,10 +2734,17 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 @keyframes gfCardDrop {
-  0% { opacity: 0; transform: translateY(-28px) scale(0.96); }
-  45% { opacity: 1; transform: translateY(4px) scale(1); }
-  66% { transform: translateY(-3px); }
-  82% { transform: translateY(1px); }
+  0% {
+    opacity: 0.8;
+    transform: translate(
+      calc(var(--card-source-x) - var(--card-target-x)),
+      calc(var(--card-source-y) - var(--card-target-y))
+    ) scale(0.27);
+    transform-origin: top left;
+  }
+  62% { opacity: 1; transform: translateY(4px) scale(1); }
+  76% { transform: translateY(-3px); }
+  88% { transform: translateY(1px); }
   100% { opacity: 1; transform: translateY(0); }
 }
 
