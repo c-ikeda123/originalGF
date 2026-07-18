@@ -6,7 +6,13 @@ import RoomBaseEditor from './RoomBaseEditor';
 import { playSound } from '../soundEffects';
 import { getDefenseTotal, getNextCardSelection } from '../utils/cardSelection';
 import { getDreamDisplayedCard, isDreamAffectedCard } from '../utils/dreamCards';
-import { getLatestPresentationId, getNewPresentationEvents, getPresentationDuration } from '../utils/presentationQueue';
+import {
+  getLatestFieldPresentationId,
+  getLatestPresentationId,
+  getNewPresentationEvents,
+  getPresentationDuration,
+  shouldApplyFieldClear,
+} from '../utils/presentationQueue';
 
 let socket;
 const serverUrl = import.meta.env.VITE_SERVER_URL
@@ -73,6 +79,7 @@ export default function GameRoom() {
   const handInstanceKey = gameState?.me?.hand.map(card => card.instanceId).join('|') || '';
   const lastSoundEventId = useRef(0);
   const lastPresentationEventId = useRef(0);
+  const visibleFieldPresentationId = useRef(0);
   const hasReceivedPresentationState = useRef(false);
   const presentationQueue = useRef([]);
   const presentationActive = useRef(false);
@@ -156,13 +163,18 @@ export default function GameRoom() {
       });
       if (event.type === 'effect') setEffectAnim({ ...event, type: event.effectType });
       if (event.type === 'ascension') setAscensionAnim(event);
-      if (event.type === 'field_clear') setFieldClearing(true);
+      if (event.type === 'field_clear' && shouldApplyFieldClear(event.id, visibleFieldPresentationId.current)) {
+        setFieldClearing(true);
+      }
       if (event.type === 'hand_refill') setHandRefillAnim(event);
       if (event.type === 'miracle_stock') setMiracleStockAnim(event);
       if (event.type === 'turn_start') setTurnAnim(event);
       clearTimeout(presentationTimer.current);
       presentationTimer.current = setTimeout(() => {
-        if (event.type === 'field_clear') setVisibleField(null);
+        if (event.type === 'field_clear' && shouldApplyFieldClear(event.id, visibleFieldPresentationId.current)) {
+          visibleFieldPresentationId.current = 0;
+          setVisibleField(null);
+        }
         if (event.type === 'miracle_stock') {
           setPendingMiracleIds(current => current.filter(cardId => cardId !== event.card?.id));
         }
@@ -191,9 +203,15 @@ export default function GameRoom() {
 
     socket.on('gameState', (data) => {
       setGameState(data);
-      if (data.field) setVisibleField(data.field);
-      if (data.chatMessages) setChatMessages(data.chatMessages);
       const presentationEvents = data.presentationEvents || [];
+      if (data.field) {
+        visibleFieldPresentationId.current = getLatestFieldPresentationId(
+          presentationEvents,
+          visibleFieldPresentationId.current,
+        );
+        setVisibleField(data.field);
+      }
+      if (data.chatMessages) setChatMessages(data.chatMessages);
       if (!hasReceivedPresentationState.current) {
         hasReceivedPresentationState.current = true;
         lastPresentationEventId.current = getLatestPresentationId(presentationEvents);
@@ -238,6 +256,7 @@ export default function GameRoom() {
       setStartAnim(false);
       lastSoundEventId.current = 0;
       lastPresentationEventId.current = 0;
+      visibleFieldPresentationId.current = 0;
       hasReceivedPresentationState.current = false;
       presentationQueue.current = [];
       presentationActive.current = false;
