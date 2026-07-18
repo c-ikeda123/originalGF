@@ -69,7 +69,12 @@ const GF_BASE_CARDS = require('../shared/baseCards.json');
 const FLASH_SOUNDS = new Set(require('../shared/flashSounds.json'));
 const { resolveDreamCard } = require('../shared/dreamRules.cjs');
 const { normalizeBaseCardEdit, normalizeBaseCardEdits } = require('./baseCardEdits');
-const { addPresentationEvent, getCardPresentationLockMs, resetPresentationEvents } = require('./presentationEvents');
+const {
+  addPresentationEvent,
+  getCardPresentationLockMs,
+  resetPresentationEvents,
+  shouldPresentDamage,
+} = require('./presentationEvents');
 
 // Stores active rooms
 // rooms[roomName] = { players: { socketId: { name, ready, ...gameState } }, state: 'waiting' | 'playing' }
@@ -1090,12 +1095,14 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      isDark: isDarkAttack,
      timestamp: getNextEventTimestamp(room.lastDamage?.timestamp),
    };
-   addPresentationEvent(room, 'damage', {
-     playerId: player.id,
-     playerName: player.name,
-     amount: damageSequence.primaryDamage,
-     dark: false,
-   });
+   if (shouldPresentDamage(damageSequence.primaryDamage)) {
+     addPresentationEvent(room, 'damage', {
+       playerId: player.id,
+       playerName: player.name,
+       amount: damageSequence.primaryDamage,
+       dark: false,
+     });
+   }
    if (damageSequence.darkDamage > 0) {
      addPresentationEvent(room, 'damage', {
        playerId: player.id,

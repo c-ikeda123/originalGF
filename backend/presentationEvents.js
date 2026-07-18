@@ -23,9 +23,14 @@ function getCardPresentationLockMs(cardCount, miracleStockCount = 0) {
     + 850;
 }
 
+function shouldPresentDamage(amount) {
+  return Number(amount) > 0;
+}
+
 module.exports = {
   MAX_PRESENTATION_EVENTS,
   addPresentationEvent,
   getCardPresentationLockMs,
   resetPresentationEvents,
+  shouldPresentDamage,
 };

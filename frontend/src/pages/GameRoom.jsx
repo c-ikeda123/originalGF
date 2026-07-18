@@ -576,7 +576,7 @@ export default function GameRoom() {
         </span>
       )}
       {player.ailments.length > 0 && <span className="battle-player-ailments">{renderAilments(player)}</span>}
-      {isSelf && isMyTurn && <span className="battle-turn-label" role="status">あなたの番</span>}
+      {isSelf && isMyTurn && phase === 'main' && <span className="battle-turn-label" role="status">あなたの番</span>}
     </div>
   );
 
