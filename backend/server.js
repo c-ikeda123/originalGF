@@ -516,13 +516,20 @@ io.on('connection', (socket) => {
   });
 
   // --- Game Actions ---
-  const handlePlayCard = ({ roomName, cardIndex, cardIndices, targetId, learnedMiracleIndex }) => {
+  const handlePlayCard = ({ roomName, cardIndex, cardIndices, targetId, learnedMiracleIndex }, acknowledge) => {
+    const respond = result => {
+      if (typeof acknowledge === 'function') acknowledge(result);
+    };
+    const rejectPlay = message => {
+      socket.emit('errorMsg', message);
+      respond({ ok: false, message });
+    };
     const room = rooms[roomName];
-    if (!room || room.state !== 'playing') return;
+    if (!room || room.state !== 'playing') return rejectPlay('対戦が開始されていません。');
     
     const player = room.players[socket.id];
-    if (room.turn !== socket.id) return; // Not their turn
-    if (isActionLocked(room)) return socket.emit('errorMsg', 'ダメージ処理が終わるまでお待ちください。');
+    if (room.turn !== socket.id) return rejectPlay('現在はあなたの番ではありません。');
+    if (isActionLocked(room)) return rejectPlay('ダメージ処理が終わるまでお待ちください。');
     
     const requestedIndices = Array.isArray(cardIndices)
       ? [...new Set(cardIndices)].filter(Number.isInteger).sort((a, b) => a - b)
@@ -533,21 +540,19 @@ io.on('connection', (socket) => {
       : null;
     if (learnedMiracle) cards.push({ ...learnedMiracle, _learnedCast: true });
     let card = cards.find(c => c.type === 'weapon' || c.type === 'miracle') || cards[0];
-    if (!card) return;
+    if (!card) return rejectPlay('選択した神器が見つかりません。');
     const defaultOpponent = room.phase === 'defense'
       ? room.players[player.pendingDamage?.attackerId]
       : Object.values(room.players).find(candidate => areEnemies(player, candidate) && !candidate.ascended && candidate.hp > 0);
     const opponent = room.phase === 'defense' ? defaultOpponent : (room.players[targetId] || defaultOpponent);
     if (!opponent || (room.phase === 'main' && (!areEnemies(player, opponent) || opponent.ascended || opponent.hp <= 0))) {
-      socket.emit('errorMsg', 'その参加者は対象にできません。');
-      return;
+      return rejectPlay('その参加者は対象にできません。');
     }
 
     const isSell = room.phase === 'main' && cards.length === 2 && cards.some(c => c.effect === 'sell');
     const isSingleTrade = room.phase === 'main' && cards.length === 1 && cards[0].type === 'trade';
     if (isSingleTrade && cards[0].effect === 'sell') {
-      socket.emit('errorMsg', '「売る」と売却する神器を2枚選択してください。');
-      return;
+      return rejectPlay('「売る」と売却する神器を2枚選択してください。');
     }
     const validation = validateCardPlay(
       cards,
@@ -557,8 +562,7 @@ io.on('connection', (socket) => {
       player.pendingDamage?.defensesUsed || 0,
     );
     if (!validation.valid || cards.length !== requestedIndices.length + (learnedMiracle ? 1 : 0)) {
-      socket.emit('errorMsg', validation.message || '選択したカードを使用できません。');
-      return;
+      return rejectPlay(validation.message || '選択したカードを使用できません。');
     }
 
     let dreamResolutions = resolveDreamCardsForUse(room, player, cards, room.phase, isSell);
@@ -579,9 +583,10 @@ io.on('connection', (socket) => {
     const hasMagicFree = cards.some(c => c.supportEffect === 'magic_free');
     const totalMp = isSell || hasMagicFree ? 0 : cards.reduce((sum, c) => sum + (c.costMp || 0), 0);
     if (player.mp < totalMp) {
-       socket.emit('errorMsg', 'Not enough MP');
-       return;
+       return rejectPlay('MPが足りません。');
     }
+
+    respond({ ok: true });
 
     // Pay costs
     player.mp -= totalMp;

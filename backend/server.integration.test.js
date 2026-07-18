@@ -73,6 +73,15 @@ test('準備・チームチャット・観戦・途中参加拒否を実サー�
   assert.deepEqual(watched.selectableDefenseSupportInstanceIds, []);
   assert.equal(watched.opponents.every(player => player.hand.every(card => card.hidden)), true);
 
+  const activeSocket = watched.turn === host.id ? host : guest;
+  const lockedPlayResult = await new Promise(resolve => {
+    activeSocket.emit('playCard', { roomName, cardIndices: [0] }, resolve);
+  });
+  assert.deepEqual(lockedPlayResult, {
+    ok: false,
+    message: 'ダメージ処理が終わるまでお待ちください。',
+  });
+
   const late = io(url, { transports: ['websocket'] });
   t.after(() => late.disconnect());
   await waitFor(late, 'connect');
