@@ -7,6 +7,7 @@ const {
   applyAilment,
   applySelfAilments,
   areEnemies,
+  canChooseTarget,
   canDiscardCardCount,
   canPlayerPray,
   combineAttackCards,
@@ -69,6 +70,13 @@ const GF_BASE_CARDS = require('../shared/baseCards.json');
 const FLASH_SOUNDS = new Set(require('../shared/flashSounds.json'));
 const { resolveDreamCard } = require('../shared/dreamRules.cjs');
 const { normalizeBaseCardEdit, normalizeBaseCardEdits } = require('./baseCardEdits');
+const {
+  addPresentationEvent,
+  getCardPresentationLockMs,
+  getInitialPresentationLockMs,
+  resetPresentationEvents,
+  shouldPresentDamage,
+} = require('./presentationEvents');
 
 // Stores active rooms
 // rooms[roomName] = { players: { socketId: { name, ready, ...gameState } }, state: 'waiting' | 'playing' }
@@ -93,6 +101,10 @@ function addAscensionEvent(room, player) {
     playerName: player.name,
     timestamp: Date.now(),
   }].slice(-20);
+  addPresentationEvent(room, 'ascension', {
+    playerId: player.id,
+    playerName: player.name,
+  });
 }
 
 function addEffectEvent(room, type, player, amount = 0, details = {}) {
@@ -105,6 +117,13 @@ function addEffectEvent(room, type, player, amount = 0, details = {}) {
     amount,
     ...details,
   }].slice(-60);
+  addPresentationEvent(room, 'effect', {
+    effectType: type,
+    playerId: player?.id || null,
+    playerName: player?.name || '',
+    amount,
+    ...details,
+  });
 }
 
 const AILMENT_EFFECT_TYPES = {
@@ -115,6 +134,21 @@ const AILMENT_EFFECT_TYPES = {
 function addAilmentEffect(room, player, ailment) {
   const type = AILMENT_EFFECT_TYPES[ailment];
   if (type) addEffectEvent(room, type, player, 0, { label: ailment });
+}
+
+function announceDefenseResolution(room, player, action) {
+  const presentation = {
+    reflect: { sound: 'reflect', effect: 'reflect' },
+    flick: { sound: 'flick', effect: 'flick' },
+    block: { sound: 'block', effect: 'block' },
+    reduce: { sound: 'block' },
+    remove_attribute: { sound: 'defense_harm', effect: 'harm_remove', label: '属性解除' },
+  }[action];
+  if (!presentation) return;
+  addSoundEvent(room, presentation.sound);
+  if (presentation.effect) {
+    addEffectEvent(room, presentation.effect, player, 0, { label: presentation.label || '' });
+  }
 }
 
 function resolveDreamCardsForUse(room, player, cards, phase, isSell = false) {
@@ -220,6 +254,10 @@ io.on('connection', (socket) => {
         ascensionSeq: 0,
         effectEvents: [],
         effectSeq: 0,
+        presentationEvents: [],
+        presentationSeq: 0,
+        pendingTurnTransition: null,
+        fieldTransitionTimer: null,
         winnerId: null,
         winnerTeam: null,
         followUpAttacks: [],
@@ -404,11 +442,15 @@ io.on('connection', (socket) => {
     room.lastDamage = null;
     room.lastAction = null;
     room.actionLockedUntil = 0;
+    clearTimeout(room.fieldTransitionTimer);
+    room.pendingTurnTransition = null;
+    room.fieldTransitionTimer = null;
     room.damageSeq = 0;
     room.soundEvents = [];
     room.soundSeq = 0;
     room.effectEvents = [];
     room.effectSeq = 0;
+    resetPresentationEvents(room);
     room.winnerId = null;
     room.winnerTeam = null;
     room.pendingBuy = null;
@@ -490,13 +532,20 @@ io.on('connection', (socket) => {
   });
 
   // --- Game Actions ---
-  const handlePlayCard = ({ roomName, cardIndex, cardIndices, targetId, learnedMiracleIndex }) => {
+  const handlePlayCard = ({ roomName, cardIndex, cardIndices, targetId, learnedMiracleIndex }, acknowledge) => {
+    const respond = result => {
+      if (typeof acknowledge === 'function') acknowledge(result);
+    };
+    const rejectPlay = message => {
+      socket.emit('errorMsg', message);
+      respond({ ok: false, message });
+    };
     const room = rooms[roomName];
-    if (!room || room.state !== 'playing') return;
+    if (!room || room.state !== 'playing') return rejectPlay('対戦が開始されていません。');
     
     const player = room.players[socket.id];
-    if (room.turn !== socket.id) return; // Not their turn
-    if (isActionLocked(room)) return socket.emit('errorMsg', 'ダメージ処理が終わるまでお待ちください。');
+    if (room.turn !== socket.id) return rejectPlay('現在はあなたの番ではありません。');
+    if (isActionLocked(room)) return rejectPlay('ダメージ処理が終わるまでお待ちください。');
     
     const requestedIndices = Array.isArray(cardIndices)
       ? [...new Set(cardIndices)].filter(Number.isInteger).sort((a, b) => a - b)
@@ -507,21 +556,19 @@ io.on('connection', (socket) => {
       : null;
     if (learnedMiracle) cards.push({ ...learnedMiracle, _learnedCast: true });
     let card = cards.find(c => c.type === 'weapon' || c.type === 'miracle') || cards[0];
-    if (!card) return;
+    if (!card) return rejectPlay('選択した神器が見つかりません。');
+    const isSell = room.phase === 'main' && cards.length === 2 && cards.some(c => c.effect === 'sell');
+    const isSingleTrade = room.phase === 'main' && cards.length === 1 && cards[0].type === 'trade';
     const defaultOpponent = room.phase === 'defense'
       ? room.players[player.pendingDamage?.attackerId]
       : Object.values(room.players).find(candidate => areEnemies(player, candidate) && !candidate.ascended && candidate.hp > 0);
     const opponent = room.phase === 'defense' ? defaultOpponent : (room.players[targetId] || defaultOpponent);
-    if (!opponent || (room.phase === 'main' && (!areEnemies(player, opponent) || opponent.ascended || opponent.hp <= 0))) {
-      socket.emit('errorMsg', 'その参加者は対象にできません。');
-      return;
+    if (!opponent || (room.phase === 'main' && !canChooseTarget(player, opponent, cards))) {
+      return rejectPlay('その参加者は対象にできません。');
     }
 
-    const isSell = room.phase === 'main' && cards.length === 2 && cards.some(c => c.effect === 'sell');
-    const isSingleTrade = room.phase === 'main' && cards.length === 1 && cards[0].type === 'trade';
     if (isSingleTrade && cards[0].effect === 'sell') {
-      socket.emit('errorMsg', '「売る」と売却する神器を2枚選択してください。');
-      return;
+      return rejectPlay('「売る」と売却する神器を2枚選択してください。');
     }
     const validation = validateCardPlay(
       cards,
@@ -531,8 +578,7 @@ io.on('connection', (socket) => {
       player.pendingDamage?.defensesUsed || 0,
     );
     if (!validation.valid || cards.length !== requestedIndices.length + (learnedMiracle ? 1 : 0)) {
-      socket.emit('errorMsg', validation.message || '選択したカードを使用できません。');
-      return;
+      return rejectPlay(validation.message || '選択したカードを使用できません。');
     }
 
     let dreamResolutions = resolveDreamCardsForUse(room, player, cards, room.phase, isSell);
@@ -553,21 +599,24 @@ io.on('connection', (socket) => {
     const hasMagicFree = cards.some(c => c.supportEffect === 'magic_free');
     const totalMp = isSell || hasMagicFree ? 0 : cards.reduce((sum, c) => sum + (c.costMp || 0), 0);
     if (player.mp < totalMp) {
-       socket.emit('errorMsg', 'Not enough MP');
-       return;
+       return rejectPlay('MPが足りません。');
     }
+
+    respond({ ok: true });
 
     // Pay costs
     player.mp -= totalMp;
     announceDreamResolution(room, player, dreamResolutions);
 
     // A miracle leaves the hand on first use and becomes reusable as a learned miracle.
+    const newlyLearnedMiracles = [];
     cards.filter(c => !isSell && c.type === 'miracle' && !c._learnedCast).forEach(miracle => {
       if (!player.learnedMiracles.some(m => m.id === miracle.id)) {
         const learned = { ...miracle };
         delete learned.instanceId;
         player.learnedMiracles.push(learned);
         if (player.learnedMiracles.length > 6) player.learnedMiracles.shift();
+        newlyLearnedMiracles.push({ card: learned, slotIndex: player.learnedMiracles.findIndex(entry => entry.id === learned.id) });
       }
     });
     const consumedIndices = [...requestedIndices];
@@ -583,13 +632,44 @@ io.on('connection', (socket) => {
 
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
 
+    addPresentationEvent(room, 'card_enter', {
+      playerId: player.id,
+      playerName: player.name,
+      targetId: opponent?.id || null,
+      phase: room.phase,
+      handIndices: requestedIndices,
+      cards: cards.map(usedCard => ({
+        id: usedCard.id,
+        name: usedCard.name,
+        imageUrl: usedCard.imageUrl || '',
+        type: usedCard.type,
+        attack: usedCard.attack || 0,
+        defense: usedCard.defense || 0,
+        costMp: usedCard.costMp || 0,
+        attribute: usedCard.attribute || 'none',
+        description: usedCard.description || '',
+      })),
+    });
+    newlyLearnedMiracles.forEach(({ card: learnedCard, slotIndex }) => {
+      addPresentationEvent(room, 'miracle_stock', {
+        playerId: player.id,
+        playerName: player.name,
+        card: learnedCard,
+        slotIndex,
+      });
+    });
+    room.actionLockedUntil = Math.max(
+      room.actionLockedUntil || 0,
+      Date.now() + getCardPresentationLockMs(cards.length, newlyLearnedMiracles.length),
+    );
+
     applyImmediateCardEffects(room, player, getActivatedCards(cards, isSell));
 
     if (isSell) {
       const sellIndex = cards.findIndex(c => c.effect === 'sell');
       const soldCard = cards[sellIndex === 0 ? 1 : 0];
       const sellCard = cards[sellIndex];
-      room.lastAction = createActionEvent(player, opponent, sellCard, 'use', {
+      room.lastAction = createActionEvent(room, player, opponent, sellCard, 'use', {
         type: 'trade',
         label: `${soldCard.name}を売る`,
       });
@@ -601,7 +681,7 @@ io.on('connection', (socket) => {
     }
 
     if (isSingleTrade) {
-      room.lastAction = createActionEvent(player, opponent, card, 'use', { type: 'trade' });
+      room.lastAction = createActionEvent(room, player, opponent, card, 'use', { type: 'trade' });
       if (card.effect === 'exchange') {
         room.phase = 'exchange';
         addSoundEvent(room, 'exchange');
@@ -637,7 +717,7 @@ io.on('connection', (socket) => {
     if (combinedCard.target !== 'all' && !combinedCard.forcedTargetId) combinedCard.forcedTargetId = opponent.id;
 
     room.log.push(`${player.name} played ${combinedCard.name}!`);
-    room.lastAction = createActionEvent(player, opponent, combinedCard, 'use', { type: 'card' });
+    room.lastAction = createActionEvent(room, player, opponent, combinedCard, 'use', { type: 'card' });
 
     if (room.phase === 'main') {
        // Ailment: Hallucination causes random wrong card to be played sometimes? 
@@ -647,7 +727,7 @@ io.on('connection', (socket) => {
        if (combinedCard.type === 'weapon') {
          queueAttackSequence(room, player, nextTurnId, combinedCard, cards, roomName);
        } else if (card.type === 'item') {
-         room.field = { attackerId: player.id, attackCard: combinedCard };
+         room.field = { attackerId: player.id, attackCard: combinedCard, attackCards: cards };
          addSoundEvent(room, 'card');
          addSoundEvent(room, 'card', { delayMs: 140 });
          if (card.healHp) {
@@ -707,7 +787,7 @@ io.on('connection', (socket) => {
               increasePlayerStat(room, player, 'money', card.moneyGain);
             }
             if (card.setAssistant) setRandomAssistant(player, room);
-            room.field = { attackerId: player.id, attackCard: card };
+            room.field = { attackerId: player.id, attackCard: card, attackCards: cards };
             clearFieldLater(roomName);
             endTurnInternal(room, nextTurnId);
          }
@@ -721,9 +801,9 @@ io.on('connection', (socket) => {
          const resolution = resolveDefenseCard(pDamage, combinedCard);
          pDamage.defensesUsed = (pDamage.defensesUsed || 0) + cards.length;
          room.field.defenseCards.push(combinedCard);
+         room.field.defenseDisplayCards = [...(room.field.defenseDisplayCards || []), ...cards];
+         announceDefenseResolution(room, player, resolution.action);
          if (resolution.action === 'reflect' || resolution.action === 'flick') {
-           addSoundEvent(room, resolution.action);
-           addEffectEvent(room, resolution.action, player);
            const alivePlayers = Object.values(room.players).filter(candidate => !candidate.ascended && candidate.hp > 0);
            const target = resolution.action === 'reflect'
              ? room.players[pDamage.attackerId]
@@ -745,21 +825,16 @@ io.on('connection', (socket) => {
              room.field.attackerId = player.id;
              room.field.defenderId = target.id;
              room.field.defenseCards = [];
+             room.field.defenseDisplayCards = [];
              room.log.push(`${combinedCard.name} が攻撃を${resolution.action === 'reflect' ? 'はね返した' : '弾き飛ばした'}！`);
              if (target.id === player.id) applyDamageAndClearField(room, target, resolution.amount, roomName);
            }
         } else if (resolution.action === 'block') {
-           addSoundEvent(room, 'block');
-           addEffectEvent(room, 'block', player);
            room.log.push(`${combinedCard.name} が攻撃を完全に止めた！`);
         } else if (resolution.action === 'remove_attribute') {
-           addSoundEvent(room, 'defense_harm');
-           addEffectEvent(room, 'harm_remove', player, 0, { label: '属性解除' });
            pDamage.attribute = 'none';
            room.log.push(`${combinedCard.name} が攻撃の属性を取り除いた。`);
         } else if (resolution.action === 'reduce') {
-           addSoundEvent(room, 'block');
-           addEffectEvent(room, 'block', player);
            pDamage.amount = resolution.amount;
            room.log.push(`${player.name} は ${combinedCard.name} で防御し、残りダメージは ${pDamage.amount}。`);
          } else {
@@ -774,6 +849,26 @@ io.on('connection', (socket) => {
     emitGameState(roomName);
   };
   socket.on('playCard', handlePlayCard);
+
+  socket.on('reorderHand', ({ roomName, instanceIds }, acknowledge) => {
+    const room = rooms[roomName];
+    const player = room?.players[socket.id];
+    const respond = result => {
+      if (typeof acknowledge === 'function') acknowledge(result);
+    };
+    if (!player || room.state !== 'playing') return respond({ ok: false });
+    if (!Array.isArray(instanceIds) || instanceIds.length !== player.hand.length) {
+      return respond({ ok: false });
+    }
+    const cardsByInstanceId = new Map(player.hand.map(card => [card.instanceId, card]));
+    const uniqueIds = new Set(instanceIds);
+    if (uniqueIds.size !== player.hand.length || instanceIds.some(instanceId => !cardsByInstanceId.has(instanceId))) {
+      return respond({ ok: false });
+    }
+    player.hand = instanceIds.map(instanceId => cardsByInstanceId.get(instanceId));
+    respond({ ok: true });
+    emitGameState(roomName);
+  });
 
   socket.on('castMiracle', ({ roomName, miracleIndex, cardIndices = [], targetId }) => {
     const room = rooms[roomName];
@@ -872,7 +967,15 @@ io.on('connection', (socket) => {
     queueReplacementDraws(player, discarded.length);
     if (discarded.length) addSoundEvent(room, 'item_remove');
     if (discarded.length) {
-      room.lastAction = createActionEvent(player, null, discarded[0], 'use', {
+      addPresentationEvent(room, 'card_enter', {
+        playerId: player.id,
+        playerName: player.name,
+        targetId: null,
+        phase: 'main',
+        handIndices: indices,
+        cards: discarded,
+      });
+      room.lastAction = createActionEvent(room, player, null, discarded[0], 'use', {
         type: 'discard',
         label: `${discarded[0].name}を捨てる`,
       });
@@ -899,15 +1002,30 @@ io.on('connection', (socket) => {
     }
 
     // Pray: draw 1 card if below max
+    let prayedDraw = false;
     if (room.deck.length > 0 && player.hand.length < 18) {
        player.hand.push(drawArtifact(room));
+       prayedDraw = true;
        room.log.push(`${player.name} は祈った... (カードを1枚ドロー)`);
     } else {
        room.log.push(`${player.name} は祈った... (しかし何も起きなかった)`);
     }
-    room.lastAction = createActionEvent(player, null, null, 'use', {
+    addPresentationEvent(room, 'card_enter', {
+      playerId: player.id,
+      playerName: player.name,
+      targetId: null,
+      phase: 'main',
+      handIndices: [],
+      cards: [{ id: 'pray', name: '祈る', type: 'fixed', imageUrl: '/godfield-flash/cards/fixed/inoru.png' }],
+    });
+    room.lastAction = createActionEvent(room, player, null, null, 'use', {
       type: 'pray',
       label: '祈る',
+    });
+    if (prayedDraw) addPresentationEvent(room, 'hand_refill', {
+      playerId: player.id,
+      playerName: player.name,
+      count: 1,
     });
     addSoundEvent(room, 'game_draw');
 
@@ -1012,6 +1130,22 @@ function applyDamageAndClearField(room, player, amount, roomName) {
      isDark: isDarkAttack,
      timestamp: getNextEventTimestamp(room.lastDamage?.timestamp),
    };
+   if (shouldPresentDamage(damageSequence.primaryDamage)) {
+     addPresentationEvent(room, 'damage', {
+       playerId: player.id,
+       playerName: player.name,
+       amount: damageSequence.primaryDamage,
+       dark: false,
+     });
+   }
+   if (damageSequence.darkDamage > 0) {
+     addPresentationEvent(room, 'damage', {
+       playerId: player.id,
+       playerName: player.name,
+       amount: damageSequence.darkDamage,
+       dark: true,
+     });
+   }
    room.actionLockedUntil = Date.now() + getDamageResolutionDelay(damageSequence.darkDamage);
 
    checkDeath(room);
@@ -1036,9 +1170,36 @@ function clearFieldLater(roomName) {
   setTimeout(() => {
     const room = rooms[roomName];
     if (!room || room.state === 'waiting') return;
+    if (room.pendingTurnTransition?.field === scheduledField) return;
     if (!clearFieldIfCurrent(room, scheduledField)) return;
+    addPresentationEvent(room, 'field_clear', {});
     emitGameState(roomName);
   }, FIELD_CLEAR_DELAY_MS);
+}
+
+function scheduleTurnAfterField(room, nextTurnId, options) {
+  if (!room.field) return false;
+  clearTimeout(room.fieldTransitionTimer);
+  const transition = { field: room.field, nextTurnId, options };
+  room.pendingTurnTransition = transition;
+  room.phase = 'resolving';
+  const delay = Math.max(FIELD_CLEAR_DELAY_MS, (room.actionLockedUntil || 0) - Date.now());
+  room.actionLockedUntil = Math.max(room.actionLockedUntil || 0, Date.now() + delay);
+  room.fieldTransitionTimer = setTimeout(() => {
+    const currentRoom = rooms[room.name];
+    if (!currentRoom || currentRoom.pendingTurnTransition !== transition || currentRoom.state === 'waiting') return;
+    if (currentRoom.field === transition.field) {
+      currentRoom.field = null;
+      addPresentationEvent(currentRoom, 'field_clear', {});
+    }
+    currentRoom.pendingTurnTransition = null;
+    currentRoom.fieldTransitionTimer = null;
+    currentRoom.actionLockedUntil = 0;
+    endTurnInternal(currentRoom, transition.nextTurnId, { ...transition.options, afterFieldClear: true });
+    checkDeath(currentRoom);
+    emitGameState(currentRoom.name);
+  }, delay);
+  return true;
 }
 
 function withInstanceId(card) {
@@ -1078,15 +1239,33 @@ function queueReplacementDraws(player, count) {
 
 function flushReplacementDraws(room) {
   for (const player of Object.values(room.players)) {
+    const handSizeBeforeDraw = player.hand.length;
     while ((player.pendingDraws || 0) > 0 && player.hand.length < 18 && room.deck.length > 0 && !player.ascended) {
       player.hand.push(drawArtifact(room));
       player.pendingDraws -= 1;
     }
+    const drawnCount = player.hand.length - handSizeBeforeDraw;
+    if (drawnCount > 0) addPresentationEvent(room, 'hand_refill', {
+      playerId: player.id,
+      playerName: player.name,
+      count: drawnCount,
+    });
     player.pendingDraws = 0;
   }
 }
 
 function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, options = {}) {
+  if (options.presentCard || options.assistantAction) {
+    addPresentationEvent(room, 'card_enter', {
+      playerId: attacker.id,
+      playerName: attacker.name,
+      targetId: card.forcedTargetId || null,
+      phase: 'main',
+      handIndices: [],
+      cards: [card],
+    });
+    room.actionLockedUntil = Math.max(room.actionLockedUntil || 0, Date.now() + getCardPresentationLockMs(1));
+  }
   const targets = card.target === 'all'
     ? Object.values(room.players).filter(player => areEnemies(attacker, player) && !player.ascended && player.hp > 0)
     : [room.players[card.forcedTargetId || nextTurnId]].filter(Boolean);
@@ -1095,6 +1274,7 @@ function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, 
     attackerId: attacker.id,
     nextTurnId,
     card,
+    cards,
     assistantAction: options.assistantAction || false,
     skipAssistantOpportunity: options.skipAssistantOpportunity || false,
     ailments: getDamageAilments(cards),
@@ -1103,7 +1283,12 @@ function queueAttackSequence(room, attacker, nextTurnId, card, cards, roomName, 
 }
 
 function queueFollowUpAttack(room, attackerId, nextTurnId, card, options = {}) {
-  room.followUpAttacks = [...(room.followUpAttacks || []), { attackerId, nextTurnId, card, options }];
+  room.followUpAttacks = [...(room.followUpAttacks || []), {
+    attackerId,
+    nextTurnId,
+    card,
+    options: { presentCard: true, ...options },
+  }];
 }
 
 function startNextFollowUpAttack(room, roomName) {
@@ -1123,7 +1308,7 @@ function startNextQueuedAttack(room, roomName) {
     const target = room.players[queued.targetId];
     if (!attacker || !target || target.ascended || target.hp <= 0) continue;
     const hitResult = rollAttack(context.card, target.ailments);
-    room.lastAction = createActionEvent(attacker, target, context.card, hitResult.outcome);
+    room.lastAction = createActionEvent(room, attacker, target, context.card, hitResult.outcome);
     if (!hitResult.hit) {
       addSoundEvent(room, 'miss');
       room.log.push(`${target.name} は ${context.card.name}（${queued.repeat}回目）を回避！`);
@@ -1146,7 +1331,14 @@ function startNextQueuedAttack(room, roomName) {
     };
     room.phase = 'defense';
     room.turn = target.id;
-    room.field = { attackerId: attacker.id, attackCard: context.card, defenderId: target.id, defenseCards: [] };
+    room.field = {
+      attackerId: attacker.id,
+      attackCard: context.card,
+      attackCards: context.cards,
+      defenderId: target.id,
+      defenseCards: [],
+      defenseDisplayCards: [],
+    };
     room.log.push(hitResult.outcome === 'unavoidable'
       ? `${context.card.name} は ${target.name} に不可避！`
       : `${context.card.name}（${queued.repeat}回目）が ${target.name} に命中！`);
@@ -1335,14 +1527,14 @@ function resolveMystery(room, actor, nextTurnId, roomName) {
       id: 'mystery_uranus', name: 'URANUS', type: 'item', sourceType: 'item',
       attack: 60, hitRate: 100, attribute: 'light', target: 'single', forcedTargetId: target.id,
     };
-    queueAttackSequence(room, actor, nextTurnId, card, [card], roomName);
+    queueAttackSequence(room, actor, nextTurnId, card, [card], roomName, { presentCard: true });
   }
   if (type === 'pluto') {
     const card = {
       id: 'mystery_pluto', name: 'PLUTO', type: 'item', sourceType: 'item',
       attack: 30, hitRate: 75, attribute: 'dark', target: 'all',
     };
-    queueAttackSequence(room, actor, nextTurnId, card, [card], roomName);
+    queueAttackSequence(room, actor, nextTurnId, card, [card], roomName, { presentCard: true });
   }
   if (type === 'neptune') actor.hp = Math.min(99, actor.hp + 60);
   if (type === 'venus') players.forEach(player => { player.money = 99; });
@@ -1386,7 +1578,8 @@ function processAilments(player, room) {
   if (result.fatal) room.log.push(`${player.name} は天国病の発作でHPが0になった。`);
 }
 
-function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false } = {}) {
+function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false, afterFieldClear = false } = {}) {
+   if (!afterFieldClear && scheduleTurnAfterField(room, nextTurnId, { skipAssistantOpportunity })) return;
    if (!nextTurnId || !room.players[nextTurnId] || room.players[nextTurnId].ascended || room.players[nextTurnId].hp <= 0) {
      nextTurnId = getNextAlivePlayerId(room.turnOrder || Object.keys(room.players), room.players, room.mainTurnOwner);
    }
@@ -1409,11 +1602,12 @@ function endTurnInternal(room, nextTurnId, { skipAssistantOpportunity = false } 
    room.phase = 'main';
    const player = room.players[nextTurnId];
     room.log.push(`--- ${player.name}'s Turn ---`);
+    addPresentationEvent(room, 'turn_start', { playerId: nextTurnId, playerName: player.name });
     addSoundEvent(room, 'client_turn', { targetId: nextTurnId, delayMs: getTurnSoundDelay(room.field) });
  }
 
-function createActionEvent(attacker, defender, card, outcome, { type = 'attack', label = '' } = {}) {
-  return {
+function createActionEvent(room, attacker, defender, card, outcome, { type = 'attack', label = '' } = {}) {
+  const event = {
     id: `${Date.now()}_${Math.random().toString(36).slice(2)}`,
     type,
     outcome,
@@ -1430,6 +1624,10 @@ function createActionEvent(attacker, defender, card, outcome, { type = 'attack',
     } : null,
     timestamp: Date.now(),
   };
+  if (outcome !== 'use' || type !== 'card') {
+    addPresentationEvent(room, outcome === 'use' ? 'action' : 'hit_result', { ...event, actionType: event.type });
+  }
+  return event;
 }
 
 function checkDeath(room) {
@@ -1502,6 +1700,9 @@ function startGame(roomName) {
   room.lastDamage = null;
   room.lastAction = null;
   room.actionLockedUntil = 0;
+  clearTimeout(room.fieldTransitionTimer);
+  room.pendingTurnTransition = null;
+  room.fieldTransitionTimer = null;
   room.damageSeq = 0;
   room.soundEvents = [];
   room.soundSeq = 0;
@@ -1509,6 +1710,7 @@ function startGame(roomName) {
   room.ascensionSeq = 0;
   room.effectEvents = [];
   room.effectSeq = 0;
+  resetPresentationEvents(room);
   room.field = null;
   room.attackQueue = [];
   room.attackContext = null;
@@ -1542,6 +1744,15 @@ function startGame(roomName) {
   addSoundEvent(room, 'game_start_number');
   addSoundEvent(room, 'game_start', { delayMs: 550 });
   addSoundEvent(room, 'client_turn', { targetId: startingPlayer, delayMs: 900 });
+  addPresentationEvent(room, 'game_start', { playerId: startingPlayer, playerName: room.players[startingPlayer].name });
+  addPresentationEvent(room, 'initial_deal', {
+    playerIds,
+    cardCount: Math.max(0, ...playerIds.map(playerId => room.players[playerId].hand.length)),
+  });
+  addPresentationEvent(room, 'turn_start', { playerId: startingPlayer, playerName: room.players[startingPlayer].name });
+  room.actionLockedUntil = Date.now() + getInitialPresentationLockMs(
+    Math.max(0, ...playerIds.map(playerId => room.players[playerId].hand.length)),
+  );
   
   console.log(`Game started in room ${roomName}. Turn: ${startingPlayer}`);
   
@@ -1620,10 +1831,24 @@ function performBotTurn(roomName) {
       const card = dreamResolution.card;
       queueReplacementDraws(bot, 1);
       announceDreamResolution(room, bot, [dreamResolution]);
+      addPresentationEvent(room, 'card_enter', {
+        playerId: bot.id,
+        playerName: bot.name,
+        targetId: bot.pendingDamage?.attackerId || null,
+        phase: 'defense',
+        handIndices: [],
+        cards: [card],
+      });
+      room.actionLockedUntil = Math.max(
+        room.actionLockedUntil || 0,
+        Date.now() + getCardPresentationLockMs(1),
+      );
       applyImmediateCardEffects(room, bot, [card]);
       const resolution = resolveDefenseCard(bot.pendingDamage, card);
       room.field.defenseCards.push(card);
+      room.field.defenseDisplayCards = [...(room.field.defenseDisplayCards || []), card];
       bot.pendingDamage.defensesUsed = (bot.pendingDamage.defensesUsed || 0) + 1;
+      announceDefenseResolution(room, bot, resolution.action);
       if (resolution.action === 'remove_attribute') bot.pendingDamage.attribute = 'none';
       applyDamageAndClearField(room, bot, resolution.amount, roomName);
     } else {
@@ -1656,12 +1881,36 @@ function performBotTurn(roomName) {
     card.forcedTargetId = target.id;
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, bot.id);
     room.log.push(`${bot.name}は${card.name}を使用した。`);
-    queueAttackSequence(room, bot, nextTurnId, card, [card], roomName);
+    queueAttackSequence(room, bot, nextTurnId, card, [card], roomName, { presentCard: true });
     emitGameState(roomName);
     return;
   }
 
-  if (canPlayerPray(bot) && bot.hand.length < 18) bot.hand.push(drawArtifact(room));
+  if (canPlayerPray(bot) && bot.hand.length < 18) {
+    bot.hand.push(drawArtifact(room));
+    addPresentationEvent(room, 'card_enter', {
+      playerId: bot.id,
+      playerName: bot.name,
+      targetId: null,
+      phase: 'main',
+      handIndices: [],
+      cards: [{ id: 'pray', name: '祈る', type: 'fixed', imageUrl: '/godfield-flash/cards/fixed/inoru.png' }],
+    });
+    room.lastAction = createActionEvent(room, bot, null, null, 'use', {
+      type: 'pray',
+      label: '祈る',
+    });
+    addPresentationEvent(room, 'hand_refill', {
+      playerId: bot.id,
+      playerName: bot.name,
+      count: 1,
+    });
+    room.actionLockedUntil = Math.max(
+      room.actionLockedUntil || 0,
+      Date.now() + getCardPresentationLockMs(1),
+    );
+    addSoundEvent(room, 'game_draw');
+  }
   const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, bot.id);
   endTurnInternal(room, nextTurnId);
   emitGameState(roomName);
@@ -1702,6 +1951,7 @@ function emitGameState(roomName) {
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId || event.targetId === id),
       ascensionEvents: room.ascensionEvents || [],
       effectEvents: room.effectEvents || [],
+      presentationEvents: room.presentationEvents || [],
       usableDefenseInstanceIds,
       usableDefenseMiracleIndices,
       selectableDefenseSupportInstanceIds,
@@ -1754,6 +2004,7 @@ function emitGameState(roomName) {
       soundEvents: (room.soundEvents || []).filter(event => !event.targetId),
       ascensionEvents: room.ascensionEvents || [],
       effectEvents: room.effectEvents || [],
+      presentationEvents: room.presentationEvents || [],
       usableDefenseInstanceIds: [],
       usableDefenseMiracleIndices: [],
       selectableDefenseSupportInstanceIds: [],

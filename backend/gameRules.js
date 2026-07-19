@@ -87,6 +87,14 @@ function areEnemies(first, second) {
   return true;
 }
 
+function canChooseTarget(actor, target, cards = []) {
+  if (!actor || !target || target.ascended || target.hp <= 0) return false;
+  if (actor.id !== target.id) return true;
+  const selfTargetBlocked = cards.some(card => card?.effect === 'sell')
+    || (cards.length === 1 && cards[0]?.type === 'trade' && cards[0]?.effect === 'buy');
+  return !selfTargetBlocked;
+}
+
 function getWinningSide(players) {
   const survivors = Object.values(players).filter(player => !player.ascended && player.hp > 0);
   if (!survivors.length) return { ended: true, winnerId: null, winnerTeam: null };
@@ -162,7 +170,7 @@ function validateCardPlay(cards, phase, ailments = [], pendingDamage = null, def
   const modifiersOnly = cards.every(card => card.attack > 0 || card.additive || card.supportEffect === 'magic_free');
   const validItemModifiers = cards.every(card => card.type !== 'item' || ['magic_free', 'increase_attack'].includes(card.supportEffect));
   const magicFreeAction = actionMiracles.length === 1 && cards.every(card => card === actionMiracles[0] || card.supportEffect === 'magic_free');
-  return ((hasAttack && baseAttacks.length <= 1 && modifiersOnly) || magicFreeAction)
+  return ((hasAttack && baseAttacks.length === 1 && modifiersOnly) || magicFreeAction)
     && validItemModifiers && cards.every(card => combinationTypes.has(card.type))
     ? { valid: true }
     : { valid: false, message: 'この組み合わせでは使用できません。' };
@@ -453,6 +461,7 @@ module.exports = {
   applyAilment,
   applySelfAilments,
   areEnemies,
+  canChooseTarget,
   canDiscardCardCount,
   canPlayerPray,
   combineAttackCards,

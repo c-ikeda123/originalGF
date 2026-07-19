@@ -4,6 +4,7 @@ const {
   applyAilment,
   applySelfAilments,
   areEnemies,
+  canChooseTarget,
   canDiscardCardCount,
   canPlayerPray,
   combineAttackCards,
@@ -40,6 +41,21 @@ const {
   shouldAssistantLeave,
   validateCardPlay,
 } = require('./gameRules');
+
+test('生存中なら自分や味方も神器の対象に選べる', () => {
+  const actor = { id: 'actor', hp: 30, ascended: false, team: 'red' };
+  const ally = { id: 'ally', hp: 30, ascended: false, team: 'red' };
+  const weapon = { type: 'weapon', attack: 5 };
+  assert.equal(canChooseTarget(actor, actor, [weapon]), true);
+  assert.equal(canChooseTarget(actor, ally, [weapon]), true);
+});
+
+test('昇天済みと自己売買は対象に選べない', () => {
+  const actor = { id: 'actor', hp: 30, ascended: false };
+  assert.equal(canChooseTarget(actor, { id: 'dead', hp: 0, ascended: true }, [{ type: 'weapon' }]), false);
+  assert.equal(canChooseTarget(actor, actor, [{ type: 'trade', effect: 'buy' }]), false);
+  assert.equal(canChooseTarget(actor, actor, [{ type: 'trade', effect: 'sell' }, { type: 'weapon' }]), false);
+});
 
 test('ダメージ演出中は次の行動を待機する', () => {
   assert.equal(getDamageResolutionDelay(0), 1500);
@@ -302,6 +318,14 @@ test('攻撃補助雑貨とMP無料化雑貨を攻撃に組み合わせられる
   assert.equal(validateCardPlay([weapon, powder], 'main').valid, true);
   assert.equal(validateCardPlay([weapon, free], 'main').valid, true);
   assert.equal(combineAttackCards([weapon, powder]).attack, 15);
+});
+
+test('追加攻撃同士は重ねず通常攻撃には複数追加できる', () => {
+  const weapon = { name: '剣', type: 'weapon', attack: 5 };
+  const firstAddition = { name: '弓', type: 'weapon', attack: 2, additive: true };
+  const secondAddition = { name: '手裏剣', type: 'weapon', attack: 3, additive: true };
+  assert.equal(validateCardPlay([firstAddition, secondAddition], 'main').valid, false);
+  assert.equal(validateCardPlay([weapon, firstAddition, secondAddition], 'main').valid, true);
 });
 
 test('全体・複数回攻撃は各対象を回数分だけ順番に処理する', () => {

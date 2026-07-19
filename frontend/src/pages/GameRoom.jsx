@@ -4,14 +4,36 @@ import io from 'socket.io-client';
 import '../index.css';
 import RoomBaseEditor from './RoomBaseEditor';
 import { playSound } from '../soundEffects';
-import { getDefenseTotal, getNextCardSelection } from '../utils/cardSelection';
+import { canAddCardToSelection, getDefenseTotal, getNextCardSelection } from '../utils/cardSelection';
 import { getDreamDisplayedCard, isDreamAffectedCard } from '../utils/dreamCards';
+import { mergeHandOrder, moveHandCard } from '../utils/handOrder';
+import {
+  getLatestFieldPresentationId,
+  getLatestPresentationId,
+  getNewPresentationEvents,
+  getPresentationDuration,
+  shouldApplyFieldClear,
+} from '../utils/presentationQueue';
 
 let socket;
 const serverUrl = import.meta.env.VITE_SERVER_URL
   || (import.meta.env.DEV ? 'http://localhost:3001' : window.location.origin);
 const RESOURCE_EFFECT_TYPES = new Set(['hp_increase', 'mp_increase', 'yen_increase']);
 const ASSISTANT_EFFECT_TYPES = new Set(['assistant_add', 'assistant_action', 'assistant_remove']);
+const PRESENTATION_MANAGED_SOUNDS = new Set([
+  'card', 'hit', 'miss', 'damage', 'damage_dark', 'client_turn', 'dead',
+  'hp_increase', 'mp_increase', 'yen_increase', 'harm_remove', 'harm_add', 'disease',
+  'illusion_item', 'reflect', 'flick', 'block', 'seizure', 'no_change',
+  'assistant_add', 'assistant', 'assistant_remove', 'game_start', 'game_draw', 'item_remove', 'exchange',
+]);
+const EFFECT_SOUNDS = {
+  hp_increase: 'hp_increase', mp_increase: 'mp_increase', yen_increase: 'yen_increase',
+  harm_remove: 'harm_remove', reflect: 'reflect', flick: 'flick', block: 'block',
+  seizure: 'seizure', no_change: 'no_change', illusion: 'illusion_item',
+  cold: 'disease', fever: 'disease', hell: 'disease', heaven: 'disease', fog: 'disease',
+  glory: 'disease', dark_cloud: 'disease', assistant_add: 'assistant_add',
+  assistant_action: 'assistant', assistant_remove: 'assistant_remove',
+};
 const EFFECT_LABELS = {
   cold: '風邪', fever: '熱病', hell: '地獄病', heaven: '天国病', fog: '霧',
   glory: '閃光', illusion: '夢', dark_cloud: '暗雲', harm_remove: '災い解除',
@@ -36,9 +58,21 @@ export default function GameRoom() {
   const [startAnim, setStartAnim] = useState(false);
   const [ascensionAnim, setAscensionAnim] = useState(null);
   const [effectAnim, setEffectAnim] = useState(null);
+  const [cardEnterAnim, setCardEnterAnim] = useState(null);
+  const [turnAnim, setTurnAnim] = useState(null);
+  const [fieldClearing, setFieldClearing] = useState(false);
+  const [visibleField, setVisibleField] = useState(null);
+  const [handRefillAnim, setHandRefillAnim] = useState(null);
+  const [miracleStockAnim, setMiracleStockAnim] = useState(null);
+  const [presentationBusy, setPresentationBusy] = useState(false);
+  const [pendingMiracleIds, setPendingMiracleIds] = useState([]);
+  const [initialDealAnim, setInitialDealAnim] = useState(null);
   const [hoveredCardIndex, setHoveredCardIndex] = useState(null);
   const [hoveredMiracleIndex, setHoveredMiracleIndex] = useState(null);
   const [selectedCards, setSelectedCards] = useState([]);
+  const [playPending, setPlayPending] = useState(false);
+  const [handOrder, setHandOrder] = useState([]);
+  const [draggedCardId, setDraggedCardId] = useState(null);
   const [selectedTargetId, setSelectedTargetId] = useState(null);
   const [chatMessages, setChatMessages] = useState([]);
   const [chatText, setChatText] = useState('');
@@ -47,23 +81,18 @@ export default function GameRoom() {
   const [exchangeValues, setExchangeValues] = useState({ hp: 0, mp: 0, money: 0 });
   const [battleScale, setBattleScale] = useState(() => Math.min(window.innerWidth / 1024, window.innerHeight / 768));
   const handInstanceKey = gameState?.me?.hand.map(card => card.instanceId).join('|') || '';
-  const lastDamageTimestamp = useRef(null);
-  const lastActionId = useRef(null);
   const lastSoundEventId = useRef(0);
-  const lastAscensionEventId = useRef(0);
-  const hasReceivedGameState = useRef(false);
-  const ascensionQueue = useRef([]);
-  const ascensionActive = useRef(false);
-  const ascensionTimer = useRef(null);
-  const lastEffectEventId = useRef(0);
-  const hasReceivedEffectState = useRef(false);
-  const effectQueue = useRef([]);
-  const effectActive = useRef(false);
-  const effectTimer = useRef(null);
+  const lastPresentationEventId = useRef(0);
+  const visibleFieldPresentationId = useRef(0);
+  const hasReceivedPresentationState = useRef(false);
+  const presentationQueue = useRef([]);
+  const presentationActive = useRef(false);
+  const presentationTimer = useRef(null);
   const soundTimers = useRef([]);
-  const damageTimer = useRef(null);
-  const actionTimer = useRef(null);
+  const handOrderRef = useRef([]);
+  const suppressCardClick = useRef(false);
   const chatMessagesRef = useRef(null);
+  const activePlayRequest = useRef(0);
   useEffect(() => {
     const updateBattleScale = () => setBattleScale(Math.min(window.innerWidth / 1024, window.innerHeight / 768));
     window.addEventListener('resize', updateBattleScale);
@@ -72,29 +101,92 @@ export default function GameRoom() {
 
   useEffect(() => {
     const activeSoundTimers = soundTimers.current;
-    const playNextAscension = () => {
-      const event = ascensionQueue.current.shift();
-      if (!event) {
-        ascensionActive.current = false;
-        setAscensionAnim(null);
-        return;
-      }
-      ascensionActive.current = true;
-      setAscensionAnim(event);
-      clearTimeout(ascensionTimer.current);
-      ascensionTimer.current = setTimeout(playNextAscension, 1900);
+    const clearPresentation = () => {
+      setDamageAnim(null);
+      setActionAnim(null);
+      setStartAnim(false);
+      setAscensionAnim(null);
+      setEffectAnim(null);
+      setCardEnterAnim(null);
+      setTurnAnim(null);
+      setFieldClearing(false);
+      setHandRefillAnim(null);
+      setMiracleStockAnim(null);
+      setInitialDealAnim(null);
     };
-    const playNextEffect = () => {
-      const event = effectQueue.current.shift();
+    const playPresentationSound = event => {
+      if (event.type === 'game_start') playSound('game_start');
+      if (event.type === 'card_enter') {
+        const cardCount = Math.max(1, event.cards?.length || 0);
+        const soundDelays = cardCount === 1
+          ? [80, 260]
+          : Array.from({ length: cardCount }, (_, index) => index * 260 + 220);
+        soundDelays.forEach(delayMs => {
+          const timer = setTimeout(() => playSound('card'), delayMs);
+          activeSoundTimers.push(timer);
+        });
+      }
+      if (event.type === 'initial_deal') {
+        for (let index = 0; index < (event.cardCount || 0); index += 1) {
+          const timer = setTimeout(() => playSound('card'), index * 90);
+          activeSoundTimers.push(timer);
+        }
+      }
+      if (event.type === 'action') {
+        const actionSound = { pray: 'game_draw', discard: 'item_remove', trade: 'exchange' }[event.actionType];
+        if (actionSound) playSound(actionSound);
+      }
+      if (event.type === 'hit_result') playSound(event.outcome === 'evade' ? 'miss' : 'hit');
+      if (event.type === 'damage') playSound(event.dark ? 'damage_dark' : 'damage');
+      if (event.type === 'effect' && EFFECT_SOUNDS[event.effectType]) playSound(EFFECT_SOUNDS[event.effectType]);
+      if (event.type === 'ascension') playSound('dead');
+      if (event.type === 'turn_start' && event.playerId === socket.id) playSound('client_turn');
+    };
+    const playNextPresentation = () => {
+      const event = presentationQueue.current.shift();
       if (!event) {
-        effectActive.current = false;
-        setEffectAnim(null);
+        presentationActive.current = false;
+        setPresentationBusy(false);
+        clearPresentation();
         return;
       }
-      effectActive.current = true;
-      setEffectAnim(event);
-      clearTimeout(effectTimer.current);
-      effectTimer.current = setTimeout(playNextEffect, 1250);
+      presentationActive.current = true;
+      setPresentationBusy(true);
+      clearPresentation();
+      playPresentationSound(event);
+      if (event.type === 'game_start') setStartAnim(true);
+      if (event.type === 'initial_deal') setInitialDealAnim(event);
+      if (event.type === 'card_enter') setCardEnterAnim(event);
+      if (event.type === 'action' || event.type === 'hit_result') setActionAnim({
+        ...event,
+        type: event.actionType || event.type,
+        outcome: event.outcome || 'use',
+      });
+      if (event.type === 'damage') setDamageAnim({
+        ...event,
+        targetId: event.playerId,
+        timestamp: event.id,
+        isDarkFollowUp: Boolean(event.dark),
+      });
+      if (event.type === 'effect') setEffectAnim({ ...event, type: event.effectType });
+      if (event.type === 'ascension') setAscensionAnim(event);
+      if (event.type === 'field_clear' && shouldApplyFieldClear(event.id, visibleFieldPresentationId.current)) {
+        setFieldClearing(true);
+      }
+      if (event.type === 'hand_refill') setHandRefillAnim(event);
+      if (event.type === 'miracle_stock') setMiracleStockAnim(event);
+      if (event.type === 'turn_start') setTurnAnim(event);
+      clearTimeout(presentationTimer.current);
+      presentationTimer.current = setTimeout(() => {
+        if (event.type === 'field_clear' && shouldApplyFieldClear(event.id, visibleFieldPresentationId.current)) {
+          visibleFieldPresentationId.current = 0;
+          setVisibleField(null);
+        }
+        if (event.type === 'miracle_stock') {
+          setPendingMiracleIds(current => current.filter(cardId => cardId !== event.card?.id));
+        }
+        playNextPresentation();
+      }, getPresentationDuration(event));
     };
     socket = io(serverUrl);
     socket.on('connect', () => setSocketId(socket.id));
@@ -118,65 +210,41 @@ export default function GameRoom() {
 
     socket.on('gameState', (data) => {
       setGameState(data);
-      if (data.chatMessages) setChatMessages(data.chatMessages);
-      const damage = data.lastDamage;
-      if (damage && damage.timestamp !== lastDamageTimestamp.current) {
-        lastDamageTimestamp.current = damage.timestamp;
-        setDamageAnim(damage);
-        clearTimeout(damageTimer.current);
-        if (damage.followUpAmount > 0) {
-          damageTimer.current = setTimeout(() => {
-            setDamageAnim({ ...damage, amount: damage.followUpAmount, followUpAmount: 0, isDarkFollowUp: true });
-            damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
-          }, damage.followUpDelayMs || 650);
-        } else {
-          damageTimer.current = setTimeout(() => setDamageAnim(null), 1500);
-        }
+      const presentationEvents = data.presentationEvents || [];
+      if (data.field) {
+        visibleFieldPresentationId.current = getLatestFieldPresentationId(
+          presentationEvents,
+          visibleFieldPresentationId.current,
+        );
+        setVisibleField(data.field);
       }
-      const action = data.lastAction;
-      if (action && action.id !== lastActionId.current) {
-        lastActionId.current = action.id;
-        setActionAnim(action);
-        clearTimeout(actionTimer.current);
-        actionTimer.current = setTimeout(() => setActionAnim(null), action.outcome === 'use' ? 2000 : 1400);
+      if (data.chatMessages) setChatMessages(data.chatMessages);
+      if (!hasReceivedPresentationState.current) {
+        hasReceivedPresentationState.current = true;
+        lastPresentationEventId.current = getLatestPresentationId(presentationEvents);
+        const recentEvents = presentationEvents.filter(event => Date.now() - event.timestamp < 5000);
+        if (recentEvents.length) {
+          setPendingMiracleIds(recentEvents.filter(event => event.type === 'miracle_stock').map(event => event.card?.id).filter(Boolean));
+          presentationQueue.current.push(...recentEvents);
+          playNextPresentation();
+        }
+      } else {
+        const newPresentationEvents = getNewPresentationEvents(presentationEvents, lastPresentationEventId.current);
+        if (newPresentationEvents.length) {
+          const pendingIds = newPresentationEvents.filter(event => event.type === 'miracle_stock').map(event => event.card?.id).filter(Boolean);
+          if (pendingIds.length) setPendingMiracleIds(current => [...new Set([...current, ...pendingIds])]);
+          lastPresentationEventId.current = getLatestPresentationId(newPresentationEvents, lastPresentationEventId.current);
+          presentationQueue.current.push(...newPresentationEvents);
+          if (!presentationActive.current) playNextPresentation();
+        }
       }
       const newSoundEvents = (data.soundEvents || []).filter(event => event.id > lastSoundEventId.current);
       if (newSoundEvents.length) {
         lastSoundEventId.current = Math.max(...newSoundEvents.map(event => event.id));
-        newSoundEvents.forEach(event => {
+        newSoundEvents.filter(event => !PRESENTATION_MANAGED_SOUNDS.has(event.name)).forEach(event => {
           const timer = setTimeout(() => playSound(event.name), event.delayMs || 0);
           activeSoundTimers.push(timer);
-          if (event.name === 'game_start') {
-            const showTimer = setTimeout(() => {
-              setStartAnim(true);
-              const hideTimer = setTimeout(() => setStartAnim(false), 1400);
-              activeSoundTimers.push(hideTimer);
-            }, event.delayMs || 0);
-            activeSoundTimers.push(showTimer);
-          }
         });
-      }
-      const ascensionEvents = data.ascensionEvents || [];
-      if (!hasReceivedGameState.current) {
-        hasReceivedGameState.current = true;
-        lastAscensionEventId.current = Math.max(0, ...ascensionEvents.map(event => event.id));
-      }
-      const newAscensions = ascensionEvents.filter(event => event.id > lastAscensionEventId.current);
-      if (newAscensions.length) {
-        lastAscensionEventId.current = Math.max(...newAscensions.map(event => event.id));
-        ascensionQueue.current.push(...newAscensions);
-        if (!ascensionActive.current) playNextAscension();
-      }
-      const effectEvents = data.effectEvents || [];
-      if (!hasReceivedEffectState.current) {
-        hasReceivedEffectState.current = true;
-        lastEffectEventId.current = Math.max(0, ...effectEvents.map(event => event.id));
-      }
-      const newEffects = effectEvents.filter(event => event.id > lastEffectEventId.current);
-      if (newEffects.length) {
-        lastEffectEventId.current = Math.max(...newEffects.map(event => event.id));
-        effectQueue.current.push(...newEffects);
-        if (!effectActive.current) playNextEffect();
       }
     });
 
@@ -188,26 +256,24 @@ export default function GameRoom() {
     });
 
     socket.on('gameStateCleared', () => {
+      activePlayRequest.current += 1;
       setGameState(null);
       setSelectedCards([]);
+      setPlayPending(false);
       setDamageAnim(null);
       setActionAnim(null);
       setStartAnim(false);
-      lastDamageTimestamp.current = null;
-      lastActionId.current = null;
       lastSoundEventId.current = 0;
-      lastAscensionEventId.current = 0;
-      hasReceivedGameState.current = false;
-      ascensionQueue.current = [];
-      ascensionActive.current = false;
-      clearTimeout(ascensionTimer.current);
-      setAscensionAnim(null);
-      lastEffectEventId.current = 0;
-      hasReceivedEffectState.current = false;
-      effectQueue.current = [];
-      effectActive.current = false;
-      clearTimeout(effectTimer.current);
-      setEffectAnim(null);
+      lastPresentationEventId.current = 0;
+      visibleFieldPresentationId.current = 0;
+      hasReceivedPresentationState.current = false;
+      presentationQueue.current = [];
+      presentationActive.current = false;
+      setPresentationBusy(false);
+      setPendingMiracleIds([]);
+      clearTimeout(presentationTimer.current);
+      clearPresentation();
+      setVisibleField(null);
     });
 
     socket.on('errorMsg', (msg) => {
@@ -217,14 +283,9 @@ export default function GameRoom() {
     });
 
     return () => {
-      clearTimeout(damageTimer.current);
-      clearTimeout(actionTimer.current);
-      clearTimeout(ascensionTimer.current);
-      ascensionQueue.current = [];
-      ascensionActive.current = false;
-      clearTimeout(effectTimer.current);
-      effectQueue.current = [];
-      effectActive.current = false;
+      clearTimeout(presentationTimer.current);
+      presentationQueue.current = [];
+      presentationActive.current = false;
       activeSoundTimers.forEach(clearTimeout);
       socket.disconnect();
     };
@@ -247,9 +308,20 @@ export default function GameRoom() {
   }, [gameState?.turnDeadline, gameState?.actionLockedUntil]);
 
   useEffect(() => {
+    activePlayRequest.current += 1;
     setSelectedCards([]);
+    setPlayPending(false);
     setHoveredCardIndex(null);
   }, [gameState?.turn, gameState?.phase, gameState?.actionLockedUntil, handInstanceKey]);
+
+  useEffect(() => {
+    const hand = gameState?.me?.hand || [];
+    setHandOrder(current => {
+      const nextOrder = mergeHandOrder(current, hand);
+      handOrderRef.current = nextOrder;
+      return nextOrder;
+    });
+  }, [handInstanceKey, gameState?.me?.hand]);
 
   useEffect(() => {
     const chatElement = chatMessagesRef.current;
@@ -358,17 +430,32 @@ export default function GameRoom() {
     );
   }
 
-  const { me, opponent: firstOpponent, turn, phase, field } = gameState;
+  const { me, opponent: firstOpponent, turn, phase, field: serverField } = gameState;
+  const field = visibleField || serverField;
   const opponents = gameState.opponents?.length ? gameState.opponents : [firstOpponent].filter(Boolean);
-  const targetableOpponents = opponents.filter(player => !(me.team && player.team === me.team));
-  const opponent = targetableOpponents.find(player => player.id === selectedTargetId && !player.ascended && player.hp > 0)
-    || targetableOpponents.find(player => !player.ascended && player.hp > 0)
+  const selectedRealCards = selectedCards.map(index => me.hand[index]).filter(Boolean);
+  const selfTargetBlocked = selectedRealCards.some(card => card.effect === 'sell')
+    || (selectedRealCards.length === 1 && selectedRealCards[0].type === 'trade' && selectedRealCards[0].effect === 'buy');
+  const targetablePlayers = [...opponents, me].filter(player => (
+    !player.ascended && player.hp > 0 && (!selfTargetBlocked || player.id !== me.id)
+  ));
+  const opponent = targetablePlayers.find(player => player.id === selectedTargetId)
+    || targetablePlayers.find(player => player.id !== me.id)
+    || targetablePlayers[0]
     || firstOpponent;
+  const displayHandOrder = mergeHandOrder(handOrder, me.hand);
+  const orderedHandEntries = displayHandOrder.map(instanceId => {
+    const serverIndex = me.hand.findIndex(card => card.instanceId === instanceId);
+    return { card: me.hand[serverIndex], serverIndex };
+  }).filter(entry => entry.card);
   const playerNameById = playerId => playerId === me.id
     ? me.name
     : opponents.find(player => player.id === playerId)?.name;
+  const presentationFieldStyle = playerId => ({
+    '--presentation-column-left': field?.defenderId === playerId ? '308px' : '0px',
+  });
   const isResolvingDamage = (gameState.actionLockedUntil || 0) > now;
-  const isMyTurn = turn === me.id && !isResolvingDamage;
+  const isMyTurn = turn === me.id && !isResolvingDamage && !presentationBusy;
   const remainingSeconds = gameState.turnDeadline
     ? Math.max(0, Math.ceil((gameState.turnDeadline - now) / 1000))
     : null;
@@ -406,12 +493,34 @@ export default function GameRoom() {
     ...(field?.defenseCards || []),
     ...selectedDefenseCards,
   ]);
+  const selectedAttackCards = selectedCards.map(index => getDisplayedCard(me.hand[index], index)).filter(Boolean);
+  let selectedAttackTotal = selectedAttackCards.reduce((sum, card) => sum + (card.additive ? (card.attackBonus || card.attack || card.supportValue || 0) : (card.attack || 0)), 0);
+  if (selectedAttackCards.some(card => card.supportEffect === 'double_attack')) selectedAttackTotal *= 2;
+  const commandLabel = phase === 'defense'
+    ? `守${displayedDefenseTotal}`
+    : (selectedAttackTotal > 0 ? `攻${selectedAttackTotal}` : '使う');
 
   const handlePlayCard = (cardIndex) => {
-    if (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex)) return;
+    if (playPending || (!isCardUsable(me.hand[cardIndex]) && !selectedCards.includes(cardIndex))) return;
     const cardIndices = selectedCards.includes(cardIndex) ? selectedCards : [cardIndex];
-    socket.emit('playCard', { roomName: id, cardIndices, targetId: opponent?.id });
-    setSelectedCards([]);
+    const requestId = activePlayRequest.current + 1;
+    activePlayRequest.current = requestId;
+    setPlayPending(true);
+    socket.timeout(4000).emit(
+      'playCard',
+      { roomName: id, cardIndices, targetId: opponent?.id },
+      (timeoutError, response) => {
+        if (activePlayRequest.current !== requestId) return;
+        setPlayPending(false);
+        if (timeoutError) {
+          const message = '操作の応答がありません。もう一度OKを押してください。';
+          setError(message);
+          setTimeout(() => setError(current => current === message ? '' : current), 3000);
+          return;
+        }
+        if (response?.ok) setSelectedCards([]);
+      },
+    );
   };
 
   const toggleCard = (index) => {
@@ -426,11 +535,67 @@ export default function GameRoom() {
     ));
   };
 
+  const updateHandOrder = updater => {
+    setHandOrder(current => {
+      const nextOrder = updater(current);
+      handOrderRef.current = nextOrder;
+      return nextOrder;
+    });
+  };
+
+  const handleCardDragStart = (event, instanceId) => {
+    if (selectedCards.length > 0 || playPending) {
+      event.preventDefault();
+      return;
+    }
+    suppressCardClick.current = true;
+    setDraggedCardId(instanceId);
+    event.dataTransfer.effectAllowed = 'move';
+    event.dataTransfer.setData('text/plain', instanceId);
+  };
+
+  const handleCardDragEnter = targetId => {
+    if (!draggedCardId || draggedCardId === targetId) return;
+    updateHandOrder(current => moveHandCard(mergeHandOrder(current, me.hand), draggedCardId, targetId));
+  };
+
+  const handleCardDragEnd = () => {
+    const instanceIds = mergeHandOrder(handOrderRef.current, me.hand);
+    setDraggedCardId(null);
+    setTimeout(() => { suppressCardClick.current = false; }, 0);
+    socket.timeout(4000).emit('reorderHand', { roomName: id, instanceIds }, (timeoutError, response) => {
+      if (!timeoutError && response?.ok) return;
+      const serverOrder = me.hand.map(card => card.instanceId);
+      handOrderRef.current = serverOrder;
+      setHandOrder(serverOrder);
+      const message = timeoutError ? '並び替えを保存できませんでした。' : '手札が更新されたため並び替えを戻しました。';
+      setError(message);
+      setTimeout(() => setError(current => current === message ? '' : current), 3000);
+    });
+  };
+
   // Render a small square card for the hand
-  const renderSquareCard = (realCard, index) => {
-    const usable = isCardUsable(realCard) || (isMyTurn && phase === 'main') || selectedCards.includes(index);
+  const renderSquareCard = (realCard, index, displayIndex = index) => {
+    const selected = selectedCards.includes(index);
+    const usable = isCardUsable(realCard);
+    const selectableForDiscard = isMyTurn && phase === 'main';
+    const selectedRealCards = selectedCards.map(cardIndex => me.hand[cardIndex]).filter(Boolean);
+    const compatibleWithSelection = selected
+      || selectedCards.length === 0
+      || canAddCardToSelection(selectedRealCards, realCard, phase, me.ailments.includes('flash'));
+    const visuallyAvailable = selected || (usable && compatibleWithSelection);
+    const selectable = usable || selectableForDiscard || selected;
     const card = getDisplayedCard(realCard, index);
     const dreamAffected = isDreamAffectedCard(realCard, hasDream);
+    const cardTitle = dreamAffected
+      ? `${card.name}（夢の影響中）`
+      : (!compatibleWithSelection
+        ? `${card.name}（同時には選択できません。選ぶと選択を切り替えます）`
+        : (visuallyAvailable
+          ? card.name
+          : (phase === 'main'
+            ? `${card.name}（防御時に使用。捨てる場合は選択できます）`
+            : `${card.name}（現在は使用できません）`)));
 
     let statText = '';
     if (card.attack > 0) statText = `攻${card.attack}`;
@@ -444,11 +609,20 @@ export default function GameRoom() {
     return (
       <div 
          key={realCard.instanceId} 
-         className={`gf-card-square ${borderClass} ${selectedCards.includes(index) ? 'selected' : ''} ${dreamAffected ? 'dream-affected' : ''} ${usable ? '' : 'disabled'}`}
-         aria-disabled={!usable}
-         title={dreamAffected ? `${card.name}（夢の影響中）` : (usable ? card.name : (phase === 'main' ? 'この神器は防御時に使用します' : 'この攻撃には使用できません'))}
-         onClick={() => toggleCard(index)}
-         onDoubleClick={() => usable && handlePlayCard(index)}
+         className={`gf-card-square ${borderClass} ${selected ? 'selected' : ''} ${draggedCardId === realCard.instanceId ? 'dragging' : ''} ${dreamAffected ? 'dream-affected' : ''} ${initialDealAnim?.playerIds?.includes(me.id) ? 'initial-deal-card' : ''} ${handRefillAnim?.playerId === me.id && index >= me.hand.length - handRefillAnim.count ? 'refill-new' : ''} ${visuallyAvailable ? '' : 'unavailable'}`}
+         style={{ '--deal-index': displayIndex }}
+         aria-disabled={!selectable}
+         aria-grabbed={draggedCardId === realCard.instanceId}
+         draggable={selectedCards.length === 0 && !playPending}
+         title={cardTitle}
+         onClick={() => {
+           if (!suppressCardClick.current) toggleCard(index);
+         }}
+         onDoubleClick={() => visuallyAvailable && handlePlayCard(index)}
+         onDragStart={event => handleCardDragStart(event, realCard.instanceId)}
+         onDragEnter={() => handleCardDragEnter(realCard.instanceId)}
+         onDragOver={event => event.preventDefault()}
+         onDragEnd={handleCardDragEnd}
          onMouseEnter={() => {
            setHoveredMiracleIndex(null);
            setHoveredCardIndex(index);
@@ -510,6 +684,7 @@ export default function GameRoom() {
   const hasSelectedDefense = selectedCards.some(index => (
     gameState.usableDefenseInstanceIds || []
   ).includes(me.hand[index]?.instanceId));
+  const hasSelectedUsableCard = selectedCards.some(index => isCardUsable(me.hand[index]));
 
   const renderAssistant = (assistant) => assistant && (
     <div className="assistant-status">
@@ -520,12 +695,19 @@ export default function GameRoom() {
 
   const renderPlayerStatus = (player, isSelf = false) => player && (
     <div
-      className={`battle-player ${isSelf ? 'self' : 'opponent'} team-${player.team || 'single'} ${isMyTurn && phase === 'main' && targetableOpponents.length > 1 && opponent?.id === player.id ? 'selected-target' : ''} ${turn === player.id && !isResolvingDamage ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}
-      role={!isSelf && targetableOpponents.length > 1 ? 'button' : undefined}
-      tabIndex={!isSelf && targetableOpponents.length > 1 ? 0 : undefined}
-      onClick={() => !isSelf && targetableOpponents.length > 1 && player.hp > 0 && !player.ascended && setSelectedTargetId(player.id)}
+      className={`battle-player ${isSelf ? 'self' : 'opponent'} team-${player.team || 'single'} ${isMyTurn && phase === 'main' && opponent?.id === player.id ? 'selected-target' : ''} ${turn === player.id && !isResolvingDamage ? 'active' : ''} ${player.hp <= 0 ? 'defeated' : ''}`}
+      role={isMyTurn && phase === 'main' && targetablePlayers.some(target => target.id === player.id) ? 'button' : undefined}
+      tabIndex={isMyTurn && phase === 'main' && targetablePlayers.some(target => target.id === player.id) ? 0 : undefined}
+      onClick={() => {
+        if (isMyTurn && phase === 'main' && targetablePlayers.some(target => target.id === player.id)) {
+          setSelectedTargetId(player.id);
+        }
+      }}
       onKeyDown={event => {
-        if ((event.key === 'Enter' || event.key === ' ') && !isSelf && targetableOpponents.length > 1 && player.hp > 0 && !player.ascended) {
+        if ((event.key === 'Enter' || event.key === ' ')
+          && isMyTurn
+          && phase === 'main'
+          && targetablePlayers.some(target => target.id === player.id)) {
           setSelectedTargetId(player.id);
         }
       }}
@@ -542,7 +724,7 @@ export default function GameRoom() {
         </span>
       )}
       {player.ailments.length > 0 && <span className="battle-player-ailments">{renderAilments(player)}</span>}
-      {isSelf && isMyTurn && <span className="battle-turn-label" role="status">あなたの番</span>}
+      {isSelf && isMyTurn && phase === 'main' && <span className="battle-turn-label" role="status">あなたの番</span>}
     </div>
   );
 
@@ -571,12 +753,12 @@ export default function GameRoom() {
         <button type="button" onClick={() => navigate('/')}>修行</button>
         <span>部屋 {id}</span>
         <strong className="gf-battle-title">God Field</strong>
-        {isResolvingDamage && <span>ダメージ処理中</span>}
+        {phase === 'resolving' && <span>ダメージ処理中</span>}
         {remainingSeconds !== null && <span className={remainingSeconds <= 10 ? 'timer-warning' : ''}>残り {remainingSeconds}秒</span>}
         <button type="button">教典</button>
       </div>
 
-        <div className="gf-battle-shell">
+        <div className={`gf-battle-shell ${fieldClearing ? 'field-clearing' : ''} ${cardEnterAnim ? 'card-enter-active' : ''} ${handRefillAnim ? 'hand-refill-active' : ''}`}>
         {ascensionAnim && (
           <div key={ascensionAnim.id} className="ascension-overlay" role="status" aria-label={`${ascensionAnim.playerName}が昇天`}>
             <div className="ascension-screen-flash" />
@@ -591,6 +773,7 @@ export default function GameRoom() {
             <div
               key={effectAnim.id}
               className={`dream-reveal-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              style={presentationFieldStyle(effectAnim.playerId)}
               role="status"
               aria-label={effectAnim.changed ? '夢の影響で神器が変化' : '夢の影響を受けたが神器はそのまま'}
             >
@@ -616,7 +799,8 @@ export default function GameRoom() {
           ) : RESOURCE_EFFECT_TYPES.has(effectAnim.type) ? (
             <div
               key={effectAnim.id}
-              className={`resource-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              className={`resource-effect-overlay ${effectAnim.type} ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              style={presentationFieldStyle(effectAnim.playerId)}
               role="status"
               aria-label={`${effectAnim.playerName}の${effectAnim.type}が${effectAnim.amount}増加`}
             >
@@ -628,6 +812,7 @@ export default function GameRoom() {
             <div
               key={effectAnim.id}
               className={`assistant-effect-overlay ${effectAnim.type} ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              style={presentationFieldStyle(effectAnim.playerId)}
               role="status"
               aria-label={`${effectAnim.playerName}の${EFFECT_LABELS[effectAnim.type]}`}
             >
@@ -639,6 +824,7 @@ export default function GameRoom() {
             <div
               key={effectAnim.id}
               className={`status-effect-overlay ${effectAnim.playerId === me.id ? 'target-me' : 'target-opponent'}`}
+              style={presentationFieldStyle(effectAnim.playerId)}
               role="status"
               aria-label={`${effectAnim.playerName}に${EFFECT_LABELS[effectAnim.type] || effectAnim.type}`}
             >
@@ -651,6 +837,7 @@ export default function GameRoom() {
           <div
             key={`${damageAnim.timestamp}-${damageAnim.isDarkFollowUp ? 'dark' : 'normal'}`}
             className={`damage-overlay ${damageAnim.targetId === me.id ? 'target-me' : 'target-opponent'} ${damageAnim.isDarkFollowUp ? 'dark-follow-up' : ''}`}
+            style={presentationFieldStyle(damageAnim.targetId)}
             aria-label={`${playerNameById(damageAnim.targetId)}に${damageAnim.amount}ダメージ`}
           >
             <div className="gf-damage-number">{renderDamageNumber(damageAnim.amount, damageAnim.isDarkFollowUp)}</div>
@@ -660,9 +847,10 @@ export default function GameRoom() {
 
         {startAnim && <img className="gf-game-start-effect" src="/godfield-flash/ui/game-ja/effect/game_start.png" alt="ゲーム開始" />}
 
-        {actionAnim && !damageAnim && actionAnim.outcome === 'use' && (
+        {actionAnim && !damageAnim && actionAnim.outcome === 'use' && actionAnim.type !== 'card' && (
           <div
             className={`activity-action-overlay ${actionAnim.attackerId === me.id ? 'actor-me' : 'actor-opponent'}`}
+            style={presentationFieldStyle(actionAnim.attackerId)}
             role="status"
             aria-label={`${actionAnim.attackerName || playerNameById(actionAnim.attackerId)}が${actionAnim.label || `${actionAnim.card?.name}を使用`}`}
           >
@@ -679,8 +867,41 @@ export default function GameRoom() {
         )}
 
         {actionAnim && !damageAnim && actionAnim.outcome !== 'use' && (
-          <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`}>
+          <div className={`combat-action-overlay outcome-${actionAnim.outcome} ${actionAnim.defenderId === me.id ? 'target-me' : 'target-opponent'}`} style={presentationFieldStyle(actionAnim.defenderId)}>
             <img src={`/godfield-flash/ui/game-ja/effect/${actionEffect}.png`} alt={actionEffect === 'miss' ? '回避' : '命中'} />
+          </div>
+        )}
+
+        {turnAnim && (
+          <div className="turn-start-overlay" style={presentationFieldStyle(turnAnim.playerId)} role="status">
+            <span>{turnAnim.playerId === me.id ? 'あなたの番' : `${turnAnim.playerName}の番`}</span>
+          </div>
+        )}
+
+        {cardEnterAnim && (
+          <div className={`presentation-card-stack phase-${cardEnterAnim.phase} ${cardEnterAnim.playerId === socketId ? 'actor-self' : 'actor-remote'}`}>
+            <div className="gf-field-owner">{cardEnterAnim.playerName}</div>
+            {cardEnterAnim.cards.map((card, index) => (
+              <div
+                key={`${card.id}-${index}`}
+                className="presentation-enter-card"
+                style={{
+                  '--card-enter-index': index,
+                  '--card-source-x': `${3 + ((cardEnterAnim.handIndices?.[index] || 0) % 8) * 83}px`,
+                  '--card-source-y': `${467 + Math.floor((cardEnterAnim.handIndices?.[index] || 0) / 8) * 101}px`,
+                  '--card-target-x': cardEnterAnim.phase === 'defense' ? '308px' : '0px',
+                  '--card-target-y': `${40 + index * 100}px`,
+                }}
+              >
+                {renderFieldCard(card)}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {miracleStockAnim && miracleStockAnim.playerId === me.id && (
+          <div className="miracle-stock-flight" style={{ '--miracle-slot-index': miracleStockAnim.slotIndex }}>
+            <img src={miracleStockAnim.card.imageUrl} alt={miracleStockAnim.card.name} />
           </div>
         )}
 
@@ -689,7 +910,9 @@ export default function GameRoom() {
             {field && (
               <section className="gf-field-group attacker">
                 <div className="gf-field-owner">{playerNameById(field.attackerId) || '---'}</div>
-                {renderFieldCard(field.attackCard)}
+                {(field.attackCards?.length ? field.attackCards : [field.attackCard]).map((card, index) => (
+                  <div key={`${card.instanceId || card.id || card.name}-${index}`}>{renderFieldCard(card)}</div>
+                ))}
                 {phase !== 'defense' && selectedCards.map(index => renderSelectedCard(index, 'pending-defense-card'))}
               </section>
             )}
@@ -699,17 +922,25 @@ export default function GameRoom() {
             {field?.defenderId && (
               <section className="gf-field-group defender">
                 <div className="gf-field-owner">{playerNameById(field.defenderId) || '---'}</div>
-                {(field.defenseCards || []).map((card, index) => <div key={index}>{renderFieldCard(card)}</div>)}
+                {(field.defenseDisplayCards || field.defenseCards || []).map((card, index) => <div key={index}>{renderFieldCard(card)}</div>)}
                 {phase === 'defense' && selectedCards.map(index => renderSelectedCard(index, 'pending-defense-card'))}
               </section>
             )}
             {!field && selectedCards.length > 0 && (
-              <div className="selected-field-preview">
-                <div className="selected-field-title">選択中 ({selectedCards.length})</div>
-                <div className="selected-field-cards">
-                  {selectedCards.map(index => renderSelectedCard(index))}
-                </div>
-              </div>
+              <>
+                <section className="gf-field-group attacker selection-preview">
+                  <div className="gf-field-owner">{me.name}</div>
+                  {selectedCards.map(index => renderSelectedCard(index, 'pending-selection-card'))}
+                </section>
+                {opponent && (
+                  <img className="gf-field-target-arrow" src="/godfield-flash/ui/game/commander/target_arrow_right.png" alt="攻撃対象" />
+                )}
+                {opponent && (
+                  <section className="gf-field-group defender selection-preview target-only">
+                    <div className="gf-field-owner">{opponent.name}</div>
+                  </section>
+                )}
+              </>
             )}
           </div>
           {field?.defenderId && (
@@ -737,7 +968,7 @@ export default function GameRoom() {
         <section className="gf-hand-dock">
           {error && <div className="battle-error-toast">{error}</div>}
           {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
-            <div className="hovered-card-detail" style={{ left: `${(hoveredCardIndex % 8) * 83}px` }}>
+            <div className="hovered-card-detail" style={{ left: `${Math.max(0, orderedHandEntries.findIndex(entry => entry.serverIndex === hoveredCardIndex)) * 83}px` }}>
               {renderFieldCard(getDisplayedCard(me.hand[hoveredCardIndex], hoveredCardIndex))}
             </div>
           )}
@@ -746,7 +977,9 @@ export default function GameRoom() {
               {renderFieldCard(me.learnedMiracles[hoveredMiracleIndex])}
             </div>
           )}
-          <div className="gf-hand-cards">{me.hand.map((card, index) => renderSquareCard(card, index))}</div>
+          <div className={`gf-hand-cards ${draggedCardId ? 'reordering' : ''}`}>
+            {orderedHandEntries.map(({ card, serverIndex }, displayIndex) => renderSquareCard(card, serverIndex, displayIndex))}
+          </div>
           <div className="learned-miracles" aria-label="使用済み奇跡ストック">
             {Array.from({ length: 6 }, (_, index) => {
               const miracle = me.learnedMiracles?.[index];
@@ -759,7 +992,7 @@ export default function GameRoom() {
                <button
                   type="button"
                  key={`${miracle.id}-${index}`}
-                  className="miracle-stock-slot"
+                  className={`miracle-stock-slot ${pendingMiracleIds.includes(miracle.id) ? 'stock-arriving' : ''}`}
                   disabled={disabled}
                   aria-label={`${miracle.name}を使用（MP${miracle.costMp || 0}）`}
                   title={`${miracle.name}（MP${miracle.costMp || 0}）`}
@@ -780,11 +1013,11 @@ export default function GameRoom() {
             })}
           </div>
           <div className="gf-hand-actions">
-            {isMyTurn && selectedCards.length > 0 && (phase === 'main' || (phase === 'defense' && hasSelectedDefense)) && (
-               <button className="btn gf-command-button" aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>使用する</button>
+            {isMyTurn && selectedCards.length > 0 && ((phase === 'main' && hasSelectedUsableCard) || (phase === 'defense' && hasSelectedDefense)) && (
+               <button className="btn gf-command-button" disabled={playPending} aria-label={`選択した神器${selectedCards.length}枚を使用`} onClick={() => handlePlayCard(selectedCards[0])}>{commandLabel}</button>
             )}
             {isMyTurn && phase === 'defense' && selectedCards.length === 0 && (
-               <button className="btn gf-command-button" aria-label="防御せずダメージを受ける" onClick={() => socket.emit('finishDefense', { roomName: id })}>防御しない</button>
+               <button className="btn gf-command-button forgive-command" aria-label="防御せずダメージを受ける" onClick={() => socket.emit('finishDefense', { roomName: id })}>許す</button>
             )}
             {isMyTurn && phase === 'main' && (
                <button
@@ -845,7 +1078,7 @@ export default function GameRoom() {
         </div>
       )}
 
-      {gameState.gameStateStr === 'ended' && !ascensionAnim && (
+      {gameState.gameStateStr === 'ended' && !presentationBusy && !ascensionAnim && (
         <div className="game-end-overlay">
           <div className="glass-panel game-end-panel">
             <img

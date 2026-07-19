@@ -66,11 +66,21 @@ test('準備・チームチャット・観戦・途中参加拒否を実サー�
   const watched = await spectatorGame;
   assert.equal(watched.opponents.length, 2);
   assert.deepEqual(watched.effectEvents, []);
-  assert.equal(watched.actionLockedUntil, 0);
+  assert.ok(watched.actionLockedUntil > Date.now());
+  assert.deepEqual(watched.presentationEvents.map(event => event.type), ['game_start', 'initial_deal', 'turn_start']);
   assert.deepEqual(watched.usableDefenseInstanceIds, []);
   assert.deepEqual(watched.usableDefenseMiracleIndices, []);
   assert.deepEqual(watched.selectableDefenseSupportInstanceIds, []);
   assert.equal(watched.opponents.every(player => player.hand.every(card => card.hidden)), true);
+
+  const activeSocket = watched.turn === host.id ? host : guest;
+  const lockedPlayResult = await new Promise(resolve => {
+    activeSocket.emit('playCard', { roomName, cardIndices: [0] }, resolve);
+  });
+  assert.deepEqual(lockedPlayResult, {
+    ok: false,
+    message: 'ダメージ処理が終わるまでお待ちください。',
+  });
 
   const late = io(url, { transports: ['websocket'] });
   t.after(() => late.disconnect());
@@ -91,7 +101,15 @@ test('準備・チームチャット・観戦・途中参加拒否を実サー�
   botHost.emit('toggleReady', { roomName: botRoom });
   await waitFor(botHost, 'roomUpdate', state => state.players.every(player => player.ready));
   botHost.emit('startGame', { roomName: botRoom });
-  const initialBotGame = await waitFor(botHost, 'gameState', state => state.gameStateStr === 'playing');
+  let initialBotGame = await waitFor(botHost, 'gameState', state => state.gameStateStr === 'playing');
+  const reversedHandIds = initialBotGame.me.hand.map(card => card.instanceId).reverse();
+  const reorderedGameState = waitFor(botHost, 'gameState', state => state.me.hand[0]?.instanceId === reversedHandIds[0]);
+  const reorderResult = await new Promise(resolve => {
+    botHost.emit('reorderHand', { roomName: botRoom, instanceIds: reversedHandIds }, resolve);
+  });
+  assert.deepEqual(reorderResult, { ok: true });
+  initialBotGame = await reorderedGameState;
+  await new Promise(resolve => setTimeout(resolve, Math.max(0, initialBotGame.actionLockedUntil - Date.now()) + 30));
   if (initialBotGame.turn !== botId) {
     const discardIndex = initialBotGame.me.hand.findIndex(card => !card.mortar);
     assert.notEqual(discardIndex, -1);
@@ -100,4 +118,8 @@ test('準備・チームチャット・観戦・途中参加拒否を実サー�
   }
   const afterBot = await waitFor(botHost, 'gameState', state => !(state.turn === botId && state.phase === 'main'));
   assert.equal(afterBot.gameStateStr, 'playing');
+  const botCardEnter = afterBot.presentationEvents.find(event => (
+    event.type === 'card_enter' && event.playerId === botId
+  ));
+  assert.ok(botCardEnter, 'Botの神器登場イベントが通知される');
 });

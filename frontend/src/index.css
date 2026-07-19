@@ -559,8 +559,7 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .room-card-image-preview {
-  min-height: 180px;
-  max-height: 300px;
+  height: clamp(180px, 28vw, 300px);
   border: 1px dashed #94a3b8;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.45);
@@ -571,9 +570,9 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .room-card-image-preview img {
-  width: 100%;
+  width: auto;
+  max-width: 100%;
   height: 100%;
-  max-height: 300px;
   object-fit: contain;
 }
 
@@ -1934,6 +1933,29 @@ h1, h2, h3, h4, h5, h6 {
   box-sizing: border-box;
   border: 0;
   box-shadow: none;
+  cursor: grab;
+  transition: filter 100ms ease, opacity 100ms ease, transform 100ms ease;
+}
+
+.gf-hand-cards.reordering,
+.gf-hand-cards.reordering .gf-card-square {
+  cursor: grabbing;
+}
+
+.gf-hand-dock .gf-card-square.dragging {
+  z-index: 6;
+  opacity: 0.58;
+  filter: brightness(1.16);
+  transform: scale(0.94);
+}
+
+.gf-hand-cards.reordering .gf-card-square:not(.dragging) {
+  animation: gfHandReorder 130ms ease-out;
+}
+
+@keyframes gfHandReorder {
+  from { transform: scale(0.96); }
+  to { transform: scale(1); }
 }
 
 .gf-hand-dock .gf-card-square .stat-bar {
@@ -1955,6 +1977,11 @@ h1, h2, h3, h4, h5, h6 {
 .gf-hand-dock .gf-card-square:hover,
 .gf-hand-dock .gf-card-square.selected {
   transform: none;
+}
+
+.gf-hand-dock .gf-card-square.dragging,
+.gf-hand-dock .gf-card-square.dragging:hover {
+  transform: scale(0.94);
 }
 
 .gf-hand-dock .gf-card-square.selected {
@@ -2066,6 +2093,14 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .gf-field-group.defender .pending-defense-card {
+  margin: 0;
+}
+
+.gf-field-group.selection-preview.target-only {
+  min-height: 30px;
+}
+
+.pending-selection-card {
   margin: 0;
 }
 
@@ -2620,8 +2655,16 @@ h1, h2, h3, h4, h5, h6 {
   100% { opacity: 0; transform: translate(-50%, -8px) scale(0.98); }
 }
 
-.gf-game-screen .gf-card-square.disabled {
-  cursor: default;
+.gf-game-screen .gf-hand-dock .gf-card-square.unavailable {
+  filter: brightness(0.56) saturate(0.72);
+  opacity: 0.72;
+}
+
+.gf-game-screen .gf-hand-dock .gf-card-square.unavailable:hover {
+  filter: brightness(0.66) saturate(0.78);
+}
+
+.gf-game-screen .gf-hand-dock .gf-card-square.selected {
   filter: none;
   opacity: 1;
 }
@@ -2637,6 +2680,260 @@ h1, h2, h3, h4, h5, h6 {
   object-fit: contain;
   pointer-events: none;
   animation: combatAction 1.4s ease-out forwards;
+}
+
+.gf-hand-dock .miracle-stock-slot.stock-arriving {
+  opacity: 0;
+}
+
+/* Flash版と同様に、判定文字を対象参加者のステータス行へ結び付ける。 */
+.gf-game-screen .damage-overlay,
+.gf-game-screen .combat-action-overlay,
+.resource-effect-overlay,
+.status-effect-overlay,
+.dream-reveal-overlay,
+.assistant-effect-overlay {
+  right: auto;
+  left: calc(var(--presentation-column-left, 0px) + 150px) !important;
+}
+
+.gf-game-screen .damage-overlay,
+.gf-game-screen .damage-overlay.target-me,
+.gf-game-screen .damage-overlay.target-opponent {
+  top: 126px;
+  width: 188px;
+  height: 118px;
+  box-sizing: border-box;
+  display: block;
+  overflow: hidden;
+  padding: 5px 10px 8px;
+  border: 0;
+  border-radius: 17px;
+  background: rgba(55, 55, 55, 0.94);
+  box-shadow: none;
+}
+
+.gf-game-screen .gf-damage-number {
+  height: 82px;
+  align-items: center;
+}
+
+.gf-game-screen .gf-damage-number img {
+  height: 79px;
+}
+
+.gf-game-screen .gf-damage-label {
+  position: absolute;
+  right: 8px;
+  bottom: 7px;
+  width: 77px;
+  height: 27px;
+}
+
+.resource-effect-overlay {
+  top: 105px !important;
+  width: 188px;
+  height: 96px;
+  box-sizing: border-box;
+  align-items: center;
+  gap: 3px;
+  padding: 9px 12px;
+  overflow: hidden;
+  border-radius: 17px;
+  background: rgba(0, 180, 137, 0.96);
+  filter: none;
+}
+
+.resource-effect-overlay.mp_increase {
+  background: rgba(54, 132, 202, 0.96);
+}
+
+.resource-effect-overlay.yen_increase {
+  background: rgba(216, 170, 20, 0.96);
+}
+
+.resource-effect-overlay .resource-effect-label {
+  height: 55px;
+}
+
+.resource-effect-overlay .resource-effect-number {
+  height: 61px;
+}
+
+.resource-effect-overlay .resource-effect-number img {
+  height: 59px;
+}
+
+.status-effect-overlay,
+.dream-reveal-overlay,
+.assistant-effect-overlay,
+.gf-game-screen .combat-action-overlay,
+.gf-game-screen .combat-action-overlay.target-me,
+.gf-game-screen .combat-action-overlay.target-opponent {
+  top: 126px;
+}
+
+.activity-action-overlay {
+  top: 96px !important;
+  left: calc(var(--presentation-column-left, 0px) + 150px);
+}
+
+.turn-start-overlay {
+  position: absolute;
+  top: 4px;
+  right: auto;
+  left: calc(var(--presentation-column-left, 0px) + 150px);
+  z-index: 150;
+  width: 160px;
+  height: 28px;
+  transform: translateX(-50%);
+  pointer-events: none;
+  animation: gfTurnMove 850ms ease-out both;
+}
+
+.turn-start-overlay span {
+  display: block;
+  height: 28px;
+  color: #285a48;
+  background: url('/godfield-flash/ui/game/command/value.png') center / 160px 28px no-repeat;
+  font: bold 14px/28px Georgia, 'Yu Mincho', serif;
+  text-align: center;
+}
+
+.turn-start-overlay::after {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: -62px;
+  width: 60px;
+  height: 40px;
+  background: url('/godfield-flash/ui/game/commander/target_arrow_right.png') center / contain no-repeat;
+}
+
+@keyframes gfTurnMove {
+  0% { opacity: 0; transform: translateX(calc(-50% - 35px)); }
+  24%, 78% { opacity: 1; transform: translateX(-50%); }
+  100% { opacity: 0; transform: translateX(calc(-50% + 8px)); }
+}
+
+.presentation-card-stack {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 108;
+  width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.presentation-card-stack.phase-defense {
+  left: 308px;
+}
+
+.presentation-enter-card {
+  opacity: 0;
+  animation: gfCardDrop 420ms cubic-bezier(0.2, 0.9, 0.3, 1.15) both;
+  animation-delay: calc(var(--card-enter-index) * 260ms);
+}
+
+.presentation-card-stack.actor-remote .presentation-enter-card {
+  animation-name: gfRemoteCardDrop;
+  animation-duration: 460ms;
+}
+
+@keyframes gfCardDrop {
+  0% {
+    opacity: 0.8;
+    transform: translate(
+      calc(var(--card-source-x) - var(--card-target-x)),
+      calc(var(--card-source-y) - var(--card-target-y))
+    ) scale(0.27);
+    transform-origin: top left;
+  }
+  62% { opacity: 1; transform: translateY(4px) scale(1); }
+  76% { transform: translateY(-3px); }
+  88% { transform: translateY(1px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes gfRemoteCardDrop {
+  0% { opacity: 0; transform: translateY(-22px) scale(0.96); }
+  28% { opacity: 1; transform: translateY(5px) scale(1); }
+  44% { transform: translateY(-4px); }
+  68% { transform: translateY(2px); }
+  84% { transform: translateY(-1px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+.card-enter-active .gf-field-cards {
+  opacity: 0.12;
+}
+
+.field-clearing .gf-field-cards {
+  animation: gfFieldClear 350ms ease-in both;
+}
+
+@keyframes gfFieldClear {
+  to { opacity: 0; transform: translateY(-12px) scale(0.98); }
+}
+
+.gf-hand-dock .gf-card-square.refill-new {
+  animation: gfHandRefill 520ms cubic-bezier(0.16, 0.9, 0.28, 1.2) both;
+}
+
+@keyframes gfHandRefill {
+  0% { opacity: 0; transform: translateY(32px) scale(0.72); }
+  58% { opacity: 1; transform: translateY(-4px) scale(1.04); }
+  78% { transform: translateY(2px) scale(0.99); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.gf-hand-dock .gf-card-square.initial-deal-card {
+  opacity: 0;
+  animation: gfInitialDeal 430ms cubic-bezier(0.2, 0.82, 0.28, 1.18) both;
+  animation-delay: calc(var(--deal-index) * 90ms);
+}
+
+@keyframes gfInitialDeal {
+  0% { opacity: 0; transform: translate(38px, -120px) scale(0.35) rotate(8deg); }
+  62% { opacity: 1; transform: translate(-3px, 2px) scale(1.04) rotate(-1deg); }
+  100% { opacity: 1; transform: translate(0, 0) scale(1) rotate(0); }
+}
+
+.miracle-stock-flight {
+  position: absolute;
+  top: 35px;
+  left: 5px;
+  z-index: 145;
+  width: 80px;
+  height: 80px;
+  pointer-events: none;
+  animation: gfMiracleToStock 650ms cubic-bezier(0.25, 0.78, 0.28, 1) both;
+}
+
+.miracle-stock-flight img {
+  display: block;
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+}
+
+@keyframes gfMiracleToStock {
+  0%, 18% { opacity: 1; transform: translate(0, 0) scale(1.08); }
+  82% { opacity: 1; transform: translate(calc(1px + var(--miracle-slot-index) * 83px), 633px) scale(1); }
+  100% { opacity: 0; transform: translate(calc(1px + var(--miracle-slot-index) * 83px), 633px) scale(0.94); }
+}
+
+.card-enter-active .gf-combat-totals span {
+  animation: gfTotalUpdate 420ms ease-out both;
+}
+
+@keyframes gfTotalUpdate {
+  0% { opacity: 0.35; transform: scaleY(0.75); }
+  45% { opacity: 1; transform: scaleY(1.08); }
+  100% { opacity: 1; transform: scaleY(1); }
 }
 
 .gf-game-screen .shrine-overlay,
