@@ -34,6 +34,7 @@ const {
   isActionLocked,
   isDefenseCard,
   processEndOfTurnAilments,
+  redrawPlayerArtifacts,
   resolveDamageSequence,
   resolveDefenseCard,
   rollAttack,
@@ -306,7 +307,7 @@ test('属性相性と特殊防御を解決する', () => {
 
 test('防御力が足りなくても1回の防御で残りダメージを確定する', () => {
   assert.equal(getDamageAfterDefense({ action: 'reduce', amount: 7 }), 7);
-  assert.equal(getDamageAfterDefense({ action: 'remove_attribute', amount: 10 }), 10);
+  assert.equal(getDamageAfterDefense({ action: 'remove_attribute', amount: 10 }), null);
   assert.equal(getDamageAfterDefense({ action: 'block', amount: 0 }), 0);
   assert.equal(getDamageAfterDefense({ action: 'reflect', amount: 10 }), null);
 });
@@ -318,6 +319,26 @@ test('攻撃補助雑貨とMP無料化雑貨を攻撃に組み合わせられる
   assert.equal(validateCardPlay([weapon, powder], 'main').valid, true);
   assert.equal(validateCardPlay([weapon, free], 'main').valid, true);
   assert.equal(combineAttackCards([weapon, powder]).attack, 15);
+});
+
+test('攻撃力付き防具を武器へ加算できる', () => {
+  const weapon = { name: '剣', type: 'weapon', attack: 5, hitRate: 100, attribute: 'none' };
+  const ogreArmor = { name: '鬼のよろい', type: 'armor', attack: 0, attackBonus: 15, defense: 9, attribute: 'none' };
+  assert.equal(validateCardPlay([weapon, ogreArmor], 'main').valid, true);
+  assert.equal(validateCardPlay([ogreArmor], 'main').valid, false);
+  assert.equal(combineAttackCards([weapon, ogreArmor]).attack, 20);
+});
+
+test('神器一新で手札と習得済み奇跡をすべて新しい神器へ変える', () => {
+  const player = {
+    hand: [{ instanceId: 'old-1' }, { instanceId: 'old-2' }],
+    learnedMiracles: [{ id: 'miracle-1' }],
+  };
+  let sequence = 0;
+  const count = redrawPlayerArtifacts(player, () => ({ instanceId: `new-${++sequence}` }));
+  assert.equal(count, 3);
+  assert.deepEqual(player.learnedMiracles, []);
+  assert.deepEqual(player.hand.map(card => card.instanceId), ['new-1', 'new-2', 'new-3']);
 });
 
 test('追加攻撃同士は重ねず通常攻撃には複数追加できる', () => {

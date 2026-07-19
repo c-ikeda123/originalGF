@@ -18,6 +18,13 @@ test('攻撃補助と売る組み合わせは必要な枚数だけ選択でき�
   assert.equal(canAddCardToSelection([weapon], additive, 'main'), true);
   assert.equal(canAddCardToSelection([sell], weapon, 'main'), true);
   assert.equal(canAddCardToSelection([sell, weapon], additive, 'main'), false);
+  assert.equal(canAddCardToSelection([sell], { ...sell }, 'main'), true);
+});
+
+test('攻撃力付き防具を通常武器へ追加選択できる', () => {
+  const ogreArmor = { type: 'armor', attack: 0, attackBonus: 15, defense: 9 };
+  assert.equal(canAddCardToSelection([weapon], ogreArmor, 'main'), true);
+  assert.equal(canAddCardToSelection([ogreArmor], weapon, 'main'), true);
 });
 
 test('追加攻撃同士は重ねず通常攻撃には複数追加できる', () => {

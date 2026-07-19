@@ -896,13 +896,13 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 /* Attribute Colors for Borders/Bars */
-.attr-border-none { border-color: var(--attr-none); }
-.attr-border-fire { border-color: var(--attr-fire); }
-.attr-border-water { border-color: var(--attr-water); }
-.attr-border-wood { border-color: var(--attr-wood); }
-.attr-border-earth { border-color: var(--attr-earth); }
-.attr-border-light { border-color: var(--attr-light); }
-.attr-border-dark { border-color: var(--attr-dark); }
+.attr-border-none { --card-attribute: var(--attr-none); --card-attribute-tint: rgba(148, 163, 184, 0.16); border-color: var(--attr-none); }
+.attr-border-fire { --card-attribute: var(--attr-fire); --card-attribute-tint: rgba(239, 68, 68, 0.18); border-color: var(--attr-fire); }
+.attr-border-water { --card-attribute: var(--attr-water); --card-attribute-tint: rgba(59, 130, 246, 0.18); border-color: var(--attr-water); }
+.attr-border-wood { --card-attribute: var(--attr-wood); --card-attribute-tint: rgba(34, 197, 94, 0.18); border-color: var(--attr-wood); }
+.attr-border-earth { --card-attribute: var(--attr-earth); --card-attribute-tint: rgba(217, 119, 6, 0.2); border-color: var(--attr-earth); }
+.attr-border-light { --card-attribute: var(--attr-light); --card-attribute-tint: rgba(234, 179, 8, 0.2); border-color: var(--attr-light); }
+.attr-border-dark { --card-attribute: var(--attr-dark); --card-attribute-tint: rgba(126, 34, 206, 0.2); border-color: var(--attr-dark); }
 
 .attr-bg-none { background-color: var(--attr-none); }
 .attr-bg-fire { background-color: var(--attr-fire); }
@@ -911,6 +911,43 @@ h1, h2, h3, h4, h5, h6 {
 .attr-bg-earth { background-color: var(--attr-earth); }
 .attr-bg-light { background-color: var(--attr-light); }
 .attr-bg-dark { background-color: var(--attr-dark); }
+
+.attr-card-none { --card-attribute: var(--attr-none); --card-attribute-tint: rgba(148, 163, 184, 0.16); }
+.attr-card-fire { --card-attribute: var(--attr-fire); --card-attribute-tint: rgba(239, 68, 68, 0.18); }
+.attr-card-water { --card-attribute: var(--attr-water); --card-attribute-tint: rgba(59, 130, 246, 0.18); }
+.attr-card-wood { --card-attribute: var(--attr-wood); --card-attribute-tint: rgba(34, 197, 94, 0.18); }
+.attr-card-earth { --card-attribute: var(--attr-earth); --card-attribute-tint: rgba(217, 119, 6, 0.2); }
+.attr-card-light { --card-attribute: var(--attr-light); --card-attribute-tint: rgba(234, 179, 8, 0.2); }
+.attr-card-dark { --card-attribute: var(--attr-dark); --card-attribute-tint: rgba(126, 34, 206, 0.2); }
+
+.gf-card-square[class*="attr-card-"],
+.gf-card-square[class*="attr-border-"] {
+  border-color: var(--card-attribute);
+  background: var(--card-attribute-tint);
+  box-shadow: inset 5px 0 0 var(--card-attribute), 1px 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+.gf-card-square[class*="attr-card-"]::before,
+.gf-card-square[class*="attr-border-"]::before {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 4;
+  width: 4px;
+  background: var(--card-attribute);
+  pointer-events: none;
+}
+
+.gf-card-field[class*="attr-card-"],
+.gf-card-field[class*="attr-border-"] {
+  border-color: var(--card-attribute);
+  background: linear-gradient(90deg, var(--card-attribute-tint), #f5fff4 72%);
+}
+
+.gf-card-field[class*="attr-card-"] .image-area,
+.gf-card-field[class*="attr-border-"] .image-area {
+  border-right-color: var(--card-attribute);
+}
 
 /* Player Name Pill */
 .player-pill {

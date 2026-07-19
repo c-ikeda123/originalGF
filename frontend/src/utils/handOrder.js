@@ -15,3 +15,8 @@ export function moveHandCard(order, draggedId, targetId) {
   nextOrder.splice(targetIndex, 0, draggedId);
   return nextOrder;
 }
+
+export function getHandDetailLeft(displayIndex, columns = 8, columnStep = 83, maxLeft = 361) {
+  const safeIndex = Math.max(0, Number(displayIndex) || 0);
+  return Math.min((safeIndex % columns) * columnStep, maxLeft);
+}

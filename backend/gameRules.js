@@ -151,27 +151,30 @@ function validateCardPlay(cards, phase, ailments = [], pendingDamage = null, def
 
   const isSell = cards.length === 2 && cards.some(card => card.effect === 'sell');
   if (isSell) return { valid: true };
-  if (cards.some(card => ['armor', 'ring', 'defense_item'].includes(card.type))) {
+  if (cards.some(card => ['ring', 'defense_item'].includes(card.type)
+    || (card.type === 'armor' && !(card.attackBonus > 0 && cards.length > 1)))) {
     return { valid: false, message: '防具は攻撃を受けた防御時にだけ使用できます。' };
   }
   if (cards.length === 1) {
     const [card] = cards;
-    const isModifierOnly = card.attack <= 0 && ['double_attack', 'wide_attack', 'magic_free', 'increase_attack', 'set_attribute'].includes(card.supportEffect);
+    const isModifierOnly = card.attack <= 0 && (card.attackBonus > 0
+      || ['double_attack', 'wide_attack', 'magic_free', 'increase_attack', 'set_attribute'].includes(card.supportEffect));
     const isDefenseOnlyMiracle = card.type === 'miracle' && card.attack <= 0 && card.defenseEffect;
     return isModifierOnly || isDefenseOnlyMiracle
       ? { valid: false, message: 'この神器は攻撃または奇跡と組み合わせてください。' }
       : { valid: true };
   }
 
-  const combinationTypes = new Set(['weapon', 'accessory', 'miracle', 'item']);
+  const combinationTypes = new Set(['weapon', 'armor', 'accessory', 'miracle', 'item']);
   const baseAttacks = cards.filter(card => card.attack > 0 && !card.additive && card.supportEffect !== 'magic_free');
   const hasAttack = baseAttacks.length > 0 || cards.some(card => card.additive && card.attack > 0);
   const actionMiracles = cards.filter(card => card.type === 'miracle' && card.attack <= 0 && !card.additive);
-  const modifiersOnly = cards.every(card => card.attack > 0 || card.additive || card.supportEffect === 'magic_free');
+  const modifiersOnly = cards.every(card => card.attack > 0 || card.additive || card.attackBonus > 0 || card.supportEffect === 'magic_free');
   const validItemModifiers = cards.every(card => card.type !== 'item' || ['magic_free', 'increase_attack'].includes(card.supportEffect));
+  const validArmorModifiers = cards.every(card => card.type !== 'armor' || card.attackBonus > 0);
   const magicFreeAction = actionMiracles.length === 1 && cards.every(card => card === actionMiracles[0] || card.supportEffect === 'magic_free');
   return ((hasAttack && baseAttacks.length === 1 && modifiersOnly) || magicFreeAction)
-    && validItemModifiers && cards.every(card => combinationTypes.has(card.type))
+    && validItemModifiers && validArmorModifiers && cards.every(card => combinationTypes.has(card.type))
     ? { valid: true }
     : { valid: false, message: 'この組み合わせでは使用できません。' };
 }
@@ -194,7 +197,7 @@ function combineAttackCards(cards) {
   let attack = base.attack || 0;
   for (const card of cards) {
     if (card === base) continue;
-    if (card.additive) attack += card.attackBonus || card.attack || card.supportValue || 0;
+    if (card.additive || card.attackBonus > 0) attack += card.attackBonus || card.attack || card.supportValue || 0;
   }
   if (cards.some(card => card.supportEffect === 'double_attack')) attack *= 2;
   const wide = cards.some(card => card.supportEffect === 'wide_attack');
@@ -331,7 +334,7 @@ function resolveDefenseCard(pendingDamage, card) {
 }
 
 function getDamageAfterDefense(resolution) {
-  return ['block', 'remove_attribute', 'reduce'].includes(resolution?.action)
+  return ['block', 'reduce'].includes(resolution?.action)
     ? resolution.amount
     : null;
 }
@@ -363,6 +366,17 @@ function applyAilment(player, ailment) {
 
 function getActivatedCards(cards, isSell = false) {
   return isSell ? cards.filter(card => card.effect === 'sell') : cards;
+}
+
+function redrawPlayerArtifacts(player, drawArtifact) {
+  const redrawCount = (player.hand?.length || 0) + (player.learnedMiracles?.length || 0);
+  player.hand = [];
+  player.learnedMiracles = [];
+  for (let index = 0; index < redrawCount; index++) {
+    const artifact = drawArtifact();
+    if (artifact) player.hand.push(artifact);
+  }
+  return redrawCount;
 }
 
 function applySelfAilments(player, cards) {
@@ -490,6 +504,7 @@ module.exports = {
   isActionLocked,
   isDefenseCard,
   processEndOfTurnAilments,
+  redrawPlayerArtifacts,
   resolveDamageSequence,
   resolveDefenseCard,
   rollAttack,

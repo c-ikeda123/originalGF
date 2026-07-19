@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mergeHandOrder, moveHandCard } from './handOrder.js';
+import { getHandDetailLeft, mergeHandOrder, moveHandCard } from './handOrder.js';
 
 test('ドラッグした神器を差し込み位置へ移動する', () => {
   assert.deepEqual(moveHandCard(['a', 'b', 'c', 'd'], 'b', 'd'), ['a', 'c', 'd', 'b']);
@@ -15,4 +15,11 @@ test('手札補充時も並び順を保って新しい神器を末尾へ追加�
 test('使用済み神器を並び順から取り除く', () => {
   const hand = [{ instanceId: 'a' }, { instanceId: 'c' }];
   assert.deepEqual(mergeHandOrder(['c', 'b', 'a'], hand), ['c', 'a']);
+});
+
+test('2行目以降の神器詳細を同じ列の位置に表示する', () => {
+  assert.equal(getHandDetailLeft(1), 83);
+  assert.equal(getHandDetailLeft(9), 83);
+  assert.equal(getHandDetailLeft(16), 0);
+  assert.equal(getHandDetailLeft(7), 361);
 });

@@ -35,6 +35,7 @@ const {
   isActionLocked,
   isDefenseCard,
   processEndOfTurnAilments,
+  redrawPlayerArtifacts,
   resolveDamageSequence,
   resolveDefenseCard,
   rollAttack,
@@ -730,24 +731,25 @@ io.on('connection', (socket) => {
          room.field = { attackerId: player.id, attackCard: combinedCard, attackCards: cards };
          addSoundEvent(room, 'card');
          addSoundEvent(room, 'card', { delayMs: 140 });
+         const itemTarget = opponent || player;
          if (card.healHp) {
-           increasePlayerStat(room, player, 'hp', card.healHp);
+           increasePlayerStat(room, itemTarget, 'hp', card.healHp);
          }
          if (card.healMp) {
-           increasePlayerStat(room, player, 'mp', card.healMp);
+           increasePlayerStat(room, itemTarget, 'mp', card.healMp);
          }
          if (card.moneyGain) {
-           increasePlayerStat(room, player, 'money', card.moneyGain);
+           increasePlayerStat(room, itemTarget, 'money', card.moneyGain);
          }
          if (card.randomHp) {
-           const beforeHp = player.hp;
+           const beforeHp = itemTarget.hp;
            const change = Math.random() < 0.5 ? card.randomHp : -card.randomHp;
-           player.hp = Math.min(99, player.hp + change);
-           if (player.hp > beforeHp) {
-             addEffectEvent(room, 'hp_increase', player, player.hp - beforeHp);
+           itemTarget.hp = Math.min(99, itemTarget.hp + change);
+           if (itemTarget.hp > beforeHp) {
+             addEffectEvent(room, 'hp_increase', itemTarget, itemTarget.hp - beforeHp);
              addSoundEvent(room, 'hp_increase');
            }
-           room.log.push(`${card.name}: HP ${change > 0 ? '+' : ''}${change}`);
+           room.log.push(`${card.name}: ${itemTarget.name} のHP ${change > 0 ? '+' : ''}${change}`);
          }
          if (card.removeItems) {
            const removed = removeRandomEntries(opponent.hand, card.removeItems);
@@ -780,11 +782,12 @@ io.on('connection', (socket) => {
               addAilmentEffect(room, opponent, applied);
               room.log.push(`${opponent.name} は ${applied} になった。`);
             }
+            const miracleTarget = opponent || player;
             if (card.healHp) {
-              increasePlayerStat(room, player, 'hp', card.healHp);
+              increasePlayerStat(room, miracleTarget, 'hp', card.healHp);
             }
             if (card.moneyGain) {
-              increasePlayerStat(room, player, 'money', card.moneyGain);
+              increasePlayerStat(room, miracleTarget, 'money', card.moneyGain);
             }
             if (card.setAssistant) setRandomAssistant(player, room);
             room.field = { attackerId: player.id, attackCard: card, attackCards: cards };
@@ -1027,8 +1030,6 @@ io.on('connection', (socket) => {
       playerName: player.name,
       count: 1,
     });
-    addSoundEvent(room, 'game_draw');
-
     const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, socket.id);
     endTurnInternal(room, nextTurnId);
     emitGameState(roomName);
@@ -1225,10 +1226,8 @@ function applyImmediateCardEffects(room, player, cards) {
       if (cured.length) room.log.push(`${player.name} の災い（${cured.join('、')}）が治った。`);
     }
     if (card.redrawHand) {
-      const handSize = player.hand.length;
-      player.hand = [];
-      for (let i = 0; i < handSize; i++) player.hand.push(drawArtifact(room));
-      room.log.push(`${player.name} の手札が一新された。`);
+      const redrawCount = redrawPlayerArtifacts(player, () => drawArtifact(room));
+      room.log.push(`${player.name} の神器と奇跡 ${redrawCount} 個が一新された。`);
     }
   });
 }
@@ -1849,8 +1848,12 @@ function performBotTurn(roomName) {
       room.field.defenseDisplayCards = [...(room.field.defenseDisplayCards || []), card];
       bot.pendingDamage.defensesUsed = (bot.pendingDamage.defensesUsed || 0) + 1;
       announceDefenseResolution(room, bot, resolution.action);
-      if (resolution.action === 'remove_attribute') bot.pendingDamage.attribute = 'none';
-      applyDamageAndClearField(room, bot, resolution.amount, roomName);
+      if (resolution.action === 'remove_attribute') {
+        bot.pendingDamage.attribute = 'none';
+        emitGameState(roomName);
+      } else {
+        applyDamageAndClearField(room, bot, resolution.amount, roomName);
+      }
     } else {
       applyDamageAndClearField(room, bot, bot.pendingDamage?.amount || 0, roomName);
     }
@@ -1909,7 +1912,6 @@ function performBotTurn(roomName) {
       room.actionLockedUntil || 0,
       Date.now() + getCardPresentationLockMs(1),
     );
-    addSoundEvent(room, 'game_draw');
   }
   const nextTurnId = getNextAlivePlayerId(room.turnOrder, room.players, bot.id);
   endTurnInternal(room, nextTurnId);

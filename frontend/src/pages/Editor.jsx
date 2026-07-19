@@ -255,7 +255,7 @@ export default function Editor() {
                  <div className="card-name">{currentCard.name}</div>
                  <div className="card-stat-text">
                    {currentCard.attack > 0 ? `攻${currentCard.attack} ` : ''}
-                   {currentCard.hitRate > 0 && currentCard.type !== 'armor' ? `${currentCard.hitRate}% ` : ''}
+                   {currentCard.hitRate > 0 && currentCard.hitRate < 100 && currentCard.type !== 'armor' ? `${currentCard.hitRate}% ` : ''}
                    {currentCard.defense > 0 ? `守${currentCard.defense} ` : ''}
                    {currentCard.healHp > 0 ? `HP+${currentCard.healHp} ` : ''}
                  </div>

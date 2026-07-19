@@ -112,12 +112,12 @@ test('人間とBotの防御は同じ効果音演出を通る', () => {
   assert.doesNotMatch(serverSource, /reduce: \{ sound: 'block', effect: 'block' \}/);
 });
 
-test('Botが祈ったときも祈りの表示と効果音を送る', () => {
+test('Botが祈ったときも祈りを表示し、引き分けSEは鳴らさない', () => {
   const serverSource = fs.readFileSync(path.join(__dirname, 'server.js'), 'utf8');
   const botTurnSource = serverSource.slice(
     serverSource.indexOf('function performBotTurn'),
     serverSource.indexOf('function emitGameState'),
   );
   assert.match(botTurnSource, /createActionEvent\(room, bot, null, null, 'use', \{\s*type: 'pray'/);
-  assert.match(botTurnSource, /addSoundEvent\(room, 'game_draw'\)/);
+  assert.doesNotMatch(botTurnSource, /addSoundEvent\(room, 'game_draw'\)/);
 });

@@ -6,7 +6,7 @@ import RoomBaseEditor from './RoomBaseEditor';
 import { playSound } from '../soundEffects';
 import { canAddCardToSelection, getDefenseTotal, getNextCardSelection } from '../utils/cardSelection';
 import { getDreamDisplayedCard, isDreamAffectedCard } from '../utils/dreamCards';
-import { mergeHandOrder, moveHandCard } from '../utils/handOrder';
+import { getHandDetailLeft, mergeHandOrder, moveHandCard } from '../utils/handOrder';
 import {
   getLatestFieldPresentationId,
   getLatestPresentationId,
@@ -133,7 +133,7 @@ export default function GameRoom() {
         }
       }
       if (event.type === 'action') {
-        const actionSound = { pray: 'game_draw', discard: 'item_remove', trade: 'exchange' }[event.actionType];
+        const actionSound = { discard: 'item_remove', trade: 'exchange' }[event.actionType];
         if (actionSound) playSound(actionSound);
       }
       if (event.type === 'hit_result') playSound(event.outcome === 'evade' ? 'miss' : 'hit');
@@ -434,12 +434,16 @@ export default function GameRoom() {
   const field = visibleField || serverField;
   const opponents = gameState.opponents?.length ? gameState.opponents : [firstOpponent].filter(Boolean);
   const selectedRealCards = selectedCards.map(index => me.hand[index]).filter(Boolean);
+  const selectedCardsPreferSelf = selectedRealCards.length > 0 && selectedRealCards.every(card => (
+    card.type === 'item' && (card.healHp || card.healMp || card.moneyGain || card.randomHp)
+  ) || (card.type === 'miracle' && card.attack <= 0 && (card.healHp || card.moneyGain)));
   const selfTargetBlocked = selectedRealCards.some(card => card.effect === 'sell')
     || (selectedRealCards.length === 1 && selectedRealCards[0].type === 'trade' && selectedRealCards[0].effect === 'buy');
   const targetablePlayers = [...opponents, me].filter(player => (
     !player.ascended && player.hp > 0 && (!selfTargetBlocked || player.id !== me.id)
   ));
   const opponent = targetablePlayers.find(player => player.id === selectedTargetId)
+    || (selectedCardsPreferSelf ? targetablePlayers.find(player => player.id === me.id) : null)
     || targetablePlayers.find(player => player.id !== me.id)
     || targetablePlayers[0]
     || firstOpponent;
@@ -464,7 +468,8 @@ export default function GameRoom() {
 
   const isCardUsable = (card) => {
     if (!isMyTurn || !card) return false;
-    if (phase === 'main') return !['armor', 'ring', 'defense_item'].includes(card.type);
+    if (phase === 'main') return !['ring', 'defense_item'].includes(card.type)
+      && (card.type !== 'armor' || card.attackBonus > 0);
     if (phase === 'defense') {
       return (gameState.usableDefenseInstanceIds || []).includes(card.instanceId)
         || (gameState.selectableDefenseSupportInstanceIds || []).includes(card.instanceId);
@@ -494,7 +499,11 @@ export default function GameRoom() {
     ...selectedDefenseCards,
   ]);
   const selectedAttackCards = selectedCards.map(index => getDisplayedCard(me.hand[index], index)).filter(Boolean);
-  let selectedAttackTotal = selectedAttackCards.reduce((sum, card) => sum + (card.additive ? (card.attackBonus || card.attack || card.supportValue || 0) : (card.attack || 0)), 0);
+  let selectedAttackTotal = selectedAttackCards.reduce((sum, card) => sum + (
+    card.additive || card.attackBonus > 0
+      ? (card.attackBonus || card.attack || card.supportValue || 0)
+      : (card.attack || 0)
+  ), 0);
   if (selectedAttackCards.some(card => card.supportEffect === 'double_attack')) selectedAttackTotal *= 2;
   const commandLabel = phase === 'defense'
     ? `守${displayedDefenseTotal}`
@@ -598,7 +607,8 @@ export default function GameRoom() {
             : `${card.name}（現在は使用できません）`)));
 
     let statText = '';
-    if (card.attack > 0) statText = `攻${card.attack}`;
+    if (card.attackBonus > 0 && card.type === 'armor') statText = `攻+${card.attackBonus} 守${card.defense || 0}`;
+    else if (card.attack > 0) statText = card.additive ? `攻+${card.attackBonus || card.attack}` : `攻${card.attack}`;
     else if (card.defense > 0) statText = `守${card.defense}`;
     else if (card.healHp > 0) statText = `HP+${card.healHp}`;
     
@@ -609,7 +619,7 @@ export default function GameRoom() {
     return (
       <div 
          key={realCard.instanceId} 
-         className={`gf-card-square ${borderClass} ${selected ? 'selected' : ''} ${draggedCardId === realCard.instanceId ? 'dragging' : ''} ${dreamAffected ? 'dream-affected' : ''} ${initialDealAnim?.playerIds?.includes(me.id) ? 'initial-deal-card' : ''} ${handRefillAnim?.playerId === me.id && index >= me.hand.length - handRefillAnim.count ? 'refill-new' : ''} ${visuallyAvailable ? '' : 'unavailable'}`}
+         className={`gf-card-square attr-card-${card.attribute || 'none'} ${borderClass} ${selected ? 'selected' : ''} ${draggedCardId === realCard.instanceId ? 'dragging' : ''} ${dreamAffected ? 'dream-affected' : ''} ${initialDealAnim?.playerIds?.includes(me.id) ? 'initial-deal-card' : ''} ${handRefillAnim?.playerId === me.id && index >= me.hand.length - handRefillAnim.count ? 'refill-new' : ''} ${visuallyAvailable ? '' : 'unavailable'}`}
          style={{ '--deal-index': displayIndex }}
          aria-disabled={!selectable}
          aria-grabbed={draggedCardId === realCard.instanceId}
@@ -643,15 +653,16 @@ export default function GameRoom() {
   const renderFieldCard = (card) => {
     if (!card) return null;
     let statText = '';
+    if (card.attackBonus > 0 && card.type === 'armor') statText += `攻+${card.attackBonus} `;
     if (card.attack > 0) {
-      statText += `攻${card.attack} `;
-      if (card.hitRate > 0) statText += `命中${card.hitRate}% `;
+      statText += `${card.additive ? '攻+' : '攻'}${card.attackBonus || card.attack} `;
+      if (card.hitRate > 0 && card.hitRate < 100) statText += `命中${card.hitRate}% `;
     }
     if (card.defense > 0) statText += `守${card.defense} `;
     if (card.healHp > 0) statText += `HP+${card.healHp} `;
 
     return (
-      <div className={`gf-card-field type-${card.type} attr-border-${card.attribute}`}>
+      <div className={`gf-card-field type-${card.type} attr-card-${card.attribute || 'none'} attr-border-${card.attribute}`}>
         {card.imageUrl ? (
           <div className="image-area" style={{backgroundImage: `url(${card.imageUrl})`}}></div>
         ) : (
@@ -968,12 +979,12 @@ export default function GameRoom() {
         <section className="gf-hand-dock">
           {error && <div className="battle-error-toast">{error}</div>}
           {hoveredCardIndex !== null && me.hand[hoveredCardIndex] && (
-            <div className="hovered-card-detail" style={{ left: `${Math.max(0, orderedHandEntries.findIndex(entry => entry.serverIndex === hoveredCardIndex)) * 83}px` }}>
+            <div className="hovered-card-detail" style={{ left: `${getHandDetailLeft(orderedHandEntries.findIndex(entry => entry.serverIndex === hoveredCardIndex))}px` }}>
               {renderFieldCard(getDisplayedCard(me.hand[hoveredCardIndex], hoveredCardIndex))}
             </div>
           )}
           {hoveredMiracleIndex !== null && me.learnedMiracles?.[hoveredMiracleIndex] && (
-            <div className="hovered-card-detail" style={{ left: `${hoveredMiracleIndex * 83}px` }}>
+            <div className="hovered-card-detail" style={{ left: `${getHandDetailLeft(hoveredMiracleIndex)}px` }}>
               {renderFieldCard(me.learnedMiracles[hoveredMiracleIndex])}
             </div>
           )}
